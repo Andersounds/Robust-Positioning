@@ -7,7 +7,7 @@
 KLT_ORB_Tracker::KLT_ORB_Tracker(void){
 
 
-}
+}//Is the constructor needed?
 int KLT_ORB_Tracker::init(void){
   /*Initialize the ORB detector and descriptor computer itself*/
   orbObject = cv::ORB::create(
@@ -53,7 +53,7 @@ int KLT_ORB_Tracker::calcORBDescriptors(cv::Mat RoI, std::vector<cv::KeyPoint>& 
  * -Find keypoints again in the located rects. This will give a more even distribution of keypoints between the found areas
  *  -Not guaranteed to be very expensive since ORB is fast as it is
 */
-std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance,std::vector<std::vector<cv::KeyPoint>>& returnKeyPoints){
+std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance,std::vector<std::vector<cv::KeyPoint>>& returnKeyPoints,std::vector<cv::Mat>& returnDescriptors){
   std::vector<cv::Rect> rects;
   /*Create mat where keypoint coordinates are set to non-zero*/
   cv::Mat keypointMat = cv::Mat::zeros(frame.size(), CV_8UC1);
@@ -68,10 +68,10 @@ std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<c
   cv::Point min_loc, max_loc;
   for(int i=0;i<noOfClusters;i++){
     cv::minMaxLoc(filteredMat, &min, &max, &min_loc, &max_loc);
-    cv::Rect RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);
+    cv::Rect RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);      //Will this cause a redefinition error if noOfclusters>1?
     rects.push_back(RoI);
     cv::Rect blackOut(max_loc.x-minDistance, max_loc.y-minDistance,(kernelSize+2*minDistance),(kernelSize+2*minDistance));
-    cv::rectangle(filteredMat,blackOut,CV_RGB(0,0,0),CV_FILLED,cv::LINE_8,0);//Just set color 0?
+    cv::rectangle(filteredMat,blackOut,0,CV_FILLED,cv::LINE_8,0);//Just set color 0?
     std::vector<cv::KeyPoint> RoIKeyPoints;
     for(int j=0;j<keypoints.size();j++){
       if(keypoints[j].pt.inside(RoI)){
@@ -79,7 +79,10 @@ std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<c
       }
       //Make some statement here that breaks out if all keypoints in region have been found
     }
+    cv::Mat RoIDescriptors;
+    orbObject->compute(frame,RoIKeyPoints,RoIDescriptors);// Calculate descriptors
     returnKeyPoints.push_back(RoIKeyPoints);
+    returnDescriptors.push_back(RoIDescriptors);
   }
 
   return rects;
@@ -129,14 +132,55 @@ int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std:
 
 }
 /*
+ * getQueryFeatures
+ * Takes the queryImg and a rect that is used to create a Mask (with larger area?), within which the queryfeatures are located
+ * For each keypoint found, the descriptor is calculated directly
+*/
+int KLT_ORB_Tracker::getQueryFeatures(cv::Mat frame, cv::Rect maskRect,std::vector<cv::KeyPoint>& keyPoints, cv::Mat& descriptors){
+  cv::Mat mask = cv::Mat::zeros(frame.size(), frame.type());
+  cv::Rect largerMaskRect(maskRect.x-(int)maskRect.width/2, maskRect.y-(int)maskRect.height/2, 2*maskRect.width, 2*maskRect.height);
+  //RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);
+  cv::rectangle(mask,largerMaskRect,1,CV_FILLED,cv::LINE_8,0);
+  orbObject->detectAndCompute(frame, mask, keyPoints, descriptors);
+  return 1;
+}
+/*
  * featureMatching
  *
  *
 */
-int KLT_ORB_Tracker::featureMatching(cv::Mat& roidescriptors, cv::Mat& querydescriptors, std::vector<cv::DMatch>& matches){ //Maybe use mask in future?
-  matcherObject ->match(roidescriptors,querydescriptors,matches);//OBS ordning på descriptors orsakar krasch
+int KLT_ORB_Tracker::featureMatching(cv::Mat roiDescriptors, cv::Mat queryDescriptors, std::vector<cv::DMatch>& matches){ //Maybe use mask in future?
+  matcherObject ->match(roiDescriptors,queryDescriptors,matches);//OBS ordning på descriptors orsakar krasch
   return 1;
 }
+/*
+ * trackMatches
+ *
+ *
+*/
+int trackMatches(std::vector<cv::DMatch> matches, std::vector<cv::KeyPoint>& keyPoints, cv::Rect& roi){
+
+
+
+
+  return 1;
+}
+/*
+ * drawKeypoints or points
+ *
+ *
+*/
+int KLT_ORB_Tracker::drawPoints(cv::Mat inputImg, std::vector<cv::KeyPoint> keyPoints, cv::Mat& outputImg, cv::Scalar color){
+  cv::drawKeypoints(inputImg, keyPoints, outputImg,color);
+  return 1;
+}
+int KLT_ORB_Tracker::drawPoints(cv::Mat inputImg, std::vector<cv::Point2f> keyPoints, cv::Mat& outputImg, cv::Scalar color){
+  std::vector<cv::KeyPoint> kp;
+  cv::KeyPoint::convert(keyPoints,kp);
+  cv::drawKeypoints(inputImg, kp, outputImg,color);
+  return 1;
+}
+
 /*
  * drawTheMatches
  *

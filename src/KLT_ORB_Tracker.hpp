@@ -40,12 +40,17 @@ class KLT_ORB_Tracker{
     KLT_ORB_Tracker(void);//Constructor. Probably give a settings struct
     int init(void);
     int getFeatures(cv::Mat, std::vector<cv::KeyPoint>&);// ORB
-    std::vector<cv::Rect> findClusters(cv::Mat, std::vector<cv::KeyPoint>, int, int, int,std::vector<std::vector<cv::KeyPoint>>&);
+    std::vector<cv::Rect> findClusters(cv::Mat, std::vector<cv::KeyPoint>, int, int, int,std::vector<std::vector<cv::KeyPoint>>&,std::vector<cv::Mat>&);
     int calcORBDescriptors(cv::Mat, std::vector<cv::KeyPoint>&, cv::Mat&);
     int calcCenterPoint(std::vector<cv::KeyPoint>&, cv::KeyPoint&);
 
+    int getQueryFeatures(cv::Mat, cv::Rect,std::vector<cv::KeyPoint>&, cv::Mat&);
     int trackOpticalFlow(cv::Mat, cv::Mat, std::vector<cv::Point2f>&, cv::Rect&);
-    int featureMatching(cv::Mat&, cv::Mat&, std::vector<cv::DMatch>&);//not sure about this one yet
+    int featureMatching(cv::Mat, cv::Mat, std::vector<cv::DMatch>&);
+    int trackMatches(std::vector<cv::DMatch>, std::vector<cv::KeyPoint>&, cv::Rect&);
+    int drawPoints(cv::Mat, std::vector<cv::KeyPoint>, cv::Mat&, cv::Scalar);
+    int drawPoints(cv::Mat, std::vector<cv::Point2f>, cv::Mat&, cv::Scalar);
+
     int drawTheMatches(cv::Mat&, std::vector<cv::KeyPoint>&, cv::Mat&, std::vector<cv::KeyPoint>&, std::vector<cv::DMatch>&, cv::Mat&);
 
     int repeat(void);
