@@ -1,6 +1,6 @@
 #!/bin/bash
 
-g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/ORBwithClasswithKLT.cpp -o bin/blob
+g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/ORBwithClasswithKLT.cpp -o bin/tryIt
 
 
 
