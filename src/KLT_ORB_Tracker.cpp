@@ -126,7 +126,7 @@ int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std:
   rectangle.y +=(int) roIShift.y;
   //std::cout << "Rectangle coordinate: " << rectangle.x << ", " << rectangle.y << std::endl;
   if(rectangle.x <= xMax && rectangle.x>= xMin && rectangle.y <=yMax && rectangle.y >=yMin){
-    corners = trackedCorners;//Shift new corners. Or should feature matching do this when it is implemented
+    corners = trackedCorners;//Shift new corners.
     return 1;
   }else{return 0;} //Out of bound
 
@@ -139,6 +139,7 @@ int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std:
 int KLT_ORB_Tracker::getQueryFeatures(cv::Mat frame, cv::Rect maskRect,std::vector<cv::KeyPoint>& keyPoints, cv::Mat& descriptors){
   cv::Mat mask = cv::Mat::zeros(frame.size(), frame.type());
   cv::Rect largerMaskRect(maskRect.x-(int)maskRect.width/2, maskRect.y-(int)maskRect.height/2, 2*maskRect.width, 2*maskRect.height);
+  //cv::Rect largerMaskRect(maskRect.x, maskRect.y,maskRect.width, maskRect.height);
   //RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);
   cv::rectangle(mask,largerMaskRect,1,CV_FILLED,cv::LINE_8,0);
   orbObject->detectAndCompute(frame, mask, keyPoints, descriptors);
@@ -155,14 +156,48 @@ int KLT_ORB_Tracker::featureMatching(cv::Mat roiDescriptors, cv::Mat queryDescri
 }
 /*
  * trackMatches
+Denna funktion ska ge en ny skattning på vår Roi och uppdatera våra nuvarande keyPoints och deras descriptors
+Vi har: keypoints och descriptors från init eller frra gången denna funktionen kördes
+Vi har också: Matchningar mellan förra descriptors och nya som har samlats in i ett lite större område
+Vi ska: Välja ut de bästa matchningarna, och skriva över våra gamla keypoints och deras descriptors med de nya, matchade, keypoints och deras descriptrs
+Vi ska också: definiera om Roi (vår rect) så att den omfattar de nya keypoints
  *
  *
 */
-int trackMatches(std::vector<cv::DMatch> matches, std::vector<cv::KeyPoint>& keyPoints, cv::Rect& roi){
+int trackMatches(std::vector<cv::DMatch> matches, std::vector<cv::KeyPoint>& objectKeyPoints, std::vector<cv::KeyPoint>& sceneKeyPoints, cv::Rect& roi){
+  float dist_max = 0;
+  float dist_min = 100;
+  for(int i=0;i<matches.size();i++){
+    float dist = matches[i].distance;
+    if( dist < dist_min ) dist_min = dist;
+    if( dist > dist_max ) dist_max = dist;
+  }
+  /*Keep only good matches whose distance is less than 3*dist_min*/
+  std::vector< cv::DMatch > good_matches;
+  for( int i = 0; i < matches.size(); i++ )
+  { if( matches[i].distance < 3*dist_min )
+     { good_matches.push_back( matches[i]); }
+  }
+  /*Take the points of the good matches*/
+  std::vector <cv::Point2f> scene;
+  for(int i=0; i<good_matches.size(); i++){
+    scene.push_back( sceneKeyPoints[ good_matches[i].trainIdx ].pt );//train or query? noone knows.
+  }
+  /*Get center point of cluster (Mean point)*/
+  float x=0;float y=0;
+  for(int i=0; i<scene.size(); i++){
+    x += scene[i].x;
+    y += scene[i].y;
+  }
+  x/=scene.size();
+  x-=roi.width/2;
+  y/=scene.size();
+  y-=roi.height/2;
+  /*Adapt rect corner point so that it surrounds the mean of the found cluster*/
+  roi.x=(int) x;
+  roi.y=(int) y;
 
-
-
-
+  if(good_matches.size()<3){return 0;}//Some criteria to discard bad matching.
   return 1;
 }
 /*
