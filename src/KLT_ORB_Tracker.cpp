@@ -164,7 +164,7 @@ Vi ska också: definiera om Roi (vår rect) så att den omfattar de nya keypoint
  *
  *
 */
-int trackMatches(std::vector<cv::DMatch> matches, std::vector<cv::KeyPoint>& objectKeyPoints, std::vector<cv::KeyPoint>& sceneKeyPoints, cv::Rect& roi){
+int trackMatches(std::vector<cv::DMatch> matches, std::vector<cv::KeyPoint> sceneKeyPoints, std::vector<cv::Point2f>& newObjectPoints,cv::Rect& roi){
   float dist_max = 0;
   float dist_min = 100;
   for(int i=0;i<matches.size();i++){
@@ -197,6 +197,7 @@ int trackMatches(std::vector<cv::DMatch> matches, std::vector<cv::KeyPoint>& obj
   roi.x=(int) x;
   roi.y=(int) y;
 
+  newObjectPoints =  scene;
   if(good_matches.size()<3){return 0;}//Some criteria to discard bad matching.
   return 1;
 }
