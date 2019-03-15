@@ -32,14 +32,19 @@ int KLT_ORB_Tracker::init(void){
  * Takes an image
  * Returns keypoints found according to ORB
 */
-int KLT_ORB_Tracker::getFeatures(cv::Mat RoI, std::vector<cv::KeyPoint>& keypoints){//Alternativt: ge hela bilden och en rect som specificerar RoI
-    orbObject->detect(RoI,keypoints);
+int KLT_ORB_Tracker::getFeatures(cv::Mat frame, std::vector<cv::KeyPoint>& keypoints){//Alternativt: ge hela bilden och en rect som specificerar RoI
+    orbObject->detect(frame,keypoints);
+    return 1;
+}
+int KLT_ORB_Tracker::getFeatures(cv::Mat frame, std::vector<cv::KeyPoint>& keypoints, cv::Mat mask){//Alternativt: ge hela bilden och en rect som specificerar RoI
+    orbObject->detect(frame,keypoints,mask);
     return 1;
 }
 /*
  * calcORBDescriptors
  * Takes an image and a set of keypoints found in the image.
  * Returns the ORB descriptors
+ * Just a wrapper around the compute function
 */
 int KLT_ORB_Tracker::calcORBDescriptors(cv::Mat RoI, std::vector<cv::KeyPoint>& keypoints, cv::Mat& descriptors){
     orbObject ->compute(RoI,keypoints, descriptors);
@@ -74,7 +79,6 @@ std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<c
         rects.push_back(RoI);
         cv::Rect blackOut(max_loc.x-minDistance, max_loc.y-minDistance,(kernelSize+2*minDistance),(kernelSize+2*minDistance));
         cv::rectangle(filteredMat,blackOut,0,CV_FILLED,cv::LINE_8,0);//Just set color 0?
-        }
     }
     return rects;
 }
@@ -234,6 +238,14 @@ int KLT_ORB_Tracker::drawTheMatches(cv::Mat& RoI, std::vector<cv::KeyPoint>&RoIK
                  matches, imgOut, cv::Scalar::all(-1), cv::Scalar::all(-1),
                  drawMask, cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
   return 1;
+}
+/*
+ * Make a mat mask with the rect rigion set to 1
+ */
+int KLT_ORB_Tracker::getMask(cv::Rect RoI, cv::Mat mask){
+    mask.setTo(0);
+    cv::rectangle(mask,RoI,1,CV_FILLED);
+    return 1;
 }
 
  /*
