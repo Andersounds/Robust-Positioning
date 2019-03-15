@@ -41,7 +41,7 @@ class KLT_ORB_Tracker{
     KLT_ORB_Tracker(void);//Constructor. Probably give a settings struct
     int init(void);
     int getFeatures(cv::Mat, std::vector<cv::KeyPoint>&);// ORB
-    std::vector<cv::Rect> findClusters(cv::Mat, std::vector<cv::KeyPoint>, int, int, int,std::vector<std::vector<cv::KeyPoint>>&,std::vector<cv::Mat>&);
+    std::vector<cv::Rect> findClusters(cv::Mat, std::vector<cv::KeyPoint>, int, int, int);
     int calcORBDescriptors(cv::Mat, std::vector<cv::KeyPoint>&, cv::Mat&);
     int calcCenterPoint(std::vector<cv::KeyPoint>&, cv::KeyPoint&);
 

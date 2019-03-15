@@ -54,40 +54,27 @@ int KLT_ORB_Tracker::calcORBDescriptors(cv::Mat RoI, std::vector<cv::KeyPoint>& 
  * -Find keypoints again in the located rects. This will give a more even distribution of keypoints between the found areas
  *  -Not guaranteed to be very expensive since ORB is fast as it is
 */
-std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance,std::vector<std::vector<cv::KeyPoint>>& returnKeyPoints,std::vector<cv::Mat>& returnDescriptors){
-
+std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance){
+    /*Init the return variable*/
     std::vector<cv::Rect> rects;
     /*Create mat where keypoint coordinates are set to non-zero*/
     cv::Mat keypointMat = cv::Mat::zeros(frame.size(), CV_8UC1);
-    for(int i = 0; i < keypoints.size(); ++i) {
-      keypointMat.at<uchar>(keypoints[i].pt) = 1;//Maybe use other value 1 is enough?
+    for(cv::KeyPoint kp:keypoints) {
+      keypointMat.at<uchar>(kp.pt) = 1;//Maybe use other value 1 is enough? maybe use keypoint response here?
     }
     cv::Mat kernel = cv::Mat::ones(kernelSize,kernelSize,CV_8UC1);
     cv::Mat filteredMat;
     cv::filter2D(keypointMat, filteredMat, -1 , kernel, cv::Point( 0, 0 ), 0, cv::BORDER_CONSTANT);//Calc. convolution (actuallly correlation) i.e. find point of maximum mean over kernel
-    //filter2D: 26.69 fps, sepFilter2D: 24.86fps
+    //filter2D: 26.69 fps, sepFilter2D: 24.86fps. If I have sepfilter the cluster dues not have to be quadratic
     double min, max;
     cv::Point min_loc, max_loc;
     for(int i=0;i<noOfClusters;i++){
         cv::minMaxLoc(filteredMat, &min, &max, &min_loc, &max_loc);
-        cv::Rect RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);      //Will this cause a redefinition error if noOfclusters>1?
+        cv::Rect RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);
         rects.push_back(RoI);
         cv::Rect blackOut(max_loc.x-minDistance, max_loc.y-minDistance,(kernelSize+2*minDistance),(kernelSize+2*minDistance));
         cv::rectangle(filteredMat,blackOut,0,CV_FILLED,cv::LINE_8,0);//Just set color 0?
-        std::vector<cv::KeyPoint> RoIKeyPoints;
-        for(int j=0;j<keypoints.size();j++){
-            if(keypoints[j].pt.inside(RoI)){
-                RoIKeyPoints.push_back(keypoints[j]);
-            }
-          //Make some statement here that breaks out if all keypoints in region have been found
         }
-    cv::Mat RoIDescriptors;
-    //std::cout << "2, ";
-    //std::cout << frame.size() << ", " << RoIKeyPoints.size() << ", " << RoIDescriptors.size();
-    orbObject->compute(frame,RoIKeyPoints,RoIDescriptors);// Calculate descriptors. This crashes???
-    //std::cout << ", 3";
-    returnKeyPoints.push_back(RoIKeyPoints);
-    returnDescriptors.push_back(RoIDescriptors);
     }
     return rects;
 }
