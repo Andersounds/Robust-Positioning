@@ -1,4 +1,5 @@
-
+#ifndef KLT_ORB_TRACKER_H
+#define KLT_ORB_TRACKER_H
 
 /*Settings struct*/
 struct KLTsettingsStruct{
@@ -12,17 +13,17 @@ struct KLTsettingsStruct{
 };
 struct ORBsettingsStruct{
   /*Settings for ORB object*/
-  int nfeatures = 300;
-  float scalefactor = 1.2;
+  int nfeatures = 500;
+  float scalefactor = 1.2;//1.2;
   int nlevels = 8;
-  int nThreshold = 20;//31
-  int firstLevel = 0;
+  int nThreshold = 31;
+  int firstLevel = 2;//2;//0;
   int WTA_K = 2;
   int scoreType = cv::ORB::HARRIS_SCORE;
   int patchSize = 31;
   int fastThreshold = 20;
   /*Settings for Matcher object*/
-  int normType = cv::NORM_HAMMING;
+  int normType = cv::NORM_HAMMING;//cv::NORM_HAMMING;
   bool crosscheck = true;
 };
 
@@ -47,11 +48,14 @@ class KLT_ORB_Tracker{
     int getQueryFeatures(cv::Mat, cv::Rect,std::vector<cv::KeyPoint>&, cv::Mat&);
     int trackOpticalFlow(cv::Mat, cv::Mat, std::vector<cv::Point2f>&, cv::Rect&);
     int featureMatching(cv::Mat, cv::Mat, std::vector<cv::DMatch>&);
-    int trackMatches(std::vector<cv::DMatch>, std::vector<cv::KeyPoint>, std::vector<cv::Point2f>& newObjectPoints,cv::Rect& roi);
+    int trackMatches(std::vector<cv::DMatch>,std::vector<cv::DMatch>&, std::vector<cv::KeyPoint>, std::vector<cv::KeyPoint>, std::vector<cv::Point2f>& newObjectPoints,cv::Rect& roi,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&, cv::Mat&);
     int drawPoints(cv::Mat, std::vector<cv::KeyPoint>, cv::Mat&, cv::Scalar);
     int drawPoints(cv::Mat, std::vector<cv::Point2f>, cv::Mat&, cv::Scalar);
 
     int drawTheMatches(cv::Mat&, std::vector<cv::KeyPoint>&, cv::Mat&, std::vector<cv::KeyPoint>&, std::vector<cv::DMatch>&, cv::Mat&);
 
     int repeat(void);
+
+    int setNfeatures(int);
 };
+#endif

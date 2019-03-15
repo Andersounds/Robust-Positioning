@@ -5,7 +5,8 @@
  * - 2. RPi camera module
  * - 3. Stream from dataset
  */
-
+#ifndef VIDEOSTREAM_H
+#define VIDEOSTREAM_H
 /*
  * Abstract base videoStream class
  */
@@ -50,3 +51,4 @@ class piCamStreamer : public Streamer{
     int getImage(cv::Mat&);
     int setSettings(int);
 };
+#endif
