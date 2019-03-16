@@ -36,10 +36,13 @@ int KLT_ORB_Tracker::getFeatures(cv::Mat frame, std::vector<cv::KeyPoint>& keypo
     orbObject->detect(frame,keypoints);
     return 1;
 }
-int KLT_ORB_Tracker::getFeatures(cv::Mat frame, std::vector<cv::KeyPoint>& keypoints, cv::Mat mask){//Alternativt: ge hela bilden och en rect som specificerar RoI
-    orbObject->detect(frame,keypoints,mask);
-    return 1;
+std::vector<cv::KeyPoint> KLT_ORB_Tracker::getFeatures(cv::Mat frame, cv::Mat mask){//Alternativt: ge hela bilden och en rect som specificerar RoI
+    std::vector<cv::KeyPoint> newKeypoints;
+    orbObject->detect(frame,newKeypoints,mask);
+    return newKeypoints;
 }
+
+
 /*
  * calcORBDescriptors
  * Takes an image and a set of keypoints found in the image.
@@ -59,9 +62,9 @@ int KLT_ORB_Tracker::calcORBDescriptors(cv::Mat RoI, std::vector<cv::KeyPoint>& 
  * -Find keypoints again in the located rects. This will give a more even distribution of keypoints between the found areas
  *  -Not guaranteed to be very expensive since ORB is fast as it is
 */
-std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance){
+std::vector<cv::Rect_<float>> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance){
     /*Init the return variable*/
-    std::vector<cv::Rect> rects;
+    std::vector<cv::Rect_<float>> rects;
     /*Create mat where keypoint coordinates are set to non-zero*/
     cv::Mat keypointMat = cv::Mat::zeros(frame.size(), CV_8UC1);
     for(cv::KeyPoint kp:keypoints) {
@@ -75,7 +78,7 @@ std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<c
     cv::Point min_loc, max_loc;
     for(int i=0;i<noOfClusters;i++){
         cv::minMaxLoc(filteredMat, &min, &max, &min_loc, &max_loc);
-        cv::Rect RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);
+        cv::Rect_<float> RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);
         rects.push_back(RoI);
         cv::Rect blackOut(max_loc.x-minDistance, max_loc.y-minDistance,(kernelSize+2*minDistance),(kernelSize+2*minDistance));
         cv::rectangle(filteredMat,blackOut,0,CV_FILLED,cv::LINE_8,0);//Just set color 0?
@@ -89,7 +92,7 @@ std::vector<cv::Rect> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<c
  * If region moves out of bounds the return integer is zero, which can be used to trigger a new RoI search
  * TODO: lös det med points vs keypoints. konvertera antingen i denna funktionen eller utanför
 */
-int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std::vector<cv::Point2f>& corners, cv::Rect& rectangle){//Rest of arguments come from class attributes
+int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std::vector<cv::Point2f>& corners, cv::Rect_<float>& rectangle){//Rest of arguments come from class attributes
 //This creates coordinate limits for the searching rectangle. If it goes out of bounds tracking is considered to be lost
     static int xMax = nextFrame.cols - rectangle.width/2;
     static int yMax = nextFrame.rows - rectangle.height/2;
@@ -106,20 +109,29 @@ int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std:
                             KLTsettings.termcrit,
                             KLTsettings.flags,//For special operation
                             0.001);
-    cv::Point2f roIShift(0,0);
-    int normInteger = 0;
-    float x=0;float y=0;
+
+    //cv::Point2f roIShift(0,0);
+    //cv::Point2f TEMProIShift(0,0);
+    float normInteger = 0;
+    float x=0;float y=0;float xT=0;float yT=0;//Cluster center of mass
+    //Detta kan göras med en static variable som förskjuts
     for(int i=0; i<trackedCorners.size(); i++){
-      x += trackedCorners[i].x;
-      y += trackedCorners[i].y;
+      xT += trackedCorners[i].x;
+      x  += corners[i].x;
+      yT += trackedCorners[i].y;
+      y  += corners[i].y;
+      normInteger += 1;
     }
-    x/=trackedCorners.size();
-    x-=rectangle.width/2;
-    y/=trackedCorners.size();
-    y-=rectangle.height/2;
-    //Adapt rect corner point so that it surrounds the mean of the found cluster
-    rectangle.x=(int) x;
-    rectangle.y=(int) y;
+    x/=normInteger;
+    y/=normInteger;
+    xT/=normInteger;
+    yT/=normInteger;
+    float offsetX = rectangle.x - x;
+    float offsetY = rectangle.y - y;
+    rectangle.x = xT + offsetX;
+    rectangle.y = yT + offsetY;
+    std::cout << "Rect position: "<< rectangle.x << ", " << rectangle.y << std::endl;
+
     //std::cout << "Rectangle coordinate: " << rectangle.x << ", " << rectangle.y << std::endl;
     if(rectangle.x <= xMax && rectangle.x>= xMin && rectangle.y <=yMax && rectangle.y >=yMin){
         corners = trackedCorners;//Shift new corners.
@@ -244,7 +256,8 @@ int KLT_ORB_Tracker::drawTheMatches(cv::Mat& RoI, std::vector<cv::KeyPoint>&RoIK
  */
 int KLT_ORB_Tracker::getMask(cv::Rect RoI, cv::Mat mask){
     mask.setTo(0);
-    cv::rectangle(mask,RoI,1,CV_FILLED);
+    //Mask value (0-255) can be set to change how many keypoints shall be detected. If we put 127 than approx half the amount of KP are detected
+    cv::rectangle(mask,RoI,255,CV_FILLED);
     return 1;
 }
 

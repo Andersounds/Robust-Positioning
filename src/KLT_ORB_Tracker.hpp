@@ -13,7 +13,7 @@ struct KLTsettingsStruct{
 };
 struct ORBsettingsStruct{
   /*Settings for ORB object*/
-  int nfeatures = 500;
+  int nfeatures = 800;
   float scalefactor = 1.2;//1.2;
   int nlevels = 8;
   int nThreshold = 31;
@@ -41,13 +41,13 @@ class KLT_ORB_Tracker{
     KLT_ORB_Tracker(void);//Constructor. Probably give a settings struct
     int init(void);
     int getFeatures(cv::Mat, std::vector<cv::KeyPoint>&);// ORB
-    int getFeatures(cv::Mat,std::vector<cv::KeyPoint>&, cv::Mat);
-    std::vector<cv::Rect> findClusters(cv::Mat, std::vector<cv::KeyPoint>, int, int, int);
+    std::vector<cv::KeyPoint> getFeatures(cv::Mat, cv::Mat);
+    std::vector<cv::Rect_<float>> findClusters(cv::Mat, std::vector<cv::KeyPoint>, int, int, int);
     int calcORBDescriptors(cv::Mat, std::vector<cv::KeyPoint>&, cv::Mat&);
     int calcCenterPoint(std::vector<cv::KeyPoint>&, cv::KeyPoint&);
 
     int getQueryFeatures(cv::Mat, cv::Rect,std::vector<cv::KeyPoint>&, cv::Mat&);
-    int trackOpticalFlow(cv::Mat, cv::Mat, std::vector<cv::Point2f>&, cv::Rect&);
+    int trackOpticalFlow(cv::Mat, cv::Mat, std::vector<cv::Point2f>&, cv::Rect_<float>&);
     int featureMatching(cv::Mat, cv::Mat, std::vector<cv::DMatch>&);
     int trackMatches(std::vector<cv::DMatch>,std::vector<cv::DMatch>&, std::vector<cv::KeyPoint>, std::vector<cv::KeyPoint>, std::vector<cv::Point2f>& newObjectPoints,cv::Rect& roi,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&, cv::Mat&);
     int drawPoints(cv::Mat, std::vector<cv::KeyPoint>, cv::Mat&, cv::Scalar);
