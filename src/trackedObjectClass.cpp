@@ -23,10 +23,13 @@ trackedObject::trackedObject(std::vector<cv::KeyPoint> keyPoints,
     }
     matches = 0;
     matchAttempts = 0;
+    color = cv::Scalar(0,0,255); //Default red
 
 }
 /*
- * Returns new cv::Point2f that can be used by the KLT tracker. Also inputoutput-returns a new Rect for the KLT
+ * Returns new cv::Point2f that can be used by the KLT tracker.
+ * Also inputoutput-returns a new Rect for the KLT
+ * Bases the decision on the winning matches.
  * For now does not consider rotation. Just scaling
  */
 std::vector<cv::Point2f> trackedObject::getTrackablePoints(float scale,
@@ -97,6 +100,26 @@ to::trackedObjectList::trackedObjectList(int size){
     activeIDs.reserve(size);
     maxNmbr = size;
     no_of_tracked = 0;
+    std::vector<cv::Scalar> tempColors{cv::Scalar(0,0,255),
+                                        cv::Scalar(0,255,255),
+                                        cv::Scalar(255,234,0),
+                                        cv::Scalar(255,0,170),
+                                        cv::Scalar(0,127,255),
+                                        cv::Scalar(0,255,191),
+                                        cv::Scalar(255,149,0),
+                                        cv::Scalar(170,0,255),
+                                        cv::Scalar(0,212,255),
+                                        cv::Scalar(0,255,106),
+                                        cv::Scalar(255,64,0),
+                                        cv::Scalar(185,185,237),
+                                        cv::Scalar(237,215,185),
+                                        cv::Scalar(237,185,220),
+                                        cv::Scalar(224,237,185),
+                                        cv::Scalar(35,35,145),
+                                        cv::Scalar(143,98,35),
+                                        cv::Scalar(143,35,107),
+                                        cv::Scalar(35,143,79)};
+    colors = tempColors;
 }
 /*
  * Adds a new object. At first available place, or if there are any available, replaces the worst one
@@ -105,6 +128,7 @@ void to::trackedObjectList::add(trackedObject* obj){
     if(no_of_tracked<maxNmbr){
         list[no_of_tracked] = obj;
         obj->ID = no_of_tracked;//Give the object an ID
+        obj->color = no_of_tracked%(colors.size()-1);//Get a color from the colors vector
         no_of_tracked++;
     }else{
         int index = getReplaceIndex();
@@ -116,6 +140,7 @@ void to::trackedObjectList::add(trackedObject* obj){
  */
 void to::trackedObjectList::replace(int index, trackedObject* obj){
     obj->ID = list[index]->ID;//Give the new object the ID of the object that it is replacing
+    obj->color = list[index]->color;//Give the new object the same color as the object that it is replacing
     delete list[index];     //Deallocate memory of object that is replaced
     list[index] = obj;      // Replace old pointer with new pointer
 }

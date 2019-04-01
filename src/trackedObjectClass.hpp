@@ -24,9 +24,8 @@
         float matchAttempts;
         float rating;
         float matchRate;
-        char r;
-        char g;
-        char b;
+        cv::Scalar color;//Can use char? or 24 bit or what
+
         //int active;
         //The class also needs some kind of certainty measure
     };
@@ -45,6 +44,7 @@ namespace to{
         std::vector<bool> activeIDs;
         int maxNmbr;
         int no_of_tracked;
+        std::vector<cv::Scalar> colors;// Colors used to draw anchors
     };
 
 }
