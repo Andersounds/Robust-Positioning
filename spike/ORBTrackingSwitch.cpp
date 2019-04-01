@@ -12,7 +12,7 @@
 /*
 Problem:
 -Ibland hittas kp utanför roi????? varför?
--måste ha ett reproducerbat sätt att relatera rekangeln till keypoint. Nu skapas rektangeln där alla kp får plats, men sen placeras den enl ngt annat
+-måste ha ett reproducerbat sätt att relatera rektangeln till keypoint. Nu skapas rektangeln där alla kp får plats, men sen placeras den enl ngt annat
 */
 int main(int argc, char** argv){
 //Settings
@@ -66,7 +66,7 @@ while(1){
 
     switch (state) {
         case 0:{//Get new regions to track
-            tracker.getFeatures(frame,keypoints);//Can this be moved out?
+            tracker.getFeatures(frame,keypoints);//Detect ORBs in whole scene
             rectangles = tracker.findClusters(frame,keypoints, noOfClusters, clusterSize, minDistance);//Get cluster
             tracker.getMask(rectangles[0],mask);
             roIKeypoints = roiTracker.getFeatures(frame,mask);  //Get new features only within cluster rectangle
@@ -79,7 +79,7 @@ while(1){
         break;
         }
         case 1:{//Locate tracked objects in new frame
-            tracker.getFeatures(frame,keypoints);//Can this be moved out?
+            tracker.getFeatures(frame,keypoints);//Detect ORBs in whole scene
             tracker.orbObject->compute(frame, keypoints, sceneDescriptors);//Calculate descriptors of all KP in scene
             int index = 0;
             while(index < objectList.no_of_tracked){//Try to match with all tracked objects until match found
@@ -106,7 +106,6 @@ while(1){
         break;
         }
         case 2:{//KLT track points from prev image in new image
-
             int success = tracker.trackOpticalFlow(prevFrame,frame,roIPoints,rectangles[0]); //Do KLT tracking
             if(!success){//If tracking was not successful
                 state = 1; //Go to state 1
@@ -118,15 +117,13 @@ while(1){
     cv::rectangle(mat4visual,rectangles[0],CV_RGB(255,0,0),2,cv::LINE_8,0);
     cv::imshow("VideoStream",mat4visual);
     frame.copyTo(prevFrame); //Shift new image to prev
-    if( cv::waitKey(1) == 27 ) {
-        std::cout << "Bryter"<< std::endl;
-        printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
-        std::cout<< "Number of frames processed: " << totlaps << std::endl;
-        objectList.clear();
-        return 1;
-    }
+    if( cv::waitKey(1) == 27 ) {break;}
 
 }
+
+std::cout << "Bryter"<< std::endl;
+printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+std::cout<< "Number of frames processed: " << totlaps << std::endl;
 objectList.clear();
 return 1;
 }
