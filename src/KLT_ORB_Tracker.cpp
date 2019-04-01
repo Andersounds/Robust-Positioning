@@ -90,7 +90,7 @@ std::vector<cv::Rect_<float>> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::
  * Takes the newest, previous frame, and a rect within which a vector of points to be tracked between are located.
  * Returns a new region of interest (in-place edited rect) of new estimated location of rect
  * If region moves out of bounds the return integer is zero, which can be used to trigger a new RoI search
- * TODO: lös det med points vs keypoints. konvertera antingen i denna funktionen eller utanför
+
 */
 int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std::vector<cv::Point2f>& corners, cv::Rect_<float>& rectangle){//Rest of arguments come from class attributes
 //This creates coordinate limits for the searching rectangle. If it goes out of bounds tracking is considered to be lost
@@ -109,31 +109,31 @@ int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std:
                             KLTsettings.termcrit,
                             KLTsettings.flags,//For special operation
                             0.001);
-
     //cv::Point2f roIShift(0,0);
     //cv::Point2f TEMProIShift(0,0);
     float normInteger = 0;
+    float pointsInRect = 0;
     float x=0;float y=0;float xT=0;float yT=0;//Cluster center of mass
-    //Detta kan göras med en static variable som förskjuts
+    //Detta kan göras med en static variable som förskjuts. Om det är samma points som kallas på varje gång
     for(int i=0; i<trackedCorners.size(); i++){
       xT += trackedCorners[i].x;
       x  += corners[i].x;
       yT += trackedCorners[i].y;
       y  += corners[i].y;
       normInteger += 1;
+      if(rectangle.contains(corners[i])){pointsInRect++;}//Count how many of the first points that were (are) in the initial rect
     }
     x/=normInteger;
     y/=normInteger;
     xT/=normInteger;
     yT/=normInteger;
-    float offsetX = rectangle.x - x;
+    pointsInRect/=normInteger;//Get percentage value
+    float offsetX = rectangle.x - x;//Get the offset from old rect to old points center of mass
     float offsetY = rectangle.y - y;
-    rectangle.x = xT + offsetX;
+    rectangle.x = xT + offsetX;     //Place the new rectangle with the calculated offset from NEW center of mass
     rectangle.y = yT + offsetY;
-    std::cout << "Rect position: "<< rectangle.x << ", " << rectangle.y << std::endl;
-
-    //std::cout << "Rectangle coordinate: " << rectangle.x << ", " << rectangle.y << std::endl;
-    if(rectangle.x <= xMax && rectangle.x>= xMin && rectangle.y <=yMax && rectangle.y >=yMin){
+    //Check if new rect is within bounds AND that at least 70% of old points were in old rect. Otherwise return 0
+    if(rectangle.x <= xMax && rectangle.x>= xMin && rectangle.y <=yMax && rectangle.y >=yMin && pointsInRect >= 0.7){
         corners = trackedCorners;//Shift new corners.
         return 1;
     }else{return 0;} //Out of bound
@@ -146,8 +146,6 @@ int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std:
 int KLT_ORB_Tracker::getQueryFeatures(cv::Mat frame, cv::Rect maskRect,std::vector<cv::KeyPoint>& keyPoints, cv::Mat& descriptors){
   cv::Mat mask = cv::Mat::zeros(frame.size(), frame.type());
   cv::Rect largerMaskRect(maskRect.x-(int)maskRect.width/2, maskRect.y-(int)maskRect.height/2, 2*maskRect.width, 2*maskRect.height);
-  //cv::Rect largerMaskRect(maskRect.x, maskRect.y,maskRect.width, maskRect.height);
-  //RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);
   cv::rectangle(mask,largerMaskRect,1,CV_FILLED,cv::LINE_8,0);
   orbObject->detectAndCompute(frame, mask, keyPoints, descriptors);
   return 1;

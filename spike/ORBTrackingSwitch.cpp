@@ -13,7 +13,6 @@
 Problem:
 -Ibland hittas kp utanför roi????? varför?
 -måste ha ett reproducerbat sätt att relatera rekangeln till keypoint. Nu skapas rektangeln där alla kp får plats, men sen placeras den enl ngt annat
--Trackopticalflow är inte riktigt placerad rätt. Rita upp tänkt flöde för main och rätta till
 */
 int main(int argc, char** argv){
 //Settings
@@ -46,7 +45,6 @@ int main(int argc, char** argv){
     //Matcher
     cv::Ptr<cv::BFMatcher> matcherObject = cv::BFMatcher::create(cv::NORM_HAMMING,true);
 
-
 while(1){
 // All runs start with a new image
     C ->getImage(freshFrame);
@@ -65,7 +63,6 @@ while(1){
     std::vector<cv::DMatch> good_matches;
     cv::Mat sceneDescriptors;
     cv::Mat objectDescriptors;
-    //std::cout << "State: " << state << std::endl;
 
     switch (state) {
         case 0:{//Get new regions to track

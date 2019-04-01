@@ -2,7 +2,7 @@
 
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/objectDetection/detection.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp -o bin/tryIt
 
-g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/OrbwithClasswithmatching.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp -o bin/tryIt
+g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/ORBTrackingSwitch.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp src/trackedObjectClass.cpp -o bin/tryIt
 
 
 
@@ -12,4 +12,4 @@ g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/OrbwithClasswithm
 #./bin/tryIt /Users/Fredrik/Datasets/picsForMatching/box.png /Users/Fredrik/Datasets/picsForMatching/box_in_scene.png
 
 #./bin/tryIt 3 /Users/Fredrik/Datasets/picsForMatching/objectDetection/images/
-#./bin/tryIt 3
+#./bin/tryIt 3 /Users/Fredrik/Datasets/Euroc/V102/cam0/data/cam0_%04d.png

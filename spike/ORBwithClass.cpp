@@ -13,7 +13,7 @@ int main(int argc, char** argv){
   Streamer* C;
   C = Streamer::make_streamer(3,"",0);
   cv::Mat frame,mat4visual;
-  int noOfClusters = 2;
+  int noOfClusters = 1;
   int clusterSize = 40;
   int minDistance = 100;
 

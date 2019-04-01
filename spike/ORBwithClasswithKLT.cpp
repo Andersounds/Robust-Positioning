@@ -85,8 +85,9 @@ returnPoints.push_back(p1);*/
     returnPoints.pop_back();
     cv::KeyPoint::convert(returnKeyPoints[0],p1);
     returnPoints.push_back(p1);
+    break;//
     }
-  //return 1;
+
   cv::KeyPoint::convert(returnPoints[0],TestKeyPoint);//Arg1: input. Arg2: output
 
   cv::drawKeypoints(mat4visual, TestKeyPoint, mat4visual,CV_RGB(200,0,255)); //Just keyPoints in rect

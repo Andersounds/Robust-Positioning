@@ -24,7 +24,7 @@ int hd::getGoodMatches(std::vector<cv::DMatch> matches,std::vector<cv::DMatch>& 
         }
     }
     goodmatches = good_matches;
-    std::cout << "Featurematching. Good matches: " << good_matches.size() << std::endl;
+    //std::cout << "Featurematching. Good matches: " << good_matches.size() << std::endl;
     if(good_matches.size()<2){return 0;} //If not at least a pair of matches is found
     else{return 1;}
 }
@@ -158,7 +158,7 @@ std::vector<float> hd::detect(std::vector<cv::DMatch> matches, std::vector<cv::K
     float d_angle_i, s_angle_i, theta_i, gamma_i;
     /*Create the variable-bin-width-histogram and fill it with values*/
     float scaleFactor = 1.4;
-    int number_of_buckets = 8;
+    int number_of_buckets = 4;
     int number_of_angle_buckets = 60;
     std::vector<float> scaleRanges = getScaledHistogramRanges(scaleFactor, number_of_buckets);
     std::vector<float> angleRanges = getAngleHistogramRanges(number_of_angle_buckets);
@@ -215,13 +215,13 @@ std::vector<float> hd::detect(std::vector<cv::DMatch> matches, std::vector<cv::K
 /*
     std::cout << "Most popular angle guess: " << angleRanges[thetaMaxIndex] <<std::endl;
     std::cout << "Most popular scale guess: " << scaleRanges[gammaMaxIndex] <<std::endl;*/
-    std::cout << "Percentage voted orientation: " << thetaPercentage << std::endl;
-    std::cout << "Percentage voted scale:       " << gammaPercentage << std::endl;
+    //std::cout << "Percentage voted orientation: " << thetaPercentage << std::endl;
+    //std::cout << "Percentage voted scale:       " << gammaPercentage << std::endl;
 
     scaleWinningPairs = scaleHistPairs[gammaMaxIndex];
     angleWinningPairs = angleHistPairs[thetaMaxIndex];
     std::vector<float> status(3,0);
-    if((thetaPercentage+gammaPercentage)>percentageLimit|| (thetaHistogram[thetaMaxIndex]+scaleHistogram[gammaMaxIndex])>20){
+    if((thetaPercentage+gammaPercentage)>percentageLimit|| (thetaHistogram[thetaMaxIndex]+scaleHistogram[gammaMaxIndex])>30){
         status[0] = 1.0;
         status[1] = scaleRanges[gammaMaxIndex];
         status[2] = angleRanges[thetaMaxIndex];
