@@ -65,6 +65,8 @@ while(1){
     std::vector<cv::DMatch> good_matches;
     cv::Mat sceneDescriptors;
     cv::Mat objectDescriptors;
+    //std::cout << "State: " << state << std::endl;
+
     switch (state) {
         case 0:{//Get new regions to track
             tracker.getFeatures(frame,keypoints);//Can this be moved out?
@@ -90,6 +92,7 @@ while(1){
                 std::vector<float> status;
                 // Do Hough detection
                 status = hd::detect(good_matches, objectList.list[index]->originalKeyPoints,keypoints, xWinningPairs, yWinningPairs);
+
                 if(status[0]){//Match!
                     std::cout << index << std::endl;
                     std::vector<cv::DMatch> winningMatches = hd::getBestMatches(good_matches,xWinningPairs,yWinningPairs);
@@ -102,10 +105,11 @@ while(1){
                 else{std::cout << "-";}//Not match
                 index++;
             }
-        if(state==1){state=0;}//If no match has been found, go to state 0 next
+        if(state==1){state=0;std::cout <<std::endl;}//If no match has been found, go to state 0 next
         break;
         }
         case 2:{//KLT track points from prev image in new image
+
             int success = tracker.trackOpticalFlow(prevFrame,frame,roIPoints,rectangles[0]); //Do KLT tracking
             if(!success){//If tracking was not successful
                 state = 1; //Go to state 1
