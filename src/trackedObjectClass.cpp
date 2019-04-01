@@ -23,6 +23,7 @@ trackedObject::trackedObject(std::vector<cv::KeyPoint> keyPoints,
     }
     matches = 0;
     matchAttempts = 0;
+
 }
 /*
  * Returns new cv::Point2f that can be used by the KLT tracker. Also inputoutput-returns a new Rect for the KLT
@@ -103,6 +104,7 @@ to::trackedObjectList::trackedObjectList(int size){
 void to::trackedObjectList::add(trackedObject* obj){
     if(no_of_tracked<maxNmbr){
         list[no_of_tracked] = obj;
+        obj->ID = no_of_tracked;//Give the object an ID
         no_of_tracked++;
     }else{
         int index = getReplaceIndex();
@@ -113,6 +115,7 @@ void to::trackedObjectList::add(trackedObject* obj){
  * Replaces an old index with a new one and deallocates the old memory
  */
 void to::trackedObjectList::replace(int index, trackedObject* obj){
+    obj->ID = list[index]->ID;//Give the new object the ID of the object that it is replacing
     delete list[index];     //Deallocate memory of object that is replaced
     list[index] = obj;      // Replace old pointer with new pointer
 }

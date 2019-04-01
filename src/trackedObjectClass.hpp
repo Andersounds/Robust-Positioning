@@ -24,6 +24,9 @@
         float matchAttempts;
         float rating;
         float matchRate;
+        char r;
+        char g;
+        char b;
         //int active;
         //The class also needs some kind of certainty measure
     };
