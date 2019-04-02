@@ -95,10 +95,16 @@ void trackedObject::improve3D(cv::Point3f position,
 /*
  *Constructor. reserves specified size for vectors
  */
-to::trackedObjectList::trackedObjectList(int maxAnchors,int paralellAnchors){
+to::trackedObjectList::trackedObjectList(int maxAnchors,int parallelAnchors){
     list.reserve(maxAnchors);
-    activeIDs.reserve(maxAnchors);
+    activeIDs.reserve(parallelAnchors);
+    activeStates.reserve(parallelAnchors);
+    for(int i=0;i<parallelAnchors;i++){ //Set initial values
+        activeIDs.push_back(-1);    //To indicate that no element is tracked
+        activeStates.push_back(0);  //Initial state for switch statement is 0
+    }
     maxNmbr = maxAnchors;
+    no_of_parallel = parallelAnchors;
     no_of_tracked = 0;
     std::vector<cv::Scalar> tempColors{cv::Scalar(0,0,255),
                                         cv::Scalar(0,255,255),
@@ -161,9 +167,16 @@ int to::trackedObjectList::getReplaceIndex(void){
     return worstRateIndex;
 }
 /*
+ * Checks is the given ID is one of the active IDs
+ */
+bool to::trackedObjectList::isActive(int anchorID){
+    return std::find(activeIDs.begin(),activeIDs.end(),anchorID) != activeIDs.end();
+}
+
+/*
  * Deallocates all objects
  */
-void to::trackedObjectList::clear(void){ //C
+void to::trackedObjectList::clear(void){
     for(int i = 0; i<no_of_tracked; i++){
         delete list[i];
     }

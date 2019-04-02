@@ -34,18 +34,22 @@ namespace to{
 
     class trackedObjectList{
     public:
-        trackedObjectList(int,int);
+        trackedObjectList(int,int);                 //Constructor that sets up tracking vectors and initial values
         void add(trackedObject*);
         void remove(int);
         void clear(void);
         int getReplaceIndex(void);
         void replace(int,trackedObject*);
-        std::vector<trackedObject*> list;   //List of not yet defined length containing pointers to all objects (on heap)
-        std::vector<bool> activeIDs;
+        bool isActive(int);
+        std::vector<trackedObject*> list;           //List of not yet defined length containing pointers to all objects (on heap)
+
         int maxNmbr;
         int no_of_tracked;
-        std::vector<cv::Scalar> colors;// Colors used to draw anchors
-        std::vector<int> active;// The anchor(s) that are currently in FoV
+        int no_of_parallel;
+        std::vector<cv::Scalar> colors;             // Colors used to draw anchors
+        std::vector<int> activeIDs;                 // The anchor(s) that are currently in FoV
+        std::vector<int> activeStates;              // The tracking state of each tracked active anchor
+        std::vector<cv::Rect_<float>> activeRects;  // The rect of each tracked active anchor
     };
 
 }
