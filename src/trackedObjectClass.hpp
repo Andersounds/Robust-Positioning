@@ -24,7 +24,7 @@
         float matchAttempts;
         float rating;
         float matchRate;
-        cv::Scalar color;//Can use char? or 24 bit or what
+        cv::Scalar color;
 
         //int active;
         //The class also needs some kind of certainty measure
@@ -34,17 +34,18 @@ namespace to{
 
     class trackedObjectList{
     public:
-        trackedObjectList(int);
+        trackedObjectList(int,int);
         void add(trackedObject*);
         void remove(int);
         void clear(void);
         int getReplaceIndex(void);
         void replace(int,trackedObject*);
-        std::vector<trackedObject*> list;   //List of not yet defined length containing pointers to all objects
+        std::vector<trackedObject*> list;   //List of not yet defined length containing pointers to all objects (on heap)
         std::vector<bool> activeIDs;
         int maxNmbr;
         int no_of_tracked;
         std::vector<cv::Scalar> colors;// Colors used to draw anchors
+        std::vector<int> active;// The anchor(s) that are currently in FoV
     };
 
 }

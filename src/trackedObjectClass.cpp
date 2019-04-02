@@ -95,10 +95,10 @@ void trackedObject::improve3D(cv::Point3f position,
 /*
  *Constructor. reserves specified size for vectors
  */
-to::trackedObjectList::trackedObjectList(int size){
-    list.reserve(size);
-    activeIDs.reserve(size);
-    maxNmbr = size;
+to::trackedObjectList::trackedObjectList(int maxAnchors,int paralellAnchors){
+    list.reserve(maxAnchors);
+    activeIDs.reserve(maxAnchors);
+    maxNmbr = maxAnchors;
     no_of_tracked = 0;
     std::vector<cv::Scalar> tempColors{cv::Scalar(0,0,255),
                                         cv::Scalar(0,255,255),
