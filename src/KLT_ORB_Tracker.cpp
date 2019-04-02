@@ -62,17 +62,19 @@ int KLT_ORB_Tracker::calcORBDescriptors(cv::Mat RoI, std::vector<cv::KeyPoint>& 
  * -Find keypoints again in the located rects. This will give a more even distribution of keypoints between the found areas
  *  -Not guaranteed to be very expensive since ORB is fast as it is
 */
-std::vector<cv::Rect_<float>> KLT_ORB_Tracker::findClusters(cv::Mat frame, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance){
+std::vector<cv::Rect_<float>> KLT_ORB_Tracker::findClusters(cv::Mat frame, cv::Mat& invMask, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance){
     /*Init the return variable*/
     std::vector<cv::Rect_<float>> rects;
     /*Create mat where keypoint coordinates are set to non-zero*/
     cv::Mat keypointMat = cv::Mat::zeros(frame.size(), CV_8UC1);
+    cv::Mat maskedKeypointMat = cv::Mat::zeros(frame.size(), CV_8UC1);
     for(cv::KeyPoint kp:keypoints) {
       keypointMat.at<uchar>(kp.pt) = 1;//Maybe use other value 1 is enough? maybe use keypoint response here?
     }
+    maskedKeypointMat = keypointMat & invMask; //Per element sets all 0-pixels of invmask to 0
     cv::Mat kernel = cv::Mat::ones(kernelSize,kernelSize,CV_8UC1);
     cv::Mat filteredMat;
-    cv::filter2D(keypointMat, filteredMat, -1 , kernel, cv::Point( 0, 0 ), 0, cv::BORDER_CONSTANT);//Calc. convolution (actuallly correlation) i.e. find point of maximum mean over kernel
+    cv::filter2D(maskedKeypointMat, filteredMat, -1 , kernel, cv::Point( 0, 0 ), 0, cv::BORDER_CONSTANT);//Calc. convolution (actuallly correlation) i.e. find point of maximum mean over kernel
     //filter2D: 26.69 fps, sepFilter2D: 24.86fps. If I have sepfilter the cluster dues not have to be quadratic
     double min, max;
     cv::Point min_loc, max_loc;

@@ -42,7 +42,8 @@ class KLT_ORB_Tracker{
     int init(void);
     int getFeatures(cv::Mat, std::vector<cv::KeyPoint>&);// ORB
     std::vector<cv::KeyPoint> getFeatures(cv::Mat, cv::Mat);
-    std::vector<cv::Rect_<float>> findClusters(cv::Mat, std::vector<cv::KeyPoint>, int, int, int);
+    //std::vector<cv::Rect_<float>> findClusters(cv::Mat, std::vector<cv::KeyPoint>, int, int, int);//Without mask
+    std::vector<cv::Rect_<float>> findClusters(cv::Mat, cv::Mat&, std::vector<cv::KeyPoint>, int, int, int);//With mask
     int calcORBDescriptors(cv::Mat, std::vector<cv::KeyPoint>&, cv::Mat&);
     int calcCenterPoint(std::vector<cv::KeyPoint>&, cv::KeyPoint&);
 
