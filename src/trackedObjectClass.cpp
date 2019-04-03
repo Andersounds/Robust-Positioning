@@ -129,20 +129,27 @@ to::trackedObjectList::trackedObjectList(int maxAnchors,int parallelAnchors){
 }
 /*
  * Adds a new object. At first available place, or if there are any available, replaces the worst one
+ * Returns the index at which the object is placed
  */
-void to::trackedObjectList::add(trackedObject* obj){
+int to::trackedObjectList::add(trackedObject* obj){
     if(no_of_tracked<maxNmbr){
         list[no_of_tracked] = obj;
         obj->ID = no_of_tracked;//Give the object an ID
         obj->color = no_of_tracked%(colors.size()-1);//Get a color from the colors vector
         no_of_tracked++;
+
+
     }else{
         int index = getReplaceIndex();
         replace(index, obj);
+        obj->ID = index;//Give the object an ID, which is the index in the trackedObjects list
+        obj->color = index%(colors.size()-1);//Get a color from the colors vector
     }
+    return obj->ID;//The index at which the object pointer is placed
 }
 /*
  * Replaces an old index with a new one and deallocates the old memory
+ * Returns the index at which the object is placed
  */
 void to::trackedObjectList::replace(int index, trackedObject* obj){
     obj->ID = list[index]->ID;//Give the new object the ID of the object that it is replacing
@@ -172,7 +179,42 @@ int to::trackedObjectList::getReplaceIndex(void){
 bool to::trackedObjectList::isActive(int anchorID){
     return std::find(activeIDs.begin(),activeIDs.end(),anchorID) != activeIDs.end();
 }
-
+/*
+ * Gets the number of active elements with state zero
+ * Future: set state with a method setState instead. Then this can keep track of number of 0 states internally and this method just return an integer
+ */
+ std::vector<int> to::trackedObjectList::getZeroStateIndexes(void){
+     std::vector<int> indexes;
+     std::vector<int>::iterator begin = activeStates.begin(); //Initial value of iterator
+     std::vector<int>::iterator it;
+     int index = 0;
+     while(true){
+         it = find(begin,activeStates.end(),0);
+         if(it==activeStates.end()){break;}//If end of vector is reached then break
+         else{
+             indexes.push_back(index);
+             index++;
+             begin = it+1;//Next lap start from next elemet
+         }
+     }
+     return indexes;
+ }
+/*
+ * Setstate method
+ */
+void to::trackedObjectList::setState(int currentAnchor, int state){
+     int currentState = activeStates[currentAnchor];
+     //if(currentState == 0){
+    //     Use this statement to keep track of zeroStateUndexes for future
+     //}
+     activeStates[currentAnchor] = state;
+ }
+ /*
+  * Getstate method
+  */
+int to::trackedObjectList::getState(int currentAnchor){
+      return activeStates[currentAnchor];
+}
 /*
  * Deallocates all objects
  */

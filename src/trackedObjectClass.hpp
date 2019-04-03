@@ -35,12 +35,15 @@ namespace to{
     class trackedObjectList{
     public:
         trackedObjectList(int,int);                 //Constructor that sets up tracking vectors and initial values
-        void add(trackedObject*);
+        int add(trackedObject*);
         void remove(int);
         void clear(void);
         int getReplaceIndex(void);
         void replace(int,trackedObject*);
         bool isActive(int);
+        void setState(int,int);
+        int getState(int);
+        std::vector<int> getZeroStateIndexes(void);
         std::vector<trackedObject*> list;           //List of not yet defined length containing pointers to all objects (on heap)
 
         int maxNmbr;
