@@ -5,7 +5,7 @@
 
     class trackedObject{
     public:
-        trackedObject(std::vector<cv::KeyPoint>, cv::Mat, cv::Rect_<float>);
+        trackedObject(std::vector<cv::KeyPoint>, cv::Mat, cv::Rect_<float>,int);
         std::vector<cv::Point2f> getTrackablePoints(float,
                                                     float,
                                                     std::vector<cv::DMatch>,
@@ -25,7 +25,8 @@
         float rating;
         float matchRate;
         cv::Scalar color;
-
+        cv::Rect_<float> trackedRect;           //The constantly changing rect
+        std::vector<cv::Point2f> trackedPoints; //The tracked points
         //int active;
         //The class also needs some kind of certainty measure
     };

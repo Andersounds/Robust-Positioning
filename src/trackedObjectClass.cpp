@@ -10,7 +10,8 @@
  */
 trackedObject::trackedObject(std::vector<cv::KeyPoint> keyPoints,
                                 cv::Mat descriptors,
-                                cv::Rect_<float> rectangle){
+                                cv::Rect_<float> rectangle,
+                                int maxPoints){
     // Save all the defining data in the object itself
     originalKeyPoints = keyPoints;
     originalDescriptors = descriptors;
@@ -24,7 +25,9 @@ trackedObject::trackedObject(std::vector<cv::KeyPoint> keyPoints,
     matches = 0;
     matchAttempts = 0;
     color = cv::Scalar(0,0,255); //Default red
-
+    //Prepare the constantly updated rect and points
+    trackedRect = rectangle;
+    trackedPoints.reserve(maxPoints);
 }
 /*
  * Returns new cv::Point2f that can be used by the KLT tracker.
