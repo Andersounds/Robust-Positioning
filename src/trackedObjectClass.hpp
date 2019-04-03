@@ -45,6 +45,9 @@ namespace to{
         void setState(int,int);
         int getState(int);
         std::vector<int> getZeroStateIndexes(void);
+
+        void assignAnchor(int,int);// Assigns the anchor with the second argument as ID to the active anchor with index of the first argument
+        void updateAnchor(int,cv::Rect_<float>,std::vector<cv::Point2f>);//1. current active anchor index, new value of tracked rect, new vector of points
         std::vector<trackedObject*> list;           //List of not yet defined length containing pointers to all objects (on heap)
 
         int maxNmbr;
@@ -53,7 +56,6 @@ namespace to{
         std::vector<cv::Scalar> colors;             // Colors used to draw anchors
         std::vector<int> activeIDs;                 // The anchor(s) that are currently in FoV
         std::vector<int> activeStates;              // The tracking state of each tracked active anchor
-        std::vector<cv::Rect_<float>> activeRects;  // The rect of each tracked active anchor
     };
 
 }

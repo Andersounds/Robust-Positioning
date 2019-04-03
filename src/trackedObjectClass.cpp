@@ -177,6 +177,24 @@ int to::trackedObjectList::getReplaceIndex(void){
     return worstRateIndex;
 }
 /*
+ *
+ */
+void to::trackedObjectList::assignAnchor(int activeIndex,int anchorID){
+    activeIDs[activeIndex] = anchorID;
+}
+/*
+ *
+ */
+void to::trackedObjectList::updateAnchor(int activeIndex,
+                                        cv::Rect_<float> newRect,
+                                        std::vector<cv::Point2f> newPoints){
+    list[activeIDs[activeIndex]]->trackedRect = newRect;
+    //activeIDs[activeIndex]->trackedPoints.clear();//Necessary?
+    list[activeIDs[activeIndex]]->trackedPoints = newPoints;//Is this correct? if size changes?
+
+}
+
+/*
  * Checks is the given ID is one of the active IDs
  */
 bool to::trackedObjectList::isActive(int anchorID){
