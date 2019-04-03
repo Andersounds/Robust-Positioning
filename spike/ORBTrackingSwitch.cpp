@@ -81,7 +81,7 @@ while(1){
                         cv::KeyPoint::convert(roIKeypoints, roIPoints);     //Convert to Points to be used by KLT-tracker
                         if(roIKeypoints.size()>1&&keypoints.size()>1){      //Must be at least one pair
                             roiTracker.orbObject->compute(frame, roIKeypoints, objectDescriptors);//Calculate the keypoint descriptors from the current frame
-                            int objectID = objectList.add(new trackedObject(roIKeypoints, objectDescriptors,rectangles[index]));//Add new region to list of tracked objects
+                            int objectID = objectList.add(new trackedObject(roIKeypoints, objectDescriptors,rectangles[index], roiFeatures));//Add new region to list of tracked objects
                             //objectList.assign(currentAnchor,objectID)
                             objectList.setState(zeroIndexes[index],2);//Do KLT tracking next
                         }
