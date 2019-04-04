@@ -42,8 +42,9 @@ class KLT_ORB_Tracker{
     int init(void);
     int getFeatures(cv::Mat, std::vector<cv::KeyPoint>&);// ORB
     std::vector<cv::KeyPoint> getFeatures(cv::Mat, cv::Mat);
+    std::vector<cv::KeyPoint> getFeatures(cv::Mat, cv::Rect_<float>);
     //std::vector<cv::Rect_<float>> findClusters(cv::Mat, std::vector<cv::KeyPoint>, int, int, int);//Without mask
-    std::vector<cv::Rect_<float>> findClusters(cv::Mat, cv::Mat&, std::vector<cv::KeyPoint>, int, int, int);//With mask
+    std::vector<cv::Rect_<float>> findClusters(cv::Mat, cv::Mat, std::vector<cv::KeyPoint>, int, int, int);//With mask
     int calcORBDescriptors(cv::Mat, std::vector<cv::KeyPoint>&, cv::Mat&);
     int calcCenterPoint(std::vector<cv::KeyPoint>&, cv::KeyPoint&);
 
@@ -56,6 +57,7 @@ class KLT_ORB_Tracker{
 
     int drawTheMatches(cv::Mat&, std::vector<cv::KeyPoint>&, cv::Mat&, std::vector<cv::KeyPoint>&, std::vector<cv::DMatch>&, cv::Mat&);
     int getMask(cv::Rect, cv::Mat);
+    void blackOutMask(cv::Mat&,cv::Rect_<float>,float minDistance);
     int repeat(void);
 
     int setNfeatures(int);

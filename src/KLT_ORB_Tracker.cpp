@@ -41,6 +41,18 @@ std::vector<cv::KeyPoint> KLT_ORB_Tracker::getFeatures(cv::Mat frame, cv::Mat ma
     orbObject->detect(frame,newKeypoints,mask);
     return newKeypoints;
 }
+std::vector<cv::KeyPoint> KLT_ORB_Tracker::getFeatures(cv::Mat frame, cv::Rect_<float> mask){//Alternativt: ge hela bilden och en rect som specificerar RoI
+    std::vector<cv::KeyPoint> newKeypoints;
+    orbObject->detect(cv::Mat(frame,mask),newKeypoints);
+    std::vector<cv::KeyPoint>::iterator it=newKeypoints.begin();
+    //Offset all KP to the coordinate system of the original frame
+    while(it!=newKeypoints.end()){
+        it->pt.x+=mask.x;
+        it->pt.y+=mask.y;
+        it++;
+    }
+    return newKeypoints;
+}
 
 
 /*
@@ -56,34 +68,40 @@ int KLT_ORB_Tracker::calcORBDescriptors(cv::Mat RoI, std::vector<cv::KeyPoint>& 
 /*
  * findClusters
  * Takes a set of keypoints and corrseponding image together with some additional parameters
- * Returns separated sets of keypoints and corresponding rects within which they are contained. The rects
- *  correspond to the most keypoint-dense areas of the original frames
+ * Returns the specified number of rects that correspond to the most keypoint-dense areas of the original frames
  * IMPROVEMENT IDEAS:
- * -Find keypoints again in the located rects. This will give a more even distribution of keypoints between the found areas
- *  -Not guaranteed to be very expensive since ORB is fast as it is
+ * - Return up-to the amout of specified rects. Handle the situations when not enough clusters are found
 */
-std::vector<cv::Rect_<float>> KLT_ORB_Tracker::findClusters(cv::Mat frame, cv::Mat& invMask, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance){
+std::vector<cv::Rect_<float>> KLT_ORB_Tracker::findClusters(cv::Mat frame, cv::Mat invMask, std::vector<cv::KeyPoint> keypoints, int noOfClusters, int kernelSize, int minDistance){
+    //cv::imshow("VideoStream",invMask);
+    //std::cout << "Invmask upon entry" << std::endl;
+    //cv::waitKey(0);
     /*Init the return variable*/
     std::vector<cv::Rect_<float>> rects;
-    /*Create mat where keypoint coordinates are set to non-zero*/
-    cv::Mat keypointMat = cv::Mat::zeros(frame.size(), CV_8UC1);
-    cv::Mat maskedKeypointMat = cv::Mat::zeros(frame.size(), CV_8UC1);
-    for(cv::KeyPoint kp:keypoints) {
-      keypointMat.at<uchar>(kp.pt) = 1;//Maybe use other value 1 is enough? maybe use keypoint response here?
+    cv::Mat keypointMat = cv::Mat::zeros(frame.size(), CV_16UC1);    //Create mat where keypoint coordinates are set to non-zero
+    cv::Mat borderMask = cv::Mat::zeros(frame.size(),CV_8UC1);      //Create a mask that is used to remove the borders so that all rects are completely contained within the original frame
+    float border = ceil((float)kernelSize/2.0);
+    cv::rectangle(borderMask, cv::Point(border,border),cv::Point(frame.cols-border,frame.rows-border),cv::Scalar(255),CV_FILLED,cv::LINE_8,0);
+    for(cv::KeyPoint kp:keypoints){//Set KP coordinates to nonzero value
+      keypointMat.at<ushort>(kp.pt) = 1;//Maybe use other value 1 is enough? maybe use keypoint response here?
     }
-    maskedKeypointMat = keypointMat & invMask; //Per element sets all 0-pixels of invmask to 0
-    cv::Mat kernel = cv::Mat::ones(kernelSize,kernelSize,CV_8UC1);
+    cv::Mat kernel = cv::Mat::ones(kernelSize,kernelSize,CV_16UC1);//Kernel for filtering
     cv::Mat filteredMat;
-    cv::filter2D(maskedKeypointMat, filteredMat, -1 , kernel, cv::Point( 0, 0 ), 0, cv::BORDER_CONSTANT);//Calc. convolution (actuallly correlation) i.e. find point of maximum mean over kernel
+    //Calc. convolution (actuallly correlation) i.e. find point of maximum mean over kernel
+    cv::filter2D(keypointMat, filteredMat, -1 , kernel, cv::Point( -1, -1 ), 0, cv::BORDER_CONSTANT);// anchor is kernel center
     //filter2D: 26.69 fps, sepFilter2D: 24.86fps. If I have sepfilter the cluster dues not have to be quadratic
-    double min, max;
-    cv::Point min_loc, max_loc;
+
     for(int i=0;i<noOfClusters;i++){
-        cv::minMaxLoc(filteredMat, &min, &max, &min_loc, &max_loc);
-        cv::Rect_<float> RoI(max_loc.x,max_loc.y,kernelSize,kernelSize);
+        double min, max;
+        cv::Point min_loc, max_loc;
+        cv::Mat completeMask = borderMask & invMask;
+        cv::minMaxLoc(filteredMat, &min, &max, &min_loc, &max_loc,completeMask);
+        cv::Rect_<float> RoI(max_loc.x-border,max_loc.y-border,kernelSize,kernelSize);
         rects.push_back(RoI);
-        cv::Rect blackOut(max_loc.x-minDistance, max_loc.y-minDistance,(kernelSize+2*minDistance),(kernelSize+2*minDistance));
-        cv::rectangle(filteredMat,blackOut,0,CV_FILLED,cv::LINE_8,0);//Just set color 0?
+
+        blackOutMask(invMask,RoI,minDistance);
+        //cv::Rect_<float> blackOut(RoI.x-minDistance,RoI.y-minDistance,(kernelSize+2*minDistance),(kernelSize+2*minDistance));
+        //cv::rectangle(invMask, blackOut,0,CV_FILLED,cv::LINE_8,0);
     }
     return rects;
 }
@@ -260,7 +278,13 @@ int KLT_ORB_Tracker::getMask(cv::Rect RoI, cv::Mat mask){
     cv::rectangle(mask,RoI,255,CV_FILLED);
     return 1;
 }
-
+/*
+ * In-place edits the given mask and sets a rectangle region to zero
+ */
+void KLT_ORB_Tracker::blackOutMask(cv::Mat& mask8Bit,cv::Rect_<float> rect,float minDistance){
+    cv::Rect_<float> blackOut(rect.x-minDistance,rect.y-minDistance,(rect.width+2*minDistance),(rect.height+2*minDistance));
+    cv::rectangle(mask8Bit, blackOut,0,CV_FILLED,cv::LINE_8,0);
+}
  /*
   * Settings
   */
