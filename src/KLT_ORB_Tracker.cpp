@@ -118,7 +118,9 @@ int KLT_ORB_Tracker::trackOpticalFlow(cv::Mat prevFrame, cv::Mat nextFrame, std:
     static int yMax = nextFrame.rows - rectangle.height/2;
     static int xMin = -rectangle.width/2;
     static int yMin = -rectangle.height/2;
-    std::vector<cv::Point2f> trackedCorners(corners.size());// New estimation of corner locations
+    int noOfCorners = corners.size();
+    if(noOfCorners<1){return 0;}//If no corners to track then return 0
+    std::vector<cv::Point2f> trackedCorners(noOfCorners);// New estimation of corner locations
     std::vector<uchar> status;
     std::vector<float> errors;
     cv::calcOpticalFlowPyrLK(prevFrame,nextFrame,corners,trackedCorners,
