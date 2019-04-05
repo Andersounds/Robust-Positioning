@@ -17,7 +17,7 @@ struct ORBsettingsStruct{
   float scalefactor = 1.2;//1.2;
   int nlevels = 8;
   int nThreshold = 31;
-  int firstLevel = 2;//2;//0;
+  int firstLevel = 0;//2;//0;//When set this to 2 I sometimes encounter an assertion error crash in ORB detect
   int WTA_K = 2;
   int scoreType = cv::ORB::HARRIS_SCORE;
   int patchSize = 31;
