@@ -1,4 +1,4 @@
-#include <iostream>
+ #include <iostream>
 #include <opencv2/opencv.hpp>
 
 #include "trackedObjectClass.hpp"
@@ -11,7 +11,8 @@
 trackedObject::trackedObject(std::vector<cv::KeyPoint> keyPoints,
                                 cv::Mat descriptors,
                                 cv::Rect_<float> rectangle,
-                                int maxPoints){
+                                int maxPoints,
+                                cv::Mat roiFrame){
     // Save all the defining data in the object itself
     originalKeyPoints = keyPoints;
     originalDescriptors = descriptors;
@@ -28,6 +29,7 @@ trackedObject::trackedObject(std::vector<cv::KeyPoint> keyPoints,
     //Prepare the constantly updated rect and points
     trackedRect = rectangle;
     trackedPoints.reserve(maxPoints);
+    roiFrame.copyTo(originalFrame);
 }
 /*
  * Returns new cv::Point2f that can be used by the KLT tracker.
@@ -103,8 +105,9 @@ to::trackedObjectList::trackedObjectList(int maxAnchors,int parallelAnchors){
     activeIDs.reserve(parallelAnchors);
     activeStates.reserve(parallelAnchors);
     for(int i=0;i<parallelAnchors;i++){ //Set initial values
-        activeIDs.push_back(-1);    //To indicate that no element is tracked
+        activeIDs.push_back(1);    //Start in state 1. If no anchor is tracked yet it will move on to state 0
         activeStates.push_back(0);  //Initial state for switch statement is 0
+        activeDelays.push_back(0);
     }
     maxNmbr = maxAnchors;
     no_of_parallel = parallelAnchors;
@@ -131,22 +134,33 @@ to::trackedObjectList::trackedObjectList(int maxAnchors,int parallelAnchors){
     colors = tempColors;
 }
 /*
+ * Draws the tracked rect and points
+ */
+void to::trackedObjectList::drawAnchor(cv::Mat& frame,int activeAnchor){
+    if(activeStates[activeAnchor]==2){
+        //tracker.drawPoints(mat4visual,objectList.list[objectList.activeIDs[0]]->trackedPoints,mat4visual,CV_RGB(255,0,0));
+        cv::rectangle(frame,list[activeIDs[activeAnchor]]->trackedRect,list[activeIDs[activeAnchor]]->color,2,cv::LINE_8,0);
+    }
+}
+/*
  * Adds a new object. At first available place, or if there are any available, replaces the worst one
  * Returns the index at which the object is placed
  */
 int to::trackedObjectList::add(trackedObject* obj){
     if(no_of_tracked<maxNmbr){
         list[no_of_tracked] = obj;
-        obj->ID = no_of_tracked;//Give the object an ID
-        obj->color = no_of_tracked%(colors.size()-1);//Get a color from the colors vector
+        obj->ID = no_of_tracked;//Give the object an ID (which is its index in the list)
+        obj->color = colors[no_of_tracked%(colors.size()-1)];//Get a color from the colors vector
         no_of_tracked++;
-
-
     }else{
         int index = getReplaceIndex();
+        if(index==-1){//If there is no available place for the objects
+            delete obj;//Deallocate the object
+            return index;//Return invalid index
+        }
         replace(index, obj);
         obj->ID = index;//Give the object an ID, which is the index in the trackedObjects list
-        obj->color = index%(colors.size()-1);//Get a color from the colors vector
+        obj->color = colors[index%(colors.size()-1)];//Get a color from the colors vector
     }
     return obj->ID;//The index at which the object pointer is placed
 }
@@ -167,8 +181,9 @@ void to::trackedObjectList::replace(int index, trackedObject* obj){
 int to::trackedObjectList::getReplaceIndex(void){
     float worstRate = 1;
     float rate = 1;
-    int worstRateIndex = 0;
+    int worstRateIndex = -1;// start with invalid index. if this i returned then there is no available place
     for(int index = 0;index<maxNmbr;index++){
+        if(isActive(index)){continue;}//Dont assign to a anchor that is already active
         rate = list[index]->matchRate;
         if(rate<worstRate){
             worstRate = rate;
@@ -189,7 +204,7 @@ void to::trackedObjectList::updateAnchor(int activeIndex,
                                         cv::Rect_<float> newRect,
                                         std::vector<cv::Point2f> newPoints){
     list[activeIDs[activeIndex]]->trackedRect = newRect;
-    //activeIDs[activeIndex]->trackedPoints.clear();//Necessary?
+    list[activeIDs[activeIndex]]->trackedPoints.clear();//Necessary?
     list[activeIDs[activeIndex]]->trackedPoints = newPoints;//Is this correct? if size changes?
 
 }
@@ -206,17 +221,12 @@ bool to::trackedObjectList::isActive(int anchorID){
  */
  std::vector<int> to::trackedObjectList::getZeroStateIndexes(void){
      std::vector<int> indexes;
-     std::vector<int>::iterator begin = activeStates.begin(); //Initial value of iterator
-     std::vector<int>::iterator it;
      int index = 0;
-     while(true){
-         it = find(begin,activeStates.end(),0);
-         if(it==activeStates.end()){break;}//If end of vector is reached then break
-         else{
+     for(int state:activeStates){
+         if(state==0||state==-1){
              indexes.push_back(index);
-             index++;
-             begin = it+1;//Next lap start from next elemet
          }
+         index++;
      }
      return indexes;
  }
@@ -224,7 +234,7 @@ bool to::trackedObjectList::isActive(int anchorID){
  * Setstate method
  */
 void to::trackedObjectList::setState(int currentAnchor, int state){
-     int currentState = activeStates[currentAnchor];
+     //int currentState = activeStates[currentAnchor];
      //if(currentState == 0){
     //     Use this statement to keep track of zeroStateUndexes for future
      //}
@@ -233,9 +243,29 @@ void to::trackedObjectList::setState(int currentAnchor, int state){
  /*
   * Getstate method
   */
-int to::trackedObjectList::getState(int currentAnchor){
+int to::trackedObjectList::getState(int currentAnchor){ //Maybe zero delay here??
       return activeStates[currentAnchor];
 }
+/*
+ *Set the specified anchor to state delay state (-1) with specified delay
+ */
+ void to::trackedObjectList::setDelay(int anchorID,int delay){
+     setState(anchorID,-1);//Set to state 0
+     activeDelays[anchorID] = delay;//Make abs here
+ }
+ /*
+  * Decrements the delay of the specified anchor
+  */
+ void to::trackedObjectList::decrementDelay(int anchorID){
+     activeDelays[anchorID]--;
+ }
+ /*
+  * Gets the delay of the specified anchor (in the list of active anchors)
+  */
+ int to::trackedObjectList::getDelay(int anchorID){
+     return activeDelays[anchorID];
+ }
+
 /*
  * Deallocates all objects
  */

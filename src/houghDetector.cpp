@@ -8,6 +8,11 @@
 using std::cout;
 using std::endl;
 
+/*
+ * Problem:
+    -getBestMatches måste göras om och funktionaliteten måste testas
+ */
+
 int hd::getGoodMatches(std::vector<cv::DMatch> matches,std::vector<cv::DMatch>& goodmatches){
     float dist_max = 0;
     float dist_min = 300;
@@ -46,7 +51,9 @@ int hd::getAngleBucketIndex(std::vector<float> ranges, float first_element, floa
   else if(value >= ranges[tryBucket]){return getAngleBucketIndex(ranges, tryBucket, last_element,  value);}
   else {return -1;}
 }
-/*Extract the best matches from all matches, using a vector of Points that represent pairs*/
+/*Extract the best matches from all matches, using a vector of Points that represent pairs
+ *
+ */
 std::vector<cv::DMatch> hd::getBestMatches(std::vector<cv::DMatch>matches, std::vector<cv::Point> xWinningPairs, std::vector<cv::Point> yWinningPairs){
     std::vector<cv::DMatch> xBest_matches, yBest_matches, best_matches;
     std::vector<int> x_best_indexes, y_best_indexes, best_indexes;
@@ -217,7 +224,7 @@ std::vector<float> hd::detect(std::vector<cv::DMatch> matches, std::vector<cv::K
     std::cout << "Most popular scale guess: " << scaleRanges[gammaMaxIndex] <<std::endl;*/
     //std::cout << "Percentage voted orientation: " << thetaPercentage << std::endl;
     //std::cout << "Percentage voted scale:       " << gammaPercentage << std::endl;
-
+//std::cout << "Antal hough matches: " << scaleHistogram[gammaMaxIndex]<< ", "<< thetaHistogram[thetaMaxIndex] << std::endl;
     scaleWinningPairs = scaleHistPairs[gammaMaxIndex];
     angleWinningPairs = angleHistPairs[thetaMaxIndex];
     std::vector<float> status(3,0);

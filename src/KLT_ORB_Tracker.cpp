@@ -15,7 +15,7 @@ int KLT_ORB_Tracker::init(void){
                     ORBsettings.nfeatures,
                     ORBsettings.scalefactor,
                     ORBsettings.nlevels,
-                    ORBsettings.nThreshold,
+                    ORBsettings.edgeThreshold,
                     ORBsettings.firstLevel,
                     ORBsettings.WTA_K,
                     ORBsettings.scoreType,
