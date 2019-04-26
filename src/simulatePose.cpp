@@ -10,18 +10,20 @@ class simulatePose{
 public:
     cv::Mat baseScene;
     cv::Mat_<float> K;//Normalized K mat for image.
-
+    simulatePose(cv::Mat_<float> K_){
+        K=K_;
+    }
     void setBaseScene(int blockSize,int rowsOfBoxes,int colsOfBoxes){
         baseScene = getImage(blockSize,rowsOfBoxes,colsOfBoxes);
         float cx = ((float) baseScene.cols) /2;
         float cy = ((float) baseScene.rows) /2;
-        K = getKMat(cx,cy);
+        //K = getKMat(cx,cy);
     }
     void setBaseScene(cv::Mat baseScene_){
         baseScene = baseScene_;
         float cx = ((float) baseScene.cols) /2;
         float cy = ((float) baseScene.rows) /2;
-        K = getKMat(cx,cy);
+        //K = getKMat(cx,cy);
     }
     /*Returns the parped baseScene. coordinates are to be given ass [roll,pitch,yaw], [x,y,z]
      *  In scene frame right? same as image coordinates or what? specify.
@@ -42,28 +44,39 @@ public:
         cv::Mat R_x = getXRot(roll);
         cv::Mat R_y = getYRot(pitch);
         cv::Mat R_z = getZRot(yaw);
-        cv::Mat T = getTransMat(x,y,z);
-        cv::Mat T_pitch = getTransMat(z*std::tan(pitch),0,z/std::cos(pitch));
+        cv::Mat R_2 = R_x*R_y*R_z;
+        cv::Mat R_1 = getYRot(3.1415);//Set this as constant for default view
+        cv::Mat_<float> t1 = cv::Mat_<float>::zeros(3,1);
+        t1(2,0) = 1;//1 meter i z-riktning ursprungligen
+        cv::Mat_<float> t2 = cv::Mat_<float>::zeros(3,1);
+        t2(0,0) = x;//
+        t2(1,0) = y;//
+        t2(2,0) = 1;//z;//
+        //Below is b and A with definition P=KR[I,-t]
+        cv::Mat_<float> b = t1- R_1.t()*R_2*t2;
+        cv::Mat_<float> A = R_1.t()*R_2;
+        //Below is b and A with definition P=K[R,t]
+        //cv::Mat_<float> b = R_1.t()*(t2-t1);
+        //cv::Mat_<float> A = R_1.t()*R_2;
 
-        cv::Mat T_tot = T;//+T_pitch;
-///std::cout << "T: " << T_pitch << std::endl;
-        cv::Mat_<float> H = K*R_x*R_y*R_z*T_tot*K.inv();//First method of H
-//////TEST HOMOGRAPHY AS DEFINED 3.8 in phd Thesis
-        /*cv::Mat_<float> b = cv::Mat_<float>::zeros(3,1);
-        b(0,0) = x;
-        b(1,0) = y;
-        b(2,0) = 1;
-        //Plane normal
-        cv::Mat_<float> v_t = cv::Mat_<float>::zeros(1,3);
-        v_t(0,2) = 1;
-        //Calculate homography
-        cv::Mat_<float> H = (R_x*R_y*R_z-b*v_t);//First method of H*/
-        //std::cout << H << std::endl;
-//////
+
+        float d = 1;//Distance.. correct?? or do cos... ?
+        cv::Mat_<float> v = cv::Mat_<float>::zeros(3,1);
+        v(2,0) = -1;//Testa. eller andra hållet?
+
+
+
+    std::cout << "K2: " << K << std::endl;
+        cv::Mat_<float> H = K*(A - b*v.t()/d) * K.inv();
+        //cv::Mat_<float> H = (A - b*v.t()/d) * K.inv();
+        //cv::Mat_<float> H = (A - b*v.t()/d) ;
         //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::WARP_INVERSE_MAP,cv::BORDER_CONSTANT,0);
         cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
         return out;
     }
+    /*Returns a linspace sequence starting from start with length no of steps of size step
+     *
+     */
     std::vector<float> getPath(float start,float step,float length){
         std::vector<float> path;
         for(float i=0;i<length;i++){

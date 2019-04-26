@@ -1,7 +1,8 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-#include "../src/simulatePose.cpp"
+//#include "../src/simulatePose.cpp"
+#include "simulatePose_v2.cpp"
 #include "../src/KLTFlowField.cpp"
 #include "../src/homographyVO.hpp"
 /*
@@ -27,18 +28,33 @@ void drawArrows(cv::Mat img,cv::Mat& outputImg,std::vector<cv::Point2f> features
 
 
 int main(void){
+// Define sim chessboard parameters
+int boxWidth = 11;
+int rowsOfBoxes = 30;
+int colsOfBoxes = 60;
+// Define K, T
+    cv::Mat_<float> K = cv::Mat_<float>::zeros(3,3);
+    float fx = (float) boxWidth*colsOfBoxes;//260;//1;
+    float fy = fx;//260;//1;
+    std::cout << "NORM K"<< std::endl;
+    float cx = (float) boxWidth*colsOfBoxes/2;//376;//Change pixel center according to focus area
+    float cy = (float) boxWidth*rowsOfBoxes/2;//240;
+    K(0,0) = fx;
+    K(1,1) = fy;
+    K(2,2) = 1;
+    K(0,2) = cx;
+    K(1,2) = cy;
+    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3);
+    std::cout << "K1: " << K << std::endl;
 // Init simulation environment
-    int boxWidth = 16;
-    int rowsOfBoxes = 30;
-    int colsOfBoxes = 60;
-    simulatePose warper;
+    simulatePose warper(K);
     warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
 //Create path of camera
     float length = 100;
-    std::vector<float> xPath = warper.getPath(0,4,length);
-    std::vector<float> yPath = warper.getPath(0,1,length);
+    std::vector<float> xPath = warper.getPath(0,0,length);
+    std::vector<float> yPath = warper.getPath(0,0,length);
     std::vector<float> zPath = warper.getPath(1,0,length);
-    std::vector<float> phi = warper.getPath(0,0.008,length);//Crashes if this is zero??? or smthing
+    std::vector<float> phi = warper.getPath(0,0.05,length);//Crashes if this is zero??? or smthing
 //Init flowField object
     //settings for corner finder
     double qualityLevel= 0.5;
@@ -57,17 +73,6 @@ int main(void){
     FlowField.setFeatureSettings(qualityLevel,minDistance,blockSize,useHarris,k);
     FlowField.setKLTSettings(windowSize,maxLevel,termcrit,flags);
 //Init odometry object
-    cv::Mat_<float> K = cv::Mat_<float>::zeros(3,3);
-    float fx = 1;//260;
-    float fy = 1;//260;
-    float cx = (float) boxWidth*colsOfBoxes/2;//376;//Change pixel center according to focus area
-    float cy = (float) boxWidth*rowsOfBoxes/2;//240;
-    K(0,0) = fx;
-    K(1,1) = fy;
-    K(2,2) = 1;
-    K(0,2) = cx;
-    K(1,2) = cy;
-    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3);
     vo::planarHomographyVO odometer(K,T);
 //Set some parameters that are used trhoughout the program
 //and initialize some variables on bottom of stack
@@ -77,7 +82,7 @@ int main(void){
     float maskDir = -1;//to choose mask. init value -1 for whole scene
     int cols = boxWidth*colsOfBoxes;
     int rows = boxWidth*rowsOfBoxes;
-    cv::Rect_<float> focusArea = FlowField.getFocusArea(cols,rows,300,300);//(cols,rows,size,size)
+    cv::Rect_<float> focusArea = FlowField.getFocusArea(cols,rows,60,60);//(cols,rows,size,size)
     cv::Point2f focusOffset(focusArea.x,focusArea.y);
     cv::Mat subPrevFrame;//For finding new corners
 //Initial values of UAV position
@@ -91,8 +96,8 @@ int main(void){
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
-        float roll = 0;//0.001;
-        float pitch = 0.001;
+        float roll = 3.1415/3;//60 grader
+        float pitch = 0;
         float height = 1;
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
         std::vector<float> angles{roll,pitch,phi[i]};
