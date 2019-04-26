@@ -2,8 +2,24 @@
 
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/objectDetection/detection.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp -o bin/tryIt
 
+#This is for feature based anchors
 g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/ORBTrackingSwitch.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp src/trackedObjectClass.cpp -o bin/tryIt
 
+#OF-VO
+#g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/OF_VO_v2.cpp src/KLT_ORB_Tracker.cpp -o bin/tryIt
+
+#OF-VO SIM
+#g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/OF_VO_v2_SIM.cpp src/KLT_ORB_Tracker.cpp -o bin/VO_SIM
+
+#Generate and show test dataset
+#g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimStream.cpp -o bin/tryIt
+
+#KLT flow field with test set
+g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimFlowField.cpp src/homographyVO.cpp -o bin/flowField
+
+
+#Just stream images and data from gimlee
+#g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicGimLee.cpp -o bin/gimlee
 
 
 
@@ -13,3 +29,7 @@ g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/ORBTrackingSwitch
 
 #./bin/tryIt 3 /Users/Fredrik/Datasets/picsForMatching/objectDetection/images/
 #./bin/tryIt 3 /Users/Fredrik/Datasets/Euroc/V102/cam0/data/cam0_%04d.png
+
+#debug:
+#lldb ./bin/tryIt 3
+#compile flag -ggdb
