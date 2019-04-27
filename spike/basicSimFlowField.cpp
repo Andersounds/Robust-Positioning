@@ -2,8 +2,9 @@
 #include <opencv2/opencv.hpp>
 
 //#include "../src/simulatePose.cpp"
-#include "../src/simulatePose.cpp"
+
 #include "../src/KLTFlowField.cpp"
+#include "../src/simulatePose.hpp"
 #include "../src/homographyVO.hpp"
 /*
 This code is a basic stream of sim chessboard warped images that
@@ -25,6 +26,18 @@ void drawArrows(cv::Mat img,cv::Mat& outputImg,std::vector<cv::Point2f> features
         it2++;
     }
 }
+/*Returns a linspace sequence starting from start with length no of steps of size step
+ *
+ */
+std::vector<float> getPath(float start,float step,float length){
+    std::vector<float> path;
+    for(float i=0;i<length;i++){
+        path.push_back(step*i+start);
+    }
+    return path;
+}
+
+
 
 
 int main(void){
@@ -32,7 +45,7 @@ int main(void){
 int boxWidth = 11;
 int rowsOfBoxes = 30;
 int colsOfBoxes = 60;
-// Define K, T
+/*// Define K, T
     cv::Mat_<float> K = cv::Mat_<float>::zeros(3,3);
     float fx = (float) boxWidth*colsOfBoxes;//260;//1;
     float fy = fx;//260;//1;
@@ -46,15 +59,20 @@ int colsOfBoxes = 60;
     K(1,2) = cy;
     cv::Mat_<float> T = cv::Mat_<float>::eye(3,3);
     std::cout << "K1: " << K << std::endl;
+    */
 // Init simulation environment
-    simulatePose warper(K);
+    simulatePose warper;
     warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
+    std::vector<float> angles{3.1415,0,0};
+    std::vector<float> coordinates{0,0,1};
+    warper.setBasePose(angles,coordinates);
+    warper.setParam("sceneWidth",1);
 //Create path of camera
     float length = 100;
-    std::vector<float> xPath = warper.getPath(0,0.005,length);
-    std::vector<float> yPath = warper.getPath(0,0,length);
-    std::vector<float> zPath = warper.getPath(1,0,length);
-    std::vector<float> phi = warper.getPath(0,0.04,length);//Crashes if this is zero??? or smthing
+    std::vector<float> xPath = getPath(0,0.005,length);
+    std::vector<float> yPath = getPath(0,0,length);
+    std::vector<float> zPath = getPath(0.5,0,length);
+    std::vector<float> phi = getPath(0,0.04,length);//Crashes if this is zero??? or smthing
 //Init flowField object
     //settings for corner finder
     double qualityLevel= 0.5;
@@ -73,6 +91,9 @@ int colsOfBoxes = 60;
     FlowField.setFeatureSettings(qualityLevel,minDistance,blockSize,useHarris,k);
     FlowField.setKLTSettings(windowSize,maxLevel,termcrit,flags);
 //Init odometry object
+    cv::Mat_<float> K = warper.K;
+    cv::Mat_<float> T = cv::Mat_<float>::zeros(3,3);//OBSOBSOBSOSBOSBSOBSOSBOSBSOSBOSBOBS
+    std::cout<< "OBSOBSOBSOSBOSBSOBSOSBOSBSOSBOSBOBS" << std::endl;
     vo::planarHomographyVO odometer(K,T);
 //Set some parameters that are used trhoughout the program
 //and initialize some variables on bottom of stack
@@ -82,7 +103,7 @@ int colsOfBoxes = 60;
     float maskDir = -1;//to choose mask. init value -1 for whole scene
     int cols = boxWidth*colsOfBoxes;
     int rows = boxWidth*rowsOfBoxes;
-    cv::Rect_<float> focusArea = FlowField.getFocusArea(cols,rows,60,60);//(cols,rows,size,size)
+    cv::Rect_<float> focusArea = FlowField.getFocusArea(cols,rows,100,100);//(cols,rows,size,size)
     cv::Point2f focusOffset(focusArea.x,focusArea.y);
     cv::Mat subPrevFrame;//For finding new corners
 //Initial values of UAV position
@@ -97,7 +118,7 @@ int colsOfBoxes = 60;
     for(int i=0;i<(int)length;i++){
 //Get new image
         float roll = 0;//3.1415/4;
-        float pitch = 0.08;
+        float pitch = 0.03;
         float height = 1;
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
         std::vector<float> angles{roll,pitch,phi[i]};
