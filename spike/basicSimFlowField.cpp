@@ -2,7 +2,7 @@
 #include <opencv2/opencv.hpp>
 
 //#include "../src/simulatePose.cpp"
-#include "simulatePose_v2.cpp"
+#include "../src/simulatePose.cpp"
 #include "../src/KLTFlowField.cpp"
 #include "../src/homographyVO.hpp"
 /*
@@ -51,10 +51,10 @@ int colsOfBoxes = 60;
     warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
 //Create path of camera
     float length = 100;
-    std::vector<float> xPath = warper.getPath(0,0,length);
+    std::vector<float> xPath = warper.getPath(0,0.005,length);
     std::vector<float> yPath = warper.getPath(0,0,length);
     std::vector<float> zPath = warper.getPath(1,0,length);
-    std::vector<float> phi = warper.getPath(0,0.05,length);//Crashes if this is zero??? or smthing
+    std::vector<float> phi = warper.getPath(0,0.04,length);//Crashes if this is zero??? or smthing
 //Init flowField object
     //settings for corner finder
     double qualityLevel= 0.5;
@@ -96,12 +96,14 @@ int colsOfBoxes = 60;
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
-        float roll = 3.1415/3;//60 grader
-        float pitch = 0;
+        float roll = 0;//3.1415/4;
+        float pitch = 0.08;
         float height = 1;
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
         std::vector<float> angles{roll,pitch,phi[i]};
-        cv::Mat frame = warper.getWarpedImage(angles,trueCoordinate);
+        cv::Mat rawFrame = warper.getWarpedImage(angles,trueCoordinate);
+        cv::Mat frame;
+        cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
 //Process image...
         cv::Mat subFrame = frame(focusArea);
         if(noOfTracked<=noOfCorners*0.7){
@@ -137,7 +139,8 @@ int colsOfBoxes = 60;
 
         //Illustrate
         cv::Mat colorFrame;//For illustration
-        cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
+        rawFrame.copyTo(colorFrame);
+        //cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
         float scale = 3;
         drawArrows(colorFrame,colorFrame,activeFeatures1,activeFeatures2,scale);
         cv::rectangle(colorFrame,focusArea,CV_RGB(255,0,0),2,cv::LINE_8,0);

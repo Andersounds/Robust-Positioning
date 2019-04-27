@@ -1,10 +1,18 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 /*
-
 Refactor this into h and c files with redefinition guards
+*/
 
+/*
+This class generates a visual simulation environment to evaluate VO-algorithm
 
+Features:
+-   Provide a floor image separately or use the default chessboard pattern
+-   Define parameters to relate to physical coordinates. Define camera position and pose in undistorted image case
+        Example: Camera coordinate T and rotation R, with focal length f (or wide angle) gives undistorted projection
+    The object the constructs the camera K that fulfills the specifications
+-   For each new physical camera coordinate and pose [m],[rad], the object calculates the corresponding image warp
 */
 class simulatePose{
 public:
@@ -13,20 +21,32 @@ public:
     simulatePose(cv::Mat_<float> K_){
         K=K_;
     }
+    /*Sets the default chessboard pattern as base scene
+    */
     void setBaseScene(int blockSize,int rowsOfBoxes,int colsOfBoxes){
         baseScene = getImage(blockSize,rowsOfBoxes,colsOfBoxes);
         float cx = ((float) baseScene.cols) /2;
         float cy = ((float) baseScene.rows) /2;
         //K = getKMat(cx,cy);
     }
+    /* Specify own image for basescene
+    */
     void setBaseScene(cv::Mat baseScene_){
         baseScene = baseScene_;
         float cx = ((float) baseScene.cols) /2;
         float cy = ((float) baseScene.rows) /2;
         //K = getKMat(cx,cy);
     }
-    /*Returns the parped baseScene. coordinates are to be given ass [roll,pitch,yaw], [x,y,z]
-     *  In scene frame right? same as image coordinates or what? specify.
+    /* TODO */
+    /* This function is used to specify which camera pose that projects to
+     * the undistorted base scene. It defines the R1, T1 that are initial camera pose,
+     * and constructs the camera K that fulfills the specifications
+     */
+    void setBasePose(void){
+
+
+    }
+    /*Returns the warped baseScene. coordinates are to be given ass [roll,pitch,yaw], [x,y,z]
      * Right now no z??
      */
     cv::Mat getWarpedImage(std::vector<float> angles,std::vector<float> t){
@@ -45,33 +65,37 @@ public:
         cv::Mat R_y = getYRot(pitch);
         cv::Mat R_z = getZRot(yaw);
         cv::Mat R_2 = R_x*R_y*R_z;
-        cv::Mat R_1 = getYRot(3.1415);//Set this as constant for default view
+        cv::Mat R_1 = getXRot(3.1415);//Ursprunglig rot av kamera. väljer 180 grader runt X-x.riktning bevaras
         cv::Mat_<float> t1 = cv::Mat_<float>::zeros(3,1);
         t1(2,0) = 1;//1 meter i z-riktning ursprungligen
         cv::Mat_<float> t2 = cv::Mat_<float>::zeros(3,1);
         t2(0,0) = x;//
         t2(1,0) = y;//
-        t2(2,0) = 1;//z;//
+        t2(2,0) = t1(2,0);// Vi antar planar motion. for now. bild 2 är på samma z-höjd som ursprungligen
         //Below is b and A with definition P=KR[I,-t]
-        cv::Mat_<float> b = t1- R_1.t()*R_2*t2;
+        cv::Mat_<float> b = t1 - R_1.t()*R_2*t2;
         cv::Mat_<float> A = R_1.t()*R_2;
         //Below is b and A with definition P=K[R,t]
         //cv::Mat_<float> b = R_1.t()*(t2-t1);
         //cv::Mat_<float> A = R_1.t()*R_2;
 
-
-        float d = 1;//Distance.. correct?? or do cos... ?
+        float d = t1(2,0);//Distance from camera 1 to plane (positive as plane is in front of camera 1, i think)
         cv::Mat_<float> v = cv::Mat_<float>::zeros(3,1);
-        v(2,0) = -1;//Testa. eller andra hållet?
+        v(2,0) = 1;//Chackbrädets normal uttryckt i globalt koordinatsystem
+        cv::Mat_<float> v_temp = R_1*v;//
+        v=v_temp;
 
 
 
-    std::cout << "K2: " << K << std::endl;
-        cv::Mat_<float> H = K*(A - b*v.t()/d) * K.inv();
+        cv::Mat_<float> H_tilt = K * R_x*R_y * K.inv(); // Pure rotation
+        cv::Mat_<float> H_trans = K * (A - b*v.t()/d) * K.inv(); // According to 3.8
         //cv::Mat_<float> H = (A - b*v.t()/d) * K.inv();
         //cv::Mat_<float> H = (A - b*v.t()/d) ;
         //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::WARP_INVERSE_MAP,cv::BORDER_CONSTANT,0);
+        cv::Mat_<float> H = H_tilt*H_trans;
         cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
+
+        //cv::perspectiveTransform()
         return out;
     }
     /*Returns a linspace sequence starting from start with length no of steps of size step
@@ -88,7 +112,7 @@ private:
     cv::Mat getImage(int blockSize,int rowsOfBoxes,int colsOfBoxes){
         int imageRows=blockSize*rowsOfBoxes;
         int imageCols=blockSize*colsOfBoxes;
-        cv::Mat chessBoard(imageRows,imageCols,CV_8UC1,cv::Scalar::all(0));
+        cv::Mat chessBoard(imageRows,imageCols,CV_8UC3,cv::Scalar::all(0));
         unsigned char color=0;
          for(int i=0;i<imageCols;i=i+blockSize){
           color=~color;
@@ -98,6 +122,14 @@ private:
            color=~color;
           }
          }
+         //Add coordinate system
+         int scale = 30;
+         cv::Point cntr = cv::Point(imageCols/2,imageRows/2);
+         cv::Point x = cntr + cv::Point(1,0)*scale;
+         cv::Point y = cntr +cv::Point(0,1)*scale;
+         cv::arrowedLine(chessBoard,cntr,x,CV_RGB(255,0,0),2,cv::LINE_8,0,0.1);
+         cv::arrowedLine(chessBoard,cntr,y,CV_RGB(255,0,0),2,cv::LINE_8,0,0.1);
+
         return chessBoard;
     }
 
@@ -135,7 +167,8 @@ private:
         R_z(2,2) = 1;
         return R_z;
     }
-
+    /*Update this to correct
+    */
     cv::Mat getKMat(float cx,float cy){
         cv::Mat_<float> K_ = cv::Mat_<float>::zeros(3,3);
         float fx = 1;//260;
