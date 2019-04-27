@@ -65,7 +65,7 @@ public:
         cv::Mat R_y = getYRot(pitch);
         cv::Mat R_z = getZRot(yaw);
         cv::Mat R_2 = R_x*R_y*R_z;
-        cv::Mat R_1 = getXRot(3.1415);//Ursprunglig rot av kamera. väljer 180 grader runt X-x.riktning bevaras
+        cv::Mat R_1 = getXRot(3.1415);//Ursprunglig rot av kamera. väljerba 180 grader runt X-x.riktning bevaras
         cv::Mat_<float> t1 = cv::Mat_<float>::zeros(3,1);
         t1(2,0) = 1;//1 meter i z-riktning ursprungligen
         cv::Mat_<float> t2 = cv::Mat_<float>::zeros(3,1);
