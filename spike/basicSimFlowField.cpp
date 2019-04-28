@@ -38,6 +38,15 @@ std::vector<float> getPath(float start,float step,float length){
     return path;
 }
 
+std::vector<float> linSpace(float start,float stop,float length){
+    std::vector<float> path;
+    float step = (stop-start)/length;
+    for(float i=0;i<length;i++){
+        path.push_back(step*i+start);
+    }
+    return path;
+}
+
 
 
 
@@ -63,10 +72,10 @@ int main(void){
 //Create path of camera and save to output file
     float length = 100;
     //Start out aligned with x-y of global coordinate system
-    std::vector<float> xPath = getPath(0,0.005,length);
-    std::vector<float> yPath = getPath(0,0.0025,length);
-    std::vector<float> zPath = getPath(-0.5,0,length);
-    std::vector<float> yawPath = getPath(0,0.06,length);//Crashes if this is zero??? or smthing
+    std::vector<float> xPath = linSpace(0,0.5,length);
+    std::vector<float> yPath = linSpace(0,0.25,length);
+    std::vector<float> zPath = linSpace(-0.5,-0.5,length);
+    std::vector<float> yawPath = linSpace(0,3.1415,length);//Crashes if this is zero??? or smthing
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
     std::vector<std::vector <float>> input{xPath,yPath,zPath,yawPath};
     build_path(input,file_true);
@@ -114,7 +123,7 @@ int main(void){
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
-        float roll = 3.1415/4;
+        float roll = 0.1;
         float pitch = 0.1;//3.1415/3;
         float height = 1;//Används bara av odometer
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
