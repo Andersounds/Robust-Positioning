@@ -52,8 +52,7 @@ int main(void){
 // Init simulation environment
     simulatePose warper;
     warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
-    //warper.setParam();
-    warper.setParam("d",1);
+    warper.setParam("z",1); //
     warper.setParam("sceneWidth",1);
     warper.init(0);//Initialize with configuration 0
 
@@ -62,7 +61,7 @@ int main(void){
     float length = 100;
     std::vector<float> xPath = getPath(0,0.005,length);
     std::vector<float> yPath = getPath(0,0,length);
-    std::vector<float> zPath = getPath(0.5,0,length);
+    std::vector<float> zPath = getPath(1,0,length);
     std::vector<float> phi = getPath(0,0.04,length);//Crashes if this is zero??? or smthing
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
     std::vector<std::vector <float>> input{xPath,yPath,zPath,phi};
@@ -88,7 +87,7 @@ int main(void){
 //Init odometry object
     cv::Mat_<float> K = warper.K;
     cv::Mat_<float> T = cv::Mat_<float>::zeros(3,3);//OBSOBSOBSOSBOSBSOBSOSBOSBSOSBOSBOBS
-    std::cout<< "OBSOBSOBSOSBOSBSOBSOSBOSBSOSBOSBOBS" << std::endl;
+    std::cout<< "OBS - Make T matrix correct" << std::endl;
     vo::planarHomographyVO odometer(K,T);
 //Set some parameters that are used trhoughout the program
 //and initialize some variables on bottom of stack
@@ -108,12 +107,11 @@ int main(void){
     t(1,0) = 0;//-3.398;
     t(2,0) = 0;// 1.664;
 
-
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
-        float roll = 0;//3.1415/4;
-        float pitch = 0;
+        float roll = 3.1415;
+        float pitch = 0;//3.1415/3;
         float height = 1;
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
         std::vector<float> angles{roll,pitch,phi[i]};

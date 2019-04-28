@@ -19,6 +19,7 @@ private:
     float cx;                               //Pixel offset in x in K mat
     float cy;                               //Pixel offset in y in K mat
     float d;                                //d in base plane definition. -In this implementation, base plane is horizontal at z=0
+    float z_base;                           //Base coordinate of camera 1 in z-direction
     cv::Mat_<float> v;                      //base plane normal. (as expressed in camera 1:s coordinate system)
     float N;                                //Camera resolution in x-direction [pixles]
     float sceneWidth;                       //Scene width in x-direction       [m]

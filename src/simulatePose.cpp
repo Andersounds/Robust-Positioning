@@ -4,13 +4,18 @@
 
 /*
 This class generates a visual simulation environment to evaluate VO-algorithm
-
-Features:
 -   Provide a floor image separately or use the default chessboard pattern
--   Define parameters to relate to physical coordinates. Define camera position and pose in undistorted image case
+    This is locked to the global coordinate system. By default located in x-y-plane and z pointing upwards. origin is in middle of image
+-   Define parameters which together with default scene defines the physical dimensions
+        Example:    Define that base scene is sceneWidth m across in x-direction of image
+                    Define that uav is located at d m in z-direction of global frame, i.e. at (0,0,d), in base scene
+                    Define that uav
+                    Assumption: that uav frame is rotated R from global frame in base
         Example: Camera coordinate T and rotation R, with focal length f (or wide angle) gives undistorted projection
     The object the constructs the camera K that fulfills the specifications
 -   For each new physical camera coordinate and pose [m],[rad], the object calculates the corresponding image warp
+TODO:   -Let user define general global coordinate at base scene
+        -
 */
 
     /*Sets the default chessboard pattern as base scene
@@ -30,12 +35,11 @@ void simulatePose::setBaseScene(cv::Mat baseScene_){
     cy = ((float) baseScene.rows) /2;
     N = (float) baseScene.cols;
 }
-
-    /* This function is used to specify which camera pose that projects to
-     * the undistorted base scene. It defines the R1, T1 that are initial camera pose,
-     * and constructs the camera K that fulfills the specifications
-     * TODO: check if v is defined correctly. R1.t() maybe??
-     */
+/* This function is used to specify which camera pose that projects to
+ * the undistorted base scene. It defines the R1, T1 that are initial camera pose,
+ * and constructs the camera K that fulfills the specifications
+ * TODO: check if v is defined correctly. R1.t() maybe??
+ */
 void simulatePose::setBasePose(std::vector<float> angles,std::vector<float> coordinates){
     if((angles.size()!=3) || (coordinates.size()!=3)){std::cout << "Not valid coordinates"<< std::endl;}
     //Base rotation of camera 1
@@ -55,13 +59,13 @@ void simulatePose::setBasePose(std::vector<float> angles,std::vector<float> coor
     t1_(1,0) = y;
     t1_(2,0) = z;
     t1 = t1_;                                               //Set base coordinates
-    //Base plane definition. This sets base plane in global xy-plane
-    d = t1(2,0);                                            //Distance from camera 1 to plane NOTE ONLY VALID IF PLANE IS HORIZONTAL
+    //Base plane definition. This sets base plane in global xy-plane, horizontal at z = 0; plane normal in negative z direction
     cv::Mat_<float> v_global = cv::Mat_<float>::zeros(3,1);
-    v_global(2,0) = 1;                                      //Base plane normal in global coordinate system. positive z
-    v = R1*v_global;                                        //Base plane normal expressed in camera 1 coordinate system
+    v_global(2,0) = 1; //Base plane normal in global coordinate system. positive z
+    //v = R1.t()*v_global;                                        //Base plane normal expressed in camera 1 coordinate system
+    v = v_global;
+    std::cout << "normal: " << v(2,0) << std::endl;
 }
-
 cv::Mat simulatePose::getChessboard(int blockSize,int rowsOfBoxes,int colsOfBoxes){
     int imageRows=blockSize*rowsOfBoxes;
     int imageCols=blockSize*colsOfBoxes;
@@ -81,7 +85,9 @@ cv::Mat simulatePose::getChessboard(int blockSize,int rowsOfBoxes,int colsOfBoxe
      cv::Point x = cntr + cv::Point(1,0)*scale;
      cv::Point y = cntr +cv::Point(0,1)*scale;
      cv::arrowedLine(chessBoard,cntr,x,CV_RGB(255,0,0),2,cv::LINE_8,0,0.1);
-     cv::arrowedLine(chessBoard,cntr,y,CV_RGB(255,0,0),2,cv::LINE_8,0,0.1);
+     cv::arrowedLine(chessBoard,cntr,y,CV_RGB(0,255,0),2,cv::LINE_8,0,0.1);
+     cv::imshow("Chess board",chessBoard);
+    cv::waitKey(0);
     return chessBoard;
 }
 /*This function sets physical parameters of simulation environment one by one
@@ -94,10 +100,10 @@ int simulatePose::setParam(std::string parameterName,float value){
         std::vector<std::vector<std::string>> validParameters_;
         //Init valid parameters as their names and description
         std::vector<std::string> param0{"sceneWidth",   "Physical width of scene in x-direction         [m]"};
-        std::vector<std::string> param1{"d",            "Distance between camera and scene in base pose [m]"};
+        std::vector<std::string> param1{"z",            "Base pose coordinate in z-direction            [m]"};
         std::vector<std::string> param2{"angle",        "Cameras angle of view in x-direction           [rad]"};
-        std::vector<std::string> param3{"f_m",      "Focal length in meter                          [m]"};
-        std::vector<std::string> param4{"f_p",      "Focal length in pixles                         [pixles]"};
+        std::vector<std::string> param3{"f_m",          "Focal length in meter                          [m]"};
+        std::vector<std::string> param4{"f_p",          "Focal length in pixles                         [pixles]"};
         validParameters_.push_back(param0);
         validParameters_.push_back(param1);
         validParameters_.push_back(param2);
@@ -121,8 +127,8 @@ int simulatePose::setParam(std::string parameterName,float value){
     if(parameterName == "sceneWidth"){
         sceneWidth = value;
     }
-    else if(parameterName == "d"){
-        d = value;
+    else if(parameterName == "z"){
+        z_base = value; //Only valid if base plane is horizontal and coplanar with base camera
     }
     else if(parameterName == "angle"){
         angle = value;
@@ -143,12 +149,7 @@ int simulatePose::setParam(std::string parameterName,float value){
             }
         }
     }
-    //Try to calculate K matrix with the available parameters
-    if(!setKMat()){
-        std::cout << "K matrix specified." << std::endl;
-        return 1;
-    }else{return 0;}
-
+    return 1;
 }
 //Overloaded version to give info in case of erronous function call
 int simulatePose::setParam(void){
@@ -161,13 +162,16 @@ int simulatePose::setParam(void){
 int simulatePose::init(int configuration){
     switch(configuration){
         case 0:{
-            if(d!=0 && sceneWidth!=0 && N!=0){//If the necessary attributes are defined
+            if(z_base!=0 && sceneWidth!=0 && N!=0){//If the necessary attributes are defined
                 //Set base pose
                 std::vector<float> angles{3.1415,0,0};//Rotate around x to look down at base scene -> x-direction is not changed.
-                std::vector<float> coordinates{0,0,d};
+                //std::vector<float> angles{0,0,0};
+                std::vector<float> coordinates{0,0,z_base};
+                d = abs(z_base); //Only valid in this configurtation
                 setBasePose(angles,coordinates);
                 setKMat();//Set K-mat according to default configuration, d,sceneWidth, N
             }else{
+                std::cout << "The required parameters for configuration "<< configuration << " are not set." << std::endl;
                 return 0;
             }
             break;
@@ -240,6 +244,7 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
     cv::Mat_<float> H_tilt = K * R_x*R_y * K.inv(); // Pure rotation (roll,pitch)
     //Define the yaw+translation homography according to 3.8 in Wadenbaeck.
     cv::Mat_<float> b = t1 - R1.t()*R_z*t2;
+    std::cout << "Check sign of b-definition. prob wrong way" << std::endl;
     cv::Mat_<float> A = R1.t()*R_z;
     cv::Mat_<float> H_trans = K * (A - b*v.t()/d) * K.inv();
 
