@@ -85,36 +85,63 @@ cv::Mat simulatePose::getChessboard(int blockSize,int rowsOfBoxes,int colsOfBoxe
     return chessBoard;
 }
 /*This function sets physical parameters of simulation environment one by one
- *
+ * TODO: add parameters x-y to shift global coordinate system??
  */
 int simulatePose::setParam(std::string parameterName,float value){
     static int init = 0;
     if(!init){
         init=1;
-        std::vector<std::string> validParameters_{"sceneWidth",      //Physical width of scene in x-direction    [m]
-                                                    "angle",            //Cameras angle of view in x-direction      [rad]
-                                                    "focal_m",          //Focal length in meter                     [m]
-                                                    "focal_p"};         //Focal length in pixles                    [pixles]
-        validParameters = validParameters_;
+        std::vector<std::vector<std::string>> validParameters_;
+        //Init valid parameters as their names and description
+        std::vector<std::string> param0{"sceneWidth",   "Physical width of scene in x-direction         [m]"};
+        std::vector<std::string> param1{"d",            "Distance between camera and scene in base pose [m]"};
+        std::vector<std::string> param2{"angle",        "Cameras angle of view in x-direction           [rad]"};
+        std::vector<std::string> param3{"f_m",      "Focal length in meter                          [m]"};
+        std::vector<std::string> param4{"f_p",      "Focal length in pixles                         [pixles]"};
+        validParameters_.push_back(param0);
+        validParameters_.push_back(param1);
+        validParameters_.push_back(param2);
+        validParameters_.push_back(param3);
+        validParameters_.push_back(param4);
+        validParameters = validParameters_; //Save as object attribute
+        std::vector<std::vector<int>> validConfigurations_;
+        std::vector<int> conf0{0,1};//sceneWidth and distance to base scene
+        std::vector<int> conf1{0,2};//sceneWidth and viewing angle in x-direction
+        std::vector<int> conf2{1,2};//distance to base scene and viewing angle in x direction
+        std::vector<int> conf3{4,1};//focal length in pixles and distance to base scene
+        std::vector<int> conf4{0,1,3};//sceneWidth and distance to base scene and focal length in meter
+        //There are more configurations..
+        validConfigurations_.push_back(conf0);
+        validConfigurations_.push_back(conf1);
+        validConfigurations_.push_back(conf2);
+        validConfigurations_.push_back(conf3);
+        validConfigurations_.push_back(conf4);
+        validConfigurations = validConfigurations_;
     }
-    if(parameterName == validParameters[0]){
+    if(parameterName == "sceneWidth"){
         sceneWidth = value;
     }
-    else if(parameterName == validParameters[1]){
+    else if(parameterName == "d"){
+        d = value;
+    }
+    else if(parameterName == "angle"){
         angle = value;
     }
-    else if(parameterName == validParameters[2]){
+    else if(parameterName == "f_m"){
         f_m = value;
     }
-    else if(parameterName == validParameters[3]){
+    else if(parameterName == "f_p"){
         f_p = value;
     }
     else{
-        std::cout << "Parameter name '" << parameterName << "' is not valid. Valid names are:" << std::endl;
-        for(std::string name:validParameters){
-            std::cout << "\t" <<name << std::endl;
+        std::cout << "Parameter name '" << parameterName << "' is not valid. Valid parameter configurations are:" << std::endl;
+        std::cout << "Parameter name" << "\t\t" << "Description" << std::endl;
+        for(int i=0;i<validConfigurations.size();i++){  //Print out all valid configurations
+            std::cout << "---------Configuration " << i << "---------" << std::endl;
+            for(int parameterIndex:validConfigurations[i]){//For all parameters in configuration i:
+                std::cout << validParameters[parameterIndex][0] << "\t \t" << validParameters[parameterIndex][1] << std::endl;//Print out parameter name and its description
+            }
         }
-        std::cout << "---" << std::endl;
     }
     //Try to calculate K matrix with the available parameters
     if(!setKMat()){
@@ -128,7 +155,48 @@ int simulatePose::setParam(void){
     setParam("",0); //Dummy call of set param with invalid parameter name
     return 0;
 }
-/*Defines the K-matrix. If enough parameters are set
+/* This method initializes the simulation environment according to the configuration specified
+ *
+ */
+int simulatePose::init(int configuration){
+    switch(configuration){
+        case 0:{
+            if(d!=0 && sceneWidth!=0 && N!=0){//If the necessary attributes are defined
+                //Set base pose
+                std::vector<float> angles{3.1415,0,0};//Rotate around x to look down at base scene -> x-direction is not changed.
+                std::vector<float> coordinates{0,0,d};
+                setBasePose(angles,coordinates);
+                setKMat();//Set K-mat according to default configuration, d,sceneWidth, N
+            }else{
+                return 0;
+            }
+            break;
+        }
+        case 1:{
+            std::cout << "configuration not yet implemented" << std::endl;
+            return 0;
+            break;
+        }
+        case 2:{
+            std::cout << "configuration not yet implemented" << std::endl;
+            return 0;
+            break;
+        }
+        case 3:{
+            std::cout << "configuration not yet implemented" << std::endl;
+            return 0;
+            break;
+        }
+        case 4:{
+            std::cout << "configuration not yet implemented" << std::endl;
+            return 0;
+            break;
+        }
+    }
+    return 1;
+}
+/*Defines the K-matrix.
+ TODO- give configuration as argument and build according to that
 */
 int simulatePose::setKMat(void){
     cv::Mat_<float> K_ = cv::Mat_<float>::zeros(3,3);
@@ -138,7 +206,6 @@ int simulatePose::setKMat(void){
         K_(0,0) = fx;
         K_(1,1) = fy;
     }else{std::cout << "No scene width specified." << std::endl; return 0;}
-    if(!cx){std::cout << "Basescene is specified." << std::endl;}
     K_(0,2) = cx;//Use the specified
     K_(1,2) = cy;
     K_(2,2) = 1;// Should this be 1 as 1 focal length or fx as one focal lengths worth of pixles?

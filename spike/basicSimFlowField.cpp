@@ -6,6 +6,7 @@
 #include "../src/KLTFlowField.cpp"
 #include "../src/simulatePose.hpp"
 #include "../src/homographyVO.hpp"
+#include "../src/save2file.cpp"
 /*
 This code is a basic stream of sim chessboard warped images that
 also extracts and draws the flowfield
@@ -42,37 +43,31 @@ std::vector<float> getPath(float start,float step,float length){
 
 int main(void){
 // Define sim chessboard parameters
-int boxWidth = 11;
-int rowsOfBoxes = 30;
-int colsOfBoxes = 60;
-/*// Define K, T
-    cv::Mat_<float> K = cv::Mat_<float>::zeros(3,3);
-    float fx = (float) boxWidth*colsOfBoxes;//260;//1;
-    float fy = fx;//260;//1;
-    std::cout << "NORM K"<< std::endl;
-    float cx = (float) boxWidth*colsOfBoxes/2;//376;//Change pixel center according to focus area
-    float cy = (float) boxWidth*rowsOfBoxes/2;//240;
-    K(0,0) = fx;
-    K(1,1) = fy;
-    K(2,2) = 1;
-    K(0,2) = cx;
-    K(1,2) = cy;
-    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3);
-    std::cout << "K1: " << K << std::endl;
-    */
+    int boxWidth = 11;
+    int rowsOfBoxes = 30;
+    int colsOfBoxes = 60;
+// Define file objects to output data into
+    std::ofstream file_true;
+    std::ofstream file_estimated;
 // Init simulation environment
     simulatePose warper;
     warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
-    std::vector<float> angles{3.1415,0,0};
-    std::vector<float> coordinates{0,0,1};
-    warper.setBasePose(angles,coordinates);
+    //warper.setParam();
+    warper.setParam("d",1);
     warper.setParam("sceneWidth",1);
-//Create path of camera
+    warper.init(0);//Initialize with configuration 0
+
+
+//Create path of camera and save to output file
     float length = 100;
     std::vector<float> xPath = getPath(0,0.005,length);
     std::vector<float> yPath = getPath(0,0,length);
     std::vector<float> zPath = getPath(0.5,0,length);
     std::vector<float> phi = getPath(0,0.04,length);//Crashes if this is zero??? or smthing
+    file_true.open("truePath.txt", std::ios::out | std::ios::app);
+    std::vector<std::vector <float>> input{xPath,yPath,zPath,phi};
+    build_path(input,file_true);
+    file_true.close();
 //Init flowField object
     //settings for corner finder
     double qualityLevel= 0.5;
@@ -118,7 +113,7 @@ int colsOfBoxes = 60;
     for(int i=0;i<(int)length;i++){
 //Get new image
         float roll = 0;//3.1415/4;
-        float pitch = 0.03;
+        float pitch = 0;
         float height = 1;
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
         std::vector<float> angles{roll,pitch,phi[i]};
@@ -149,13 +144,14 @@ int colsOfBoxes = 60;
 
 
         bool odometerSuccess = odometer.process(activeFeatures1,activeFeatures2,roll,pitch,height,t,R);
-        std::cout << t(0,0)<< ", "<<t(1,0)<< ", "<<t(2,0)<<"; ";
+        //std::cout << t(0,0)<< ", "<<t(1,0)<< ", "<<t(2,0)<<"; ";
         float z_sin = R(0,1);
         float zAngle_sin = std::asin(R(0,1));
-        //std::cout <<z_sin << ", "<<zAngle_sin;
-        std::cout<< std::endl;
-
-
+        //Write to file
+        std::vector<float> estimation{t(0,0),t(1,0),t(2,0),zAngle_sin};
+        file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
+        build_row(estimation,file_estimated);
+        file_estimated.close();
 
 
         //Illustrate

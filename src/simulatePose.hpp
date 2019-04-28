@@ -11,9 +11,9 @@ public:
     cv::Mat_<float> t1;                     //Base coordinate of camera
     void setBaseScene(int,int,int);         //Defines default chessboard pattern as base scene
     void setBaseScene(cv::Mat);  //Defines provided mat as base scene (And draws the global coordinate system?)
-    void setBasePose(std::vector<float>,std::vector<float>);                    //Define the base pose of the camera in global coordinate system
     int setParam(std::string,float);        //Define parameters one by one. can be given in any order
     int setParam(void);
+    int init(int);                          //Initialize physical simulation environment with the specified configuration
     cv::Mat getWarpedImage(std::vector<float>,std::vector<float>);              //Perform perspective warp of base scene
 private:
     float cx;                               //Pixel offset in x in K mat
@@ -26,7 +26,9 @@ private:
     float f_m;                              //Focal length of camera in meter  [m]
     float f_p;                              //Focal length of camera in pixles [-]
     float gamma;//NECESSARY? Pixel density of camera [pixles/meter]
-    std::vector<std::string> validParameters;//The parameters that are valid to use to calculate the simulation camera
+    std::vector<std::vector<std::string>> validParameters;//The parameters that are valid to use to calculate the simulation camera
+    std::vector<std::vector<int>> validConfigurations;      //The configurations of parameters that are valid to set up the complete simulation environment
+    void setBasePose(std::vector<float>,std::vector<float>);                    //Define the base pose of the camera in global coordinate system
     cv::Mat getChessboard(int,int,int);     //Creates a chessboard image of specified size
     cv::Mat getXRot(float);            //Defines rotation matrices
     cv::Mat getYRot(float);
