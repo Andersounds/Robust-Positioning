@@ -72,7 +72,7 @@ void simulatePose::setBasePose(void){
     t1 = t1_;                                               //Set base coordinates
     //Base plane definition. This sets base plane in global xy-plane, horizontal at z = 0; plane normal in negative z direction
     cv::Mat_<float> v_global = cv::Mat_<float>::zeros(3,1);
-    v_global(2,0) = 1; //Base plane normal in global coordinate system. positive z
+    v_global(2,0) = -1; //Base plane normal in global coordinate system. positive z
     //v = R1.t()*v_global;                                        //Base plane normal expressed in camera 1 coordinate system
     v  = v_global;
     //std::cout << "normal: " << v(2,0) << std::endl;
@@ -278,16 +278,25 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
     // 3d coordinates of camera frame are defined as x-to-left and y-down and z,forwards. We convert them to
 
     //x_tilde = H*x, where H is homography, x is 3d coordinates at z=1 of camera 1 and x_tilde is 3d coordinates at z=1 of camera 2
-    cv::Mat_<float> H_tilt = K * R1 * R_x*R_y * R1.t() * K_inv; // Pure rotation (roll,pitch)
+    //cv::Mat_<float> H_tilt = K * R1 * R_x*R_y * R1.t() * K_inv; // Pure rotation (roll,pitch)
+
+    cv::Mat_<float> H_tilt = K *R1 *R_x*R_y  *R1.t()* K_inv; // Pure rotation (roll,pitch)
+//cv::Mat_<float> H_tilt = K  *R_x*R_y  * K_inv;
+
 
     //Define the yaw+translation homography according to 3.8 in Wadenbaeck.
     //Difference: sign of b is inverted.s
-    cv::Mat_<float> b = -(t1 - R1.t()*R_z*t2);
+    //cv::Mat_<float> b = (t1 - R1.t()*R_z*t2);
+    cv::Mat_<float> b = (t1 - R1.t()*R_z*t2);
     cv::Mat_<float> A = R1.t()*R_z;
     cv::Mat_<float> H_trans = K * (A - b*v.t()/d) * K_inv;
+    //cv::Mat_<float>   H_trans = K * R1*(A - b*v.t()/d) *R1.t()* K_inv;//Rama in i R1 också?
 
     //Calculate complete homography and perform the perspective transform
     cv::Mat_<float> H = H_tilt*H_trans;
+    //cv::Mat_<float> H = H_trans;
+
+
     cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
     //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::WARP_INVERSE_MAP,cv::BORDER_CONSTANT,0);
     return out;
