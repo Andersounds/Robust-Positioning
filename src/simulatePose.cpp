@@ -19,21 +19,27 @@ TODO:   -Let user define general global coordinate at base scene
         -
 */
 simulatePose::simulatePose(void){
+    //Variables for definition of K matrix
+    N = 0;
     cx = 0;
     cy = 0;
-    d  = 0;
-    z_base = -1;
-    y_base = 0;
+    f_p = 0;
+    //Relationship between global coordinate system and base pose
     x_base = 0;
+    y_base = 0;
+    z_base = 0;
     yaw_base  = 0;
     pitch_base= 0;
     roll_base = 0;
-    N = 0;
-    sceneWidth = 0;
+    //Physical scale variables
+    sceneWidth = 0;//Maybe have dafault 1?
     angle = 0;
     f_m = 0;
-    f_p = 0;
-    gamma=0;
+    //gamma=0;
+    //Define scene plane as expressed in base pose. perpendiculat to z-axis
+    d  = 0;                             // 0 is non-accepted value. user must define via some configuration
+    v = cv::Mat_<float>::zeros(3,1);
+    v(2,0) = 1;
 }
 
     /*Sets the default chessboard pattern as base scene
@@ -53,10 +59,8 @@ void simulatePose::setBaseScene(cv::Mat baseScene_){
     cy = ((float) baseScene.rows) /2;
     N = (float) baseScene.cols;
 }
-/* This function is used to specify which camera pose that projects to
- * the undistorted base scene. It defines the R1, T1 that are initial camera pose,
- * and constructs the camera K that fulfills the specifications
- * TODO: check if v is defined correctly. R1.t() maybe??
+/*
+This function will be used to define the relationship between the global coordinate system and the base pose
  */
 void simulatePose::setBasePose(void){
     //Base rotation of camera 1. i.e the R matrix of the camera that should achieve the non-distorted base projection
@@ -70,12 +74,6 @@ void simulatePose::setBasePose(void){
     t1_(1,0) = y_base;
     t1_(2,0) = z_base;
     t1 = t1_;                                               //Set base coordinates
-    //Base plane definition. This sets base plane in global xy-plane, horizontal at z = 0; plane normal in negative z direction
-    cv::Mat_<float> v_global = cv::Mat_<float>::zeros(3,1);
-    v_global(2,0) = -1; //Base plane normal in global coordinate system. positive z
-    //v = R1.t()*v_global;                                        //Base plane normal expressed in camera 1 coordinate system
-    v  = v_global;
-    //std::cout << "normal: " << v(2,0) << std::endl;
 }
 
 cv::Mat simulatePose::getChessboard(int blockSize,int rowsOfBoxes,int colsOfBoxes){
@@ -112,16 +110,16 @@ int simulatePose::setParam(std::string parameterName,float value){
         std::vector<std::vector<std::string>> validParameters_;
         //Init valid parameters as their names and description
         std::vector<std::string> param0{"sceneWidth",   "Physical width of scene in x-direction         [m]"};
-        std::vector<std::string> param1{"z",            "UAV Base pose coordinate in z-direction        [m]"};
-        std::vector<std::string> param2{"angle",        "Cameras angle of view in x-direction           [rad]"};
-        std::vector<std::string> param3{"f_m",          "Focal length in meter                          [m]"};
-        std::vector<std::string> param4{"f_p",          "Focal length in pixles                         [pixles]"};
+        std::vector<std::string> param1{"d",            "Distance to scene in base positive             [m]"};
+        std::vector<std::string> param2{"f_m",          "Focal length in meter                          [m]"};
+        std::vector<std::string> param3{"f_p",          "Focal length in pixles                         [pixles]"};
 
-        std::vector<std::string> param5{"yaw",          "UAV yaw in base pose                           [rad]"};
-        std::vector<std::string> param6{"pitch",        "UAV pitch in base pose                         [rad]"};
-        std::vector<std::string> param7{"roll",         "UAV roll in base pose                          [rad]"};
-        std::vector<std::string> param8{"x",            "UAV Base pose coordinate in x-direction        [m]"};
-        std::vector<std::string> param9{"y",            "UAV Base pose coordinate in y-direction        [m]"};
+        std::vector<std::string> param4{"yaw",          "UAV yaw in base pose                           [rad]"};
+        std::vector<std::string> param5{"pitch",        "UAV pitch in base pose                         [rad]"};
+        std::vector<std::string> param6{"roll",         "UAV roll in base pose                          [rad]"};
+        std::vector<std::string> param7{"x",            "UAV Base pose coordinate in x-direction        [m]"};
+        std::vector<std::string> param8{"y",            "UAV Base pose coordinate in y-direction        [m]"};
+        std::vector<std::string> param9{"z",            "UAV Base pose coordinate in z-direction        [m]"};
 
 
         validParameters_.push_back(param0);
@@ -137,10 +135,10 @@ int simulatePose::setParam(std::string parameterName,float value){
         validParameters = validParameters_; //Save as object attribute
         std::vector<std::vector<int>> validConfigurations_;
         std::vector<int> conf0{0,1};//sceneWidth and distance to base scene
-        std::vector<int> conf1{0,2};//sceneWidth and viewing angle in x-direction
-        std::vector<int> conf2{1,2};//distance to base scene and viewing angle in x direction
-        std::vector<int> conf3{4,1};//focal length in pixles and distance to base scene
-        std::vector<int> conf4{0,1,3};//sceneWidth and distance to base scene and focal length in meter
+        std::vector<int> conf1{1,2};//distance to base scene in base pose and focal length in meters
+        std::vector<int> conf2{1,3};//distance to base scene in base pose and focal length in pixles
+        std::vector<int> conf3{0,2};//scene width in [m] focal length in [m]
+        std::vector<int> conf4{0,3};//scene width in [m] focal length in [pixles]
         //There are more configurations..
         validConfigurations_.push_back(conf0);
         validConfigurations_.push_back(conf1);
@@ -152,7 +150,10 @@ int simulatePose::setParam(std::string parameterName,float value){
     if(parameterName == "sceneWidth"){
         sceneWidth = value;
     }
-    else if(parameterName == "z"){
+    else if(parameterName == "d"){
+        d = abs(value);
+    }
+    /*else if(parameterName == "z"){
         z_base = value; //Only valid if base plane is horizontal and coplanar with base camera
     }
     else if(parameterName == "angle"){
@@ -178,7 +179,7 @@ int simulatePose::setParam(std::string parameterName,float value){
     }
     else if(parameterName == "roll"){
         roll_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }
+    }*/
     else{
         std::cout << "Parameter name '" << parameterName << "' is not valid. Valid parameter configurations are:" << std::endl;
         std::cout << "Parameter name" << "\t\t" << "Description" << std::endl;
@@ -202,13 +203,11 @@ int simulatePose::setParam(void){
 int simulatePose::init(int configuration){
     switch(configuration){
         /*
-        Begin with implementing case 0. scenewidth, z_base must be set
-        yaw_base,x_base, y_base optional
+        Begin with implementing case 0. scenewidth, d must be set
         */
         case 0:{
-            if(z_base!=0 && sceneWidth!=0 && N!=0){//If the necessary attributes are defined
+            if(d!=0 && sceneWidth!=0 && N!=0){//If the necessary attributes are defined
                 //Set base pose
-                d = abs(z_base); //Only valid in this configurtation
                 setBasePose();
                 setKMat();//Set K-mat according to default configuration, d,sceneWidth, N
             }else{
@@ -269,36 +268,29 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
     t2(1,0) = y;
     t2(2,0) = z;
 
-    //Define the pure rotation homography of roll,pitch http://people.scs.carleton.ca/~c_shu/Courses/comp4900d/notes/homography.pdf
-    //cv::Mat_<float> H_tilt = K * R_x*R_y * K.inv(); // Pure rotation (roll,pitch)
-    //Roll and pitch are defined in the camera frame (or in other words specifically, in the global frame after a yaw-rotation around z)
-    //We must therefore do another base transformation
-    //Outermost we must have base change from image pixel coordinates to camera coordinates
-    // On left side we must accept pixel coordinates, and transform them via K_inv to 3d coordinates at z=1 of image plane
-    // 3d coordinates of camera frame are defined as x-to-left and y-down and z,forwards. We convert them to
+    //Define T-matrix according to 4.8 Wadenbaeck
+    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t();
 
-    //x_tilde = H*x, where H is homography, x is 3d coordinates at z=1 of camera 1 and x_tilde is 3d coordinates at z=1 of camera 2
-    //cv::Mat_<float> H_tilt = K * R1 * R_x*R_y * R1.t() * K_inv; // Pure rotation (roll,pitch)
+    //NOT FULLY TESTED
+    //Define homography as
+    //cv::Mat_<float> H = K *R_x*R_y*R_z*T* K_inv;
+    //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
 
-    cv::Mat_<float> H_tilt = K *R1 *R_x*R_y  *R1.t()* K_inv; // Pure rotation (roll,pitch)
-//cv::Mat_<float> H_tilt = K  *R_x*R_y  * K_inv;
+//NOT FULLY TESTED smthong really wierd
+    //Define Homography according to 4.7. Wadenbaeck. Apply the inverse.
+    //cv::Mat_<float> H = K *R_x*R_y*R_z*T*R_y.t()*R_x.t()* K_inv;
+    //cv::Mat_<float> H = K *R_x*R_y*R_z*T* K_inv;
+    //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
 
+    //NOT FULLY TESTED
+    // Define homography according to 4.7 but no inverse. Instead define it directly
+    //cv::Mat_<float> H = K  *T.inv()*R_x.t()*R_y.t()*R_z.t()* K_inv;
+    //cv::Mat_<float> H = K  *R_x*R_y*T.inv()*R_x.t()*R_y.t()*R_z.t()* K_inv; //
 
-    //Define the yaw+translation homography according to 3.8 in Wadenbaeck.
-    //Difference: sign of b is inverted.s
-    //cv::Mat_<float> b = (t1 - R1.t()*R_z*t2);
-    cv::Mat_<float> b = (t1 - R1.t()*R_z*t2);
-    cv::Mat_<float> A = R1.t()*R_z;
-    cv::Mat_<float> H_trans = K * (A - b*v.t()/d) * K_inv;
-    //cv::Mat_<float>   H_trans = K * R1*(A - b*v.t()/d) *R1.t()* K_inv;//Rama in i R1 också?
+    //No inverse. idea: put image coordinates first through zrot, yrot, xrot, then translation No quite sure why inverse though
+    cv::Mat_<float> H = K  *T.inv()*R_x.t()*R_y.t()*R_z.t()* K_inv;
+    cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::WARP_INVERSE_MAP,cv::BORDER_CONSTANT,0);
 
-    //Calculate complete homography and perform the perspective transform
-    cv::Mat_<float> H = H_tilt*H_trans;
-    //cv::Mat_<float> H = H_trans;
-
-
-    cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
-    //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::WARP_INVERSE_MAP,cv::BORDER_CONSTANT,0);
     return out;
 }
 /* Functions for defining roll, pitch, and yaw rotation matrices
