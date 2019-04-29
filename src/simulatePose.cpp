@@ -22,7 +22,7 @@ simulatePose::simulatePose(void){
     cx = 0;
     cy = 0;
     d  = 0;
-    z_base = 0;
+    z_base = -1;
     y_base = 0;
     x_base = 0;
     yaw_base  = 0;
@@ -58,32 +58,26 @@ void simulatePose::setBaseScene(cv::Mat baseScene_){
  * and constructs the camera K that fulfills the specifications
  * TODO: check if v is defined correctly. R1.t() maybe??
  */
-void simulatePose::setBasePose(std::vector<float> angles,std::vector<float> coordinates){
-    if((angles.size()!=3) || (coordinates.size()!=3)){std::cout << "Not valid coordinates"<< std::endl;}
+void simulatePose::setBasePose(void){
     //Base rotation of camera 1. i.e the R matrix of the camera that should achieve the non-distorted base projection
-    float base_yaw = angles[0];
-    float base_pitch = angles[1];
-    float base_roll = angles[2];
-    cv::Mat_<float> Rz_ = getZRot(base_yaw); //Base rotation of -pi/2 so that x-y are aligned when uav yaw is zero
-    cv::Mat_<float> Ry_ = getYRot(base_pitch);
-    cv::Mat_<float> Rx_ = getXRot(base_roll);
+    cv::Mat_<float> Rz_ = getZRot(yaw_base); //Base rotation of -pi/2 so that x-y are aligned when uav yaw is zero
+    cv::Mat_<float> Ry_ = getYRot(pitch_base);
+    cv::Mat_<float> Rx_ = getXRot(roll_base);
     R1 = Rx_*Ry_*Rz_;                                       //Set base rotation matrix
     //Base coordinate of camera 1. i.e the t of the camera that should achieve the non-distorted base projection
-    float base_x = coordinates[0];
-    float base_y = coordinates[1];
-    float base_z = coordinates[2];
     cv::Mat_<float> t1_ = cv::Mat_<float>::zeros(3,1);
-    t1_(0,0) = base_x;
-    t1_(1,0) = base_y;
-    t1_(2,0) = base_z;
+    t1_(0,0) = x_base;
+    t1_(1,0) = y_base;
+    t1_(2,0) = z_base;
     t1 = t1_;                                               //Set base coordinates
     //Base plane definition. This sets base plane in global xy-plane, horizontal at z = 0; plane normal in negative z direction
     cv::Mat_<float> v_global = cv::Mat_<float>::zeros(3,1);
     v_global(2,0) = 1; //Base plane normal in global coordinate system. positive z
     //v = R1.t()*v_global;                                        //Base plane normal expressed in camera 1 coordinate system
-    v = v_global;
-    std::cout << "normal: " << v(2,0) << std::endl;
+    v  = v_global;
+    //std::cout << "normal: " << v(2,0) << std::endl;
 }
+
 cv::Mat simulatePose::getChessboard(int blockSize,int rowsOfBoxes,int colsOfBoxes){
     int imageRows=blockSize*rowsOfBoxes;
     int imageCols=blockSize*colsOfBoxes;
@@ -214,11 +208,8 @@ int simulatePose::init(int configuration){
         case 0:{
             if(z_base!=0 && sceneWidth!=0 && N!=0){//If the necessary attributes are defined
                 //Set base pose
-                //Angles given as: yaw,pitch,roll. == z,y,x
-                std::vector<float> angles{yaw_base,0,0};
-                std::vector<float> coordinates{x_base,y_base,z_base};
                 d = abs(z_base); //Only valid in this configurtation
-                setBasePose(angles,coordinates);
+                setBasePose();
                 setKMat();//Set K-mat according to default configuration, d,sceneWidth, N
             }else{
                 std::cout << "The required parameters for configuration "<< configuration << " are not set." << std::endl;
@@ -287,11 +278,10 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
     // 3d coordinates of camera frame are defined as x-to-left and y-down and z,forwards. We convert them to
 
     //x_tilde = H*x, where H is homography, x is 3d coordinates at z=1 of camera 1 and x_tilde is 3d coordinates at z=1 of camera 2
-
     cv::Mat_<float> H_tilt = K * R1 * R_x*R_y * R1.t() * K_inv; // Pure rotation (roll,pitch)
 
     //Define the yaw+translation homography according to 3.8 in Wadenbaeck.
-    //Difference: sign of b is inverted.
+    //Difference: sign of b is inverted.s
     cv::Mat_<float> b = -(t1 - R1.t()*R_z*t2);
     cv::Mat_<float> A = R1.t()*R_z;
     cv::Mat_<float> H_trans = K * (A - b*v.t()/d) * K_inv;

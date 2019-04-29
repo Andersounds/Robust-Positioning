@@ -37,7 +37,7 @@ private:
     float gamma;//NECESSARY? Pixel density of camera [pixles/meter]
     std::vector<std::vector<std::string>> validParameters;//The parameters that are valid to use to calculate the simulation camera
     std::vector<std::vector<int>> validConfigurations;      //The configurations of parameters that are valid to set up the complete simulation environment
-    void setBasePose(std::vector<float>,std::vector<float>);                    //Define the base pose of the camera in global coordinate system
+    void setBasePose(void);                    //Define the base pose of the camera in global coordinate system
     cv::Mat getChessboard(int,int,int);     //Creates a chessboard image of specified size
     cv::Mat getXRot(float);            //Defines rotation matrices
     cv::Mat getYRot(float);

@@ -60,22 +60,31 @@ int main(void){
     std::ofstream file_estimated;
 // Init simulation environment
     simulatePose warper;
-    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
-    warper.setParam("z",-1); //En meter i neg z-led (upp)
+
+    //warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
+    cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/gold_red_tiles.jpg",CV_32FC3);
+    //cv::Mat floor8U;
+    //cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
+    warper.setBaseScene(floor);
+    cv::imshow("Chess board",floor);
+    cv::waitKey(0);
+
+
+    warper.setParam("z",-1.5); //En meter i neg z-led (upp)
     warper.setParam("x",0);
-    warper.setParam("y",0);
+    warper.setParam("y",1);
     warper.setParam("yaw",-3.1415/2);//to align UAV with global system
-    warper.setParam("sceneWidth",1);
+    warper.setParam("sceneWidth",2);
     warper.init(0);//Initialize with configuration 0
 
 
 //Create path of camera and save to output file
-    float length = 100;
+    float length = 150;
     //Start out aligned with x-y of global coordinate system
-    std::vector<float> xPath = linSpace(0,0.5,length);
-    std::vector<float> yPath = linSpace(0,0.25,length);
-    std::vector<float> zPath = linSpace(-0.5,-0.5,length);
-    std::vector<float> yawPath = linSpace(0,3.1415,length);//Crashes if this is zero??? or smthing
+    std::vector<float> xPath = linSpace(0,1.5,length);
+    std::vector<float> yPath = linSpace(0,0,length);
+    std::vector<float> zPath = linSpace(-1.5,-1.5,length);
+    std::vector<float> yawPath = linSpace(0,0,length);//Crashes if this is zero??? or smthing
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
     std::vector<std::vector <float>> input{xPath,yPath,zPath,yawPath};
     build_path(input,file_true);
@@ -108,8 +117,8 @@ int main(void){
     int noOfCorners = 500;
     int noOfTracked = 0;//Init
     float maskDir = -1;//to choose mask. init value -1 for whole scene
-    int cols = boxWidth*colsOfBoxes;
-    int rows = boxWidth*rowsOfBoxes;
+    int cols = warper.baseScene.cols;//boxWidth*colsOfBoxes;
+    int rows = warper.baseScene.rows;//boxWidth*rowsOfBoxes;
     cv::Rect_<float> focusArea = FlowField.getFocusArea(cols,rows,100,100);//(cols,rows,size,size)
     cv::Point2f focusOffset(focusArea.x,focusArea.y);
     cv::Mat subPrevFrame;//For finding new corners
@@ -123,8 +132,8 @@ int main(void){
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
-        float roll = 0.1;
-        float pitch = 0.1;//3.1415/3;
+        float roll = 0;
+        float pitch = 0;//3.1415/4;
         float height = 1;//Används bara av odometer
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
         std::vector<float> angles{yawPath[i],pitch,roll};
