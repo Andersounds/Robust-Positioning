@@ -70,10 +70,13 @@ int main(void){
     cv::waitKey(0);*/
 
 
+    /*
     warper.setParam("z",-1); //En meter i neg z-led (upp)
     warper.setParam("x",0);
     warper.setParam("y",0);
     warper.setParam("yaw",-3.1415/2);//To define that global system is aligned with image coordinate system
+    */
+    warper.setParam("d",1);
     warper.setParam("sceneWidth",2);
     warper.init(0);//Initialize with configuration 0
 
@@ -83,8 +86,8 @@ int main(void){
     //Start out aligned with x-y of global coordinate system
     std::vector<float> xPath = linSpace(0,1,length);
     std::vector<float> yPath = linSpace(0,0,length);
-    std::vector<float> zPath = linSpace(-1,-1,length);
-    std::vector<float> yawPath = linSpace(0,3.1514/2,length);//Crashes if this is zero??? or smthing
+    std::vector<float> zPath = linSpace(0,0,length);
+    std::vector<float> yawPath = linSpace(0,3,length);//Crashes if this is zero??? or smthing
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
     std::vector<std::vector <float>> input{xPath,yPath,zPath,yawPath};
     build_path(input,file_true);
@@ -133,7 +136,7 @@ int main(void){
     for(int i=0;i<(int)length;i++){
 //Get new image
         float roll = 0;
-        float pitch = 0.1;//3.1415/10;
+        float pitch = 0;//3.1415/10;
         float height = 1;//Används bara av odometer
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
         std::vector<float> angles{yawPath[i],pitch,roll};
