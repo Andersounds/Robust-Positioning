@@ -164,7 +164,7 @@ int simulatePose::setParam(std::string parameterName,float value){
     }
     else if(parameterName == "x"){
         x_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }
+    }*/
     else if(parameterName == "yaw"){
         yaw_base = value; //Only valid if base plane is horizontal and coplanar with base camera
     }
@@ -173,7 +173,7 @@ int simulatePose::setParam(std::string parameterName,float value){
     }
     else if(parameterName == "roll"){
         roll_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }*/
+    }
     else{
         std::cout << "Parameter name '" << parameterName << "' is not valid. Valid parameter configurations are:" << std::endl;
         std::cout << "Parameter name" << "\t\t" << "Description" << std::endl;
