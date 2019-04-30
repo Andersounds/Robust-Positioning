@@ -250,11 +250,14 @@ int simulatePose::setKMat(void){
  * Finally the getWarpedImage method is called to calculate the corresponding warped view
  */
 cv::Mat simulatePose::uav2BasePose(std::vector<float> angles,std::vector<float> t){
-    cv::Mat out;
+//Define the given coordinates and angles in matrix form
+    float yaw = angles[0];
+    float pitch = angles[1];
+    float roll = angles[2];
+    cv::Mat_<float> R_shifted = R1.t()*getTotRot(yaw,pitch,roll);
+    cv::Mat_<float> t_shifted = vec2CMat(t) - t1;
 
-
-
-
+    cv::Mat out = getWarpedImage(R_shifted,t_shifted);
     return out;
 }
 /*Perform the warping of the image
@@ -296,6 +299,41 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
 
     return out;
 }
+/* Overloaded version of warp perspective that accepts arguments in matrix form
+*/
+cv::Mat simulatePose::getWarpedImage(cv::Mat_<float> R2,cv::Mat_<float> t2){
+    cv::Mat out;
+    if((R2.rows!=3) || (R2.cols!=3) || (t2.rows!=3) || (t2.cols!=1)){
+        std::cout << "Not valid size of pose Mats" << std::endl;
+        return out;
+    }
+    //Define T-matrix according to 4.8 Wadenbaeck
+    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t();
+    //Define Homography according to 4.7. Wadenbaeck. Apply the inverse.
+    // x,y,z,yaw are positive. roll, pitch are negative
+    cv::Mat_<float> H = K *R2*T* K_inv;
+    cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
+    return out;
+}
+/*Gets a vector of float and returns a column vector in Mat_<float> form
+*/
+cv::Mat simulatePose::vec2CMat(std::vector<float> vector){
+    int rows = vector.size();
+    cv::Mat_<float> matrix = cv::Mat_<float>::zeros(rows,1);
+    for(int i=0;i<rows;i++){
+        matrix(i,0) = vector[i];
+    }
+    return matrix;
+}
+/* Define a complete rotation matrix from yaw,pitch,roll
+    R_tot = Rx*Ry*Rz
+    t_rot = R_tot*t
+*/
+cv::Mat simulatePose::getTotRot(float yaw, float pitch, float roll){
+    cv::Mat_<float> R_tot = getXRot(roll)*getYRot(pitch)*getZRot(yaw);
+    return R_tot;
+}
+
 /* Functions for defining roll, pitch, and yaw rotation matrices
  * Increase speed by passing reference and edit in place?
  */
