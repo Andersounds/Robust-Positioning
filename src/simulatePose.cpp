@@ -24,13 +24,14 @@ simulatePose::simulatePose(void){
     cx = 0;
     cy = 0;
     f_p = 0;
-    //Relationship between global coordinate system and base pose
+    //Relationship between global coordinate system and base pose. Default to being completely aligned
     x_base = 0;
     y_base = 0;
     z_base = 0;
     yaw_base  = 0;
     pitch_base= 0;
     roll_base = 0;
+    T = cv::Mat_<float>::eye(3,4);              //Base conversion from UAV frame to camera frame
     //Physical scale variables
     sceneWidth = 0;//Maybe have dafault 1?
     angle = 0;
@@ -243,9 +244,21 @@ int simulatePose::setKMat(void){
     return 1;
 }
 
-/*Returns the warped baseScene.
- * oordinates are to be given ass [yaw,pitch,roll], [z,y,x] of UAV expressed in global coordinate system
- *
+/* Re-calculates the requested UAV coordinates in global coordinate system to corresponding
+ * translation and rotation matrix of the camera as realted to the base pose
+ * Coordinates are to be given ass [yaw,pitch,roll], [z,y,x] of UAV expressed in global coordinate system
+ * Finally the getWarpedImage method is called to calculate the corresponding warped view
+ */
+cv::Mat simulatePose::uav2BasePose(std::vector<float> angles,std::vector<float> t){
+    cv::Mat out;
+
+
+
+
+    return out;
+}
+/*Perform the warping of the image
+ * Input: Coordinate and Rotation matrix of the camera as related to the base pose
  */
 cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float> t){
     cv::Mat out;

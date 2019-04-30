@@ -17,6 +17,7 @@ public:
     int setParam(std::string,float);        //Define parameters one by one. can be given in any order
     int setParam(void);
     int init(int);                          //Initialize physical simulation environment with the specified configuration
+    cv::Mat uav2BasePose(std::vector<float>,std::vector<float>);//Recalculates uav pose to camera pose in relation to base pose
     cv::Mat getWarpedImage(std::vector<float>,std::vector<float>);              //Perform perspective warp of base scene
 private:
     float cx;                               //Pixel offset in x in K mat
@@ -28,7 +29,7 @@ private:
     float yaw_base;                         //Base yaw of camera 1
     float pitch_base;                       //Base pitch of camera 1
     float roll_base;                        //Base roll of camera 1
-    cv::Mat_<float> v;                      //base plane normal. (as expressed in camera 1:s coordinate system)
+    cv::Mat_<float> v;                      //base plane normal. (as expressed in camera 1:s coordinate system) - always same per definition
     float N;                                //Camera resolution in x-direction [pixles]
     float sceneWidth;                       //Scene width in x-direction       [m]
     float angle;                            //Viewing angle of camera in x-direction
