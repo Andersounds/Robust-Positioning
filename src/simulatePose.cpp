@@ -65,16 +65,9 @@ This function will be used to define the relationship between the global coordin
  */
 void simulatePose::setBasePose(void){
     //Base rotation of camera 1. i.e the R matrix of the camera that should achieve the non-distorted base projection
-    cv::Mat_<float> Rz_ = getZRot(yaw_base); //Base rotation of -pi/2 so that x-y are aligned when uav yaw is zero
-    cv::Mat_<float> Ry_ = getYRot(pitch_base);
-    cv::Mat_<float> Rx_ = getXRot(roll_base);
-    R1 = Rx_*Ry_*Rz_;                                       //Set base rotation matrix
+    R1 = getTotRot(yaw_base,pitch_base,roll_base);                                    //Set base rotation matrix
     //Base coordinate of camera 1. i.e the t of the camera that should achieve the non-distorted base projection
-    cv::Mat_<float> t1_ = cv::Mat_<float>::zeros(3,1);
-    t1_(0,0) = x_base;
-    t1_(1,0) = y_base;
-    t1_(2,0) = z_base;
-    t1 = t1_;                                               //Set base coordinates
+    t1 = coord2CMat (x_base,y_base,z_base);
 }
 
 cv::Mat simulatePose::getChessboard(int blockSize,int rowsOfBoxes,int colsOfBoxes){
@@ -255,7 +248,10 @@ cv::Mat simulatePose::uav2BasePose(std::vector<float> angles,std::vector<float> 
     float pitch = angles[1];
     float roll = angles[2];
     cv::Mat_<float> R_shifted = R1.t()*getTotRot(yaw,pitch,roll);
-    cv::Mat_<float> t_shifted = vec2CMat(t) - t1;
+    float x = t[0];
+    float y = t[1];
+    float z = t[2];
+    cv::Mat_<float> t_shifted = coord2CMat(x,y,z) - t1;
 
     cv::Mat out = getWarpedImage(R_shifted,t_shifted);
     return out;
@@ -317,12 +313,11 @@ cv::Mat simulatePose::getWarpedImage(cv::Mat_<float> R2,cv::Mat_<float> t2){
 }
 /*Gets a vector of float and returns a column vector in Mat_<float> form
 */
-cv::Mat simulatePose::vec2CMat(std::vector<float> vector){
-    int rows = vector.size();
-    cv::Mat_<float> matrix = cv::Mat_<float>::zeros(rows,1);
-    for(int i=0;i<rows;i++){
-        matrix(i,0) = vector[i];
-    }
+cv::Mat simulatePose::coord2CMat(float x, float y, float z){
+    cv::Mat_<float> matrix = cv::Mat_<float>::zeros(3,1);
+    matrix(0,0) = x;
+    matrix(1,0) = y;
+    matrix(2,0) = z;
     return matrix;
 }
 /* Define a complete rotation matrix from yaw,pitch,roll

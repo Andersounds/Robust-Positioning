@@ -40,7 +40,7 @@ private:
     std::vector<std::vector<std::string>> validParameters;//The parameters that are valid to use to calculate the simulation camera
     std::vector<std::vector<int>> validConfigurations;      //The configurations of parameters that are valid to set up the complete simulation environment
     void setBasePose(void);                    //Define the base pose of the UAV in global coordinate system
-    cv::Mat vec2CMat(std::vector<float>);   //Vector<float> to column Mat_<float>
+    cv::Mat coord2CMat(float, float, float);   //Vector<float> to column Mat_<float>
     cv::Mat getChessboard(int,int,int);     //Creates a chessboard image of specified size
     cv::Mat getTotRot(float, float, float); //Defines total rotation matrix
     cv::Mat getXRot(float);            //Defines rotation matrices
