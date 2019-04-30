@@ -84,8 +84,8 @@ int main(void){
 //Create path of camera and save to output file
     float length = 150;
     //Start out aligned with x-y of global coordinate system
-    std::vector<float> xPath = linSpace(0,1,length);
-    std::vector<float> yPath = linSpace(0,0,length);
+    std::vector<float> xPath = linSpace(0.2,0.2,length);
+    std::vector<float> yPath = linSpace(0.2,0.2,length);
     std::vector<float> zPath = linSpace(0,0,length);
     std::vector<float> yawPath = linSpace(0,3,length);//Crashes if this is zero??? or smthing
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
@@ -136,7 +136,7 @@ int main(void){
     for(int i=0;i<(int)length;i++){
 //Get new image
         float roll = 0;
-        float pitch = 0;//3.1415/10;
+        float pitch = -0.2;//3.1415/10;
         float height = 1;//Används bara av odometer
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
         std::vector<float> angles{yawPath[i],pitch,roll};

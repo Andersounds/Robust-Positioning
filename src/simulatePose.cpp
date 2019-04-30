@@ -271,30 +271,20 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
     //Define T-matrix according to 4.8 Wadenbaeck
     cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t();
 
-    //NOT FULLY TESTED
-    //Define homography as
-    //cv::Mat_<float> H = K *R_x*R_y*R_z*T* K_inv;
-    //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
-
-//NOT FULLY TESTED smthong really wierd
     //Define Homography according to 4.7. Wadenbaeck. Apply the inverse.
-    //cv::Mat_<float> H = K *R_x*R_y*R_z*T*R_y.t()*R_x.t()* K_inv;
-    //cv::Mat_<float> H = K *R_x*R_y*R_z*T* K_inv;
-    //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
+    // x,y,z,yaw are positive. roll, pitch are negative
+    cv::Mat_<float> H = K *R_x*R_y*R_z*T* K_inv;
+    cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
 
-    //NOT FULLY TESTED
     // Define homography according to 4.7 but no inverse. Instead define it directly
-    //cv::Mat_<float> H = K  *T.inv()*R_x.t()*R_y.t()*R_z.t()* K_inv;
-    //cv::Mat_<float> H = K  *R_x*R_y*T.inv()*R_x.t()*R_y.t()*R_z.t()* K_inv; //
-
     //No inverse. idea: put image coordinates first through zrot, yrot, xrot, then translation No quite sure why inverse though
-    cv::Mat_<float> H = K  *T.inv()*R_x.t()*R_y.t()*R_z.t()* K_inv;
-    cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::WARP_INVERSE_MAP,cv::BORDER_CONSTANT,0);
+    //cv::Mat_<float> H = K  *T.inv()*R_z.t()*R_y.t()*R_x.t()* K_inv;
+    //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::WARP_INVERSE_MAP,cv::BORDER_CONSTANT,0);
 
     return out;
 }
 /* Functions for defining roll, pitch, and yaw rotation matrices
- *
+ * Increase speed by passing reference and edit in place?
  */
 cv::Mat simulatePose::getXRot(float roll){
     float sinX = std::sin(roll);
@@ -307,21 +297,20 @@ cv::Mat simulatePose::getXRot(float roll){
     R_x(2,2) = cosX;
     return R_x;
 }
-
 cv::Mat simulatePose::getYRot(float pitch){
     float sinY = std::sin(pitch);
-    float cosY = std::cos(pitch);//std::sin(-pitch);
+    float cosY = std::cos(pitch);
     cv::Mat_<float> R_y = cv::Mat_<float>::zeros(3,3);
     R_y(0,0) = cosY;
     R_y(0,2) = sinY;
     R_y(1,1) = 1;
-    R_y(2,0) = -sinY; //Rätt?
+    R_y(2,0) = -sinY;
     R_y(2,2) = cosY;
     return R_y;
 }
 cv::Mat simulatePose::getZRot(float yaw){
     float sinZ = std::sin(yaw);
-    float cosZ = std::cos(yaw);//std::sin(-pitch);
+    float cosZ = std::cos(yaw);
     cv::Mat_<float> R_z = cv::Mat_<float>::zeros(3,3);
     R_z(0,0) = cosZ;
     R_z(0,1) = sinZ;
