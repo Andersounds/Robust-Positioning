@@ -26,7 +26,7 @@
 vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T_){
     K=K_;
     K_inv = K.inv();
-    T=T_;
+    T=T_;                                   //Rotation matrix around Z relating UAV with Camera
     // findHomography parameters
     homoGraphyMethod = cv::RANSAC;
     ransacReprojThreshold = 3;
@@ -57,11 +57,19 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
     b_double.convertTo(b,CV_32FC1);
     A_double.convertTo(A,CV_32FC1);
     //Transform the estimated movement from camera frame via UAV frame to global frame
-    cv::Mat_<float> t_d = R*b;//right direction?? R*T*b
+    //cv::Mat_<float> t_d = R*T.t()*b;//right direction?? R*T*b ex: Skattar rörelse av kamera i -y, vilket översätts , T.t() till + x. Detta är i UAV:s koordinatesystem, och måste allstå roteras med R.t() för att bli globalt
+    cv::Mat_<float> t_d = R.t()*T.t()*b;
     cv::Mat_<float> R_d = A;
     //Increment the global Pose
     cv::Mat_<float> t_new = t+t_d;//right direction ?Prob. not
-    cv::Mat_<float> R_new = R_d.t()*R;//right??what i dont know
+    //cv::Mat_<float> R_new = R_d*R;//Strong bias
+    //cv::Mat_<float> R_new = R_d*R_d*R;//This gives almost no bias with chessboard
+    cv::Mat_<float> R_new = R*R_d;
+
+    static float angle_est = 0;
+    angle_est+=std::atan2(A_double(0,1),A_double(0,0));//tan with quadrant checking
+    std::cout << "angle: " << angle_est << std::endl;
+
     //Update pose
     t = t_new;
     R = R_new;
@@ -94,7 +102,7 @@ bool vo::planarHomographyVO::odometry(std::vector<cv::Point2f>& p1,
         return false;
     }
     //Return the valid rotation and translation mats
-    b = -translations[validIndex]; //Maybe flip signs or something? how to express this as camera movement and not scene movement?
+    b = translations[validIndex]/height; //Maybe flip signs or something? how to express this as camera movement and not scene movement?
     A = rotations[validIndex];
     return true;
 }
@@ -246,11 +254,11 @@ int vo::planarHomographyVO::getValidDecomposition(std::vector<cv::Point2f> p_ref
  * NOTE: I could instead directly define a rotation matrix using negative angles -Faster
  */
 cv::Mat_<float> vo::planarHomographyVO::deRotateHomography(cv::Mat_<float>& H_rot, float roll,float pitch){
-    //return H_rot;
+    return H_rot;
     cv::Mat_<float> R_left = deRotMat(roll,pitch); //THIS SHOULD BE CORRECT
     cv::Mat_<float> R_right = R_left.t();
     cv::Mat_<float> H = R_left*H_rot*R_right;
-    return H;
+    //return H;
 }
 /* This method defines a de-rotation matrix by defining rotation with negative angles
  * Standard rotation sequence is Z-Y-X (yaw-pitch-roll)
