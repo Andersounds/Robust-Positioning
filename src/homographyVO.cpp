@@ -32,7 +32,7 @@ vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T
     ransacReprojThreshold = 3;
     maxIters = 2000;
     confidence = 0.995;
-    sanityLimit = 1000;//Limit of sum of squares in insanitycheck.
+    sanityLimit = 10000;//Limit of sum of squares in insanitycheck.
 }
 /*Complete process of odometry. Calls odometry method and updates t and R if possible
  * p1,p2:       Point correspondances (p1 old image, p2 new image)

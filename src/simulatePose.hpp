@@ -11,6 +11,7 @@ public:
     cv::Mat_<float> T;                      //T matrix. Camera orientation as related to UAV orientation
     cv::Mat_<float> R1;                     //Base rotation of CAMERA
     cv::Mat_<float> t1;                     //Base coordinate of CAMERA
+    float d;                                //d in base plane definition.
     simulatePose(void);                     //Constructor that sets default values to attributes
     void setBaseScene(int,int,int);         //Defines default chessboard pattern as base scene
     void setBaseScene(cv::Mat);  //Defines provided mat as base scene (And draws the global coordinate system?)
@@ -20,10 +21,12 @@ public:
     cv::Mat uav2BasePose(std::vector<float>,std::vector<float>);//Recalculates uav pose to camera pose in relation to base pose
     cv::Mat getWarpedImage(std::vector<float>,std::vector<float>);              //Perform perspective warp of base scene
     cv::Mat getWarpedImage(cv::Mat_<float>,cv::Mat_<float>);//Overloaded version with other arguments
+    cv::Mat getXRot(float);            //Defines rotation matrices
+    cv::Mat getYRot(float);
+    cv::Mat getZRot(float);
 private:
     float cx;                               //Pixel offset in x in K mat
     float cy;                               //Pixel offset in y in K mat
-    float d;                                //d in base plane definition. -In this implementation, base plane is horizontal at z=0
     float z_base;                           //Base coordinate of CAMERA 1 in z-direction
     float y_base;                           //Base coordinate of CAMERA 1 in y-direction
     float x_base;                           //Base coordinate of CAMERA 1 in x-direction
@@ -43,9 +46,6 @@ private:
     cv::Mat coord2CMat(float, float, float);   //Vector<float> to column Mat_<float>
     cv::Mat getChessboard(int,int,int);     //Creates a chessboard image of specified size
     cv::Mat getTotRot(float, float, float); //Defines total rotation matrix
-    cv::Mat getXRot(float);            //Defines rotation matrices
-    cv::Mat getYRot(float);
-    cv::Mat getZRot(float);
     int setKMat(void);  //Uses some given parameters? creates a suitable K mat
 };
 //}

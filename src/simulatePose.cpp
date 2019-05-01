@@ -158,13 +158,16 @@ int simulatePose::setParam(std::string parameterName,float value){
     }
     else if(parameterName == "f_p"){
         f_p = value;
-    }
+    }*/
     else if(parameterName == "y"){
         y_base = value; //Only valid if base plane is horizontal and coplanar with base camera
     }
     else if(parameterName == "x"){
         x_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }*/
+    }
+    else if(parameterName == "z"){
+        z_base = value; //Only valid if base plane is horizontal and coplanar with base camera
+    }
     else if(parameterName == "yaw"){
         yaw_base = value; //Only valid if base plane is horizontal and coplanar with base camera
     }
