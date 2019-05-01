@@ -46,7 +46,16 @@ namespace vo{
                         float,float,float,
                         cv::Mat_<double>&,
                         cv::Mat_<double>&);
-
+        /* Updates the global coordinate and rotation from the given b and A matrices
+         *  If the first argument is true (odometry succeeded) then the global position is
+         * updated according to A and b. If not, the UAV is assumed to continue along the current path
+         * TODO: scale the inertia-estimation with the time since last measuremnt so that velocity is assumed constant
+         */
+        void updateGlobalPosition(bool,
+                                    const cv::Mat_<float>&,
+                                    const cv::Mat_<float>&,
+                                    cv::Mat_<float>&,
+                                    cv::Mat_<float>&);
         /* This method projects a set of image plane coordinates via the inverse K-matrix to
          * 3d coordinates in camera frame at z=1
          *

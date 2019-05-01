@@ -143,7 +143,7 @@ cv::Mat colorFrame;//For illustration
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
-        float roll = 0;
+        float roll = 0.1;
         float pitch = 0;//3.1415/10;
         float height = 0.7;//Används bara av odometer
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
@@ -203,8 +203,8 @@ cv::Mat colorFrame;//For illustration
         if(i==0){//If first lap
             cv::waitKey(0);
         }
-        //if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
-        cv::waitKey(0);
+        if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
+        //cv::waitKey(0);
         //Time-shift frames and features
         features = activeFeatures2;
         subFrame.copyTo(subPrevFrame);//Could just shift prevframe and subprevframe would be automatically shifted?

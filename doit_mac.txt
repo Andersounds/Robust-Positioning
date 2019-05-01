@@ -3,7 +3,7 @@
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/objectDetection/detection.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp -o bin/tryIt
 
 #This is for feature based anchors
-#.g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/ORBTrackingSwitch.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp src/trackedObjectClass.cpp -o bin/tryIt
+#g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/ORBTrackingSwitch.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp src/trackedObjectClass.cpp -o bin/tryIt
 
 #OF-VO
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/OF_VO_v2.cpp src/KLT_ORB_Tracker.cpp -o bin/tryIt

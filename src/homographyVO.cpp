@@ -50,30 +50,15 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
     cv::Mat_<double> b_double;//odometry estimation of translation in camera frame
     cv::Mat_<double> A_double;//odometry estimation of rotation in camera frame
     bool success = odometry(p1,p2,roll,pitch,height,b_double,A_double);
-    if(!success){return false;}
     //Convert to float
     cv::Mat_<float> b;//odometry estimation of translation in camera frame
     cv::Mat_<float> A;
     b_double.convertTo(b,CV_32FC1);
     A_double.convertTo(A,CV_32FC1);
-    //Transform the estimated movement from camera frame via UAV frame to global frame
-    //cv::Mat_<float> t_d = R*T.t()*b;//right direction?? R*T*b ex: Skattar rörelse av kamera i -y, vilket översätts , T.t() till + x. Detta är i UAV:s koordinatesystem, och måste allstå roteras med R.t() för att bli globalt
-    cv::Mat_<float> t_d = R.t()*T.t()*b;
-    cv::Mat_<float> R_d = A;
-    //Increment the global Pose
-    cv::Mat_<float> t_new = t+t_d;//right direction ?Prob. not
-    //cv::Mat_<float> R_new = R_d*R;//Strong bias
-    //cv::Mat_<float> R_new = R_d*R_d*R;//This gives almost no bias with chessboard
-    cv::Mat_<float> R_new = R*R_d;
 
-    static float angle_est = 0;
-    angle_est+=std::atan2(A_double(0,1),A_double(0,0));//tan with quadrant checking
-    std::cout << "angle: " << angle_est << std::endl;
+    updateGlobalPosition(success,A,b,t,R);
 
-    //Update pose
-    t = t_new;
-    R = R_new;
-    return true;
+    return success;
 }
 /* Performs the odometry itself
  * Estimates camera movement between frames as expressed in the coordinate system of the camera of frame 1
@@ -106,8 +91,33 @@ bool vo::planarHomographyVO::odometry(std::vector<cv::Point2f>& p1,
     A = rotations[validIndex];
     return true;
 }
-
-
+/* Updates the global coordinate and rotation from the given b and A matrices
+ *  If the first argument is true (odometry succeeded) then the global position is
+ * updated according to A and b. If not, the UAV is assumed to continue along the current path
+ * TODO: scale the inertia-estimation with the time since last measuremnt so that velocity is assumed constant
+ */
+void vo::planarHomographyVO::updateGlobalPosition(bool VOSuccess,
+                            const cv::Mat_<float>& A,
+                            const cv::Mat_<float>& b,
+                            cv::Mat_<float>& t,
+                            cv::Mat_<float>& R){
+    static cv::Mat_<float> R_d = cv::Mat_<float>::eye(3,3);     //Instantaneous Rotation-difference
+    static cv::Mat_<float> t_d = cv::Mat_<float>::zeros(3,1);   //instantaneous translation-difference
+    static float timeStamp = 0;
+    cv::Mat_<float> t_new = cv::Mat_<float>::zeros(3,1);
+    if(VOSuccess){//Assign the new values to the static variables
+        t_d = R.t()*T.t()*b; //Convert translation b from camera frame to UAV frame to global frame
+        R_d = A;             //Assume only rotation around z and uav and camera frame is aligned in z. No conversion needed
+        t_new = t+t_d;//No inertia in translation, only rotation
+        t = t_new;
+    }
+    //Increment
+    //t_new = t+t_d;
+    cv::Mat_<float> R_new = R_d*R;
+    //Update pose
+    //t = t_new;
+    R = R_new;
+}
 /* Convenience method to print out decomposition returns
 */
 void vo::planarHomographyVO::printmats(std::vector<cv::Mat> rotations,
