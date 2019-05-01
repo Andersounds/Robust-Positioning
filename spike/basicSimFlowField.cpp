@@ -109,26 +109,13 @@ int main(void){
     std::vector<std::vector <float>> input{xPath,yPath,zPath,yawPath};
     build_path(input,file_true);
     file_true.close();
-//Init flowField object
-    //settings for corner finder
-    double qualityLevel= 0.3;//0.5;
-    double minDistance = 10;//20
-    cv::Mat mask;
-    int blockSize = 4;//3;
-    double k = 0.04;
-    bool useHarris = false;
-    //settings for KLT tracker
-    int windowSize = 20;//51;
-    int maxLevel = 2;
-    cv::TermCriteria termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 20, 0.01);
-    int flags = 0;//No flag. Use normal L2 norm error
-    //Init object and set settings
+//Init flowField object with default settings
     featureVO FlowField;
-    FlowField.setFeatureSettings(qualityLevel,minDistance,blockSize,useHarris,k);
-    FlowField.setKLTSettings(windowSize,maxLevel,termcrit,flags);
+    FlowField.setFeatureDefaultSettings();
+    FlowField.setKLTDefaultSettings();
 //Init odometry object
     cv::Mat_<float> K = warper.K;
-    cv::Mat_<float> T = cv::Mat_<float>::zeros(3,3);//OBSOBSOBSOSBOSBSOBSOSBOSBSOSBOSBOBS
+    cv::Mat_<float> T = warper.getZRot(-3.1415/2);//UAV frame is x forward, camera frame is -y forward
     std::cout<< "OBS - Make T matrix correct" << std::endl;
     vo::planarHomographyVO odometer(K,T);
 //Set some parameters that are used trhoughout the program
@@ -143,8 +130,7 @@ int main(void){
     cv::Point2f focusOffset(focusArea.x,focusArea.y);
     cv::Mat subPrevFrame;//For finding new corners
 //Initial values of UAV position
-    cv::Mat_<float> R = warper.getZRot(yawPath[0]-3.1415/2);
-
+    cv::Mat_<float> R = warper.getZRot(yawPath[0]);
     cv::Mat_<float> t = cv::Mat_<float>::zeros(3,1);
     t(0,0) = xPath[0];//-1.299;
     t(1,0) = yPath[0];//-3.398;
@@ -217,8 +203,8 @@ cv::Mat colorFrame;//For illustration
         if(i==0){//If first lap
             cv::waitKey(0);
         }
-        //if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
-        cv::waitKey(0);
+        if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
+        //cv::waitKey(0);
         //Time-shift frames and features
         features = activeFeatures2;
         subFrame.copyTo(subPrevFrame);//Could just shift prevframe and subprevframe would be automatically shifted?

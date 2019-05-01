@@ -35,11 +35,25 @@ public:
         useHarris = useHarris_;
         k = k_;
     }
+    void setFeatureDefaultSettings(void){
+        qualityLevel= 0.3;//0.5;
+        minDistance = 10;//20
+        blockSize = 4;//3;
+        k = 0.04;
+        useHarris = false;
+
+    }
     void setKLTSettings(int windowSize_, int maxLevel_,cv::TermCriteria termcrit_,int flags_){
         windowSize = windowSize_;
         maxLevel = maxLevel_;
         termcrit = termcrit_;
         flags = flags_;
+    }
+    void setKLTDefaultSettings(void){
+        flags = 0;//No flag. Use normal L2 norm error
+        windowSize = 20;//51;
+        maxLevel = 2;
+        termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 20, 0.01);
     }
     // Do this with a static mat that is shifted? so each time just supply the new frame?
     void trackKLT(cv::Mat prevFrame, cv::Mat frame,std::vector<cv::Point2f> corners,std::vector<cv::Point2f>& trackedCorners, std::vector<uchar>& status,std::vector<float>& errors){
