@@ -87,7 +87,7 @@ bool vo::planarHomographyVO::odometry(std::vector<cv::Point2f>& p1,
         return false;
     }
     //Return the valid rotation and translation mats
-    b = translations[validIndex]/height; //Maybe flip signs or something? how to express this as camera movement and not scene movement?
+    b = translations[validIndex]*height; //Maybe flip signs or something? how to express this as camera movement and not scene movement?
     A = rotations[validIndex];
     return true;
 }
@@ -108,14 +108,14 @@ void vo::planarHomographyVO::updateGlobalPosition(bool VOSuccess,
     if(VOSuccess){//Assign the new values to the static variables
         t_d = R.t()*T.t()*b; //Convert translation b from camera frame to UAV frame to global frame
         R_d = A;             //Assume only rotation around z and uav and camera frame is aligned in z. No conversion needed
-        t_new = t+t_d;//No inertia in translation, only rotation
-        t = t_new;
+        //t_new = t+t_d;//No inertia in translation, only rotation
+        //t = t_new;
     }
     //Increment
-    //t_new = t+t_d;
+    t_new = t+t_d;
     cv::Mat_<float> R_new = R_d*R;
     //Update pose
-    //t = t_new;
+    t = t_new;
     R = R_new;
 }
 /* Convenience method to print out decomposition returns

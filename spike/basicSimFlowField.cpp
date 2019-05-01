@@ -16,6 +16,14 @@ This code is a basic stream of sim chessboard warped images that
 also extracts and draws the flowfield
 */
 
+/*
+Issue:
+VO algorithm performs MUCH better when tracked features are simply thrown away every frame.
+    Is there a bug? can I handle it somehow?
+
+*/
+
+
 
 /* Draws arrows between the point correspondances and scale them
  *
@@ -25,7 +33,7 @@ void drawArrows(cv::Mat img,cv::Mat& outputImg,std::vector<cv::Point2f> features
     std::vector<cv::Point2f>::iterator it2 = features2.begin();
     while(it1!=features1.end()){
         cv::Point2f from = *it1 + offset;
-        cv::Point2f to = (*it2 - from)*scale + from + offset;
+        cv::Point2f to = (*it2 - *it1)*scale + *it1 + offset;
         cv::arrowedLine(outputImg,from,to,CV_RGB(200,50,0),2,cv::LINE_8,0,0.1);
         it1++;
         it2++;
@@ -66,12 +74,12 @@ int main(void){
 // Init simulation environment
     simulatePose warper;
 
-    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
-/*cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",CV_32FC3);
+//    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
+cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",CV_32FC3);
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
-*/
+
 /*
     cv::imshow("Chess board",floor);
     cv::waitKey(0);
@@ -113,7 +121,11 @@ int main(void){
     FlowField.setFeatureDefaultSettings();
     FlowField.setKLTDefaultSettings();
 //Init odometry object
-    cv::Mat_<float> K = warper.K;
+    cv::Mat_<float> K;
+    warper.K.copyTo(K);//Can not assign with = as they then refer to same object. edit one edits the other
+//Edit K matrix to work with image input of RoI-size
+    K(0,2) = 65;
+    K(1,2) = 65;
     cv::Mat_<float> T = warper.getZRot(-3.1415/2);//UAV frame is x forward, camera frame is -y forward
     std::cout<< "OBS - Make T matrix correct" << std::endl;
     vo::planarHomographyVO odometer(K,T);
@@ -129,7 +141,7 @@ int main(void){
 //Set some parameters that are used trhoughout the program
 //and initialize some variables on bottom of stack
     std::vector<cv::Point2f> features; //The vector that keeps all the current features
-    int noOfCorners = 500;
+    int noOfCorners = 30;
     int noOfTracked = 0;//Init
     float maskDir = -1;//to choose mask. init value -1 for whole scene
     int cols = warper.baseScene.cols;//boxWidth*colsOfBoxes;
@@ -156,7 +168,7 @@ cv::Mat colorFrame;//For illustration
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
 //Process image...
         cv::Mat subFrame = frame(focusArea);
-        if(noOfTracked<=14){//if(noOfTracked<=noOfCorners*0.7){
+        if(noOfTracked<=28){//if(noOfTracked<=noOfCorners*0.7){
             int noOfNew = noOfCorners-noOfTracked;
             std::vector<cv::Point2f> newFeatures;
             cv::Point2f dir(0,0);
@@ -196,7 +208,7 @@ cv::Mat colorFrame;//For illustration
         //Illustrate
         rawFrame.copyTo(colorFrame);
         //cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-        float scale = 3;
+        float scale = 10;
         drawArrows(colorFrame,colorFrame,activeFeatures1,activeFeatures2,scale,focusOffset);
         //drawFeatures(colorFrame, features, colorFrame, CV_RGB(2,200,0));
         cv::rectangle(colorFrame,focusArea,CV_RGB(255,0,0),2,cv::LINE_8,0);
@@ -207,9 +219,12 @@ cv::Mat colorFrame;//For illustration
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
         //cv::waitKey(0);
         //Time-shift frames and features
-        features = activeFeatures2;
-        subFrame.copyTo(subPrevFrame);//Could just shift prevframe and subprevframe would be automatically shifted?
+        //features = activeFeatures2;
 
+        features.clear();//These two lines are here because the algorithm performs much better when features are just thorwn away and found again
+        noOfTracked = 0;
+
+        subFrame.copyTo(subPrevFrame);//Could just shift prevframe and subprevframe would be automatically shifted?
     }
     return 1;
 }

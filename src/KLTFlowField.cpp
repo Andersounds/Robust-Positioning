@@ -5,6 +5,13 @@ This is a class used to extract a flow field from an image sequance
 Refactor this to h and c files
 */
 
+/*
+TODO:
+
+Issues:
+    - How to not find features that are already tracked??
+*/
+
 class featureVO{
 public:
     // Good features to track parameters
@@ -41,7 +48,7 @@ public:
         blockSize = 4;//3;
         k = 0.04;
         useHarris = false;
-
+        std::cout << "-----Open issue with Flowfield: features are lost every other frame" << std::endl;
     }
     void setKLTSettings(int windowSize_, int maxLevel_,cv::TermCriteria termcrit_,int flags_){
         windowSize = windowSize_;
@@ -117,7 +124,8 @@ public:
         int counter = 0;
         while(statusIt!=status.end()){
             if(*statusIt){//If feature is active
-                newFeatures.push_back(*featureIt + offset);
+                //newFeatures.push_back(*featureIt + offset);
+                newFeatures.push_back(*featureIt);
                 counter++;
             }
             statusIt++;

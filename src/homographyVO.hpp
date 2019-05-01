@@ -2,6 +2,19 @@
 #define HOMOGRAPHYVO_H
 /*
     This is first out-of-spike version of planar homography VO method
+
+    Issues:
+        - How should de-rotation be performed? Main idea is to use IMU data to calculate Rx,Ry, and
+            use them to de-rotate with.
+            -Option one is to apply them to the complete homography matrix
+                and thus obtain a cleaner version of H including only Rz and t. But does this actually work?
+            -Option two is to de-rotate the actual flow field before even calculating the homography
+                This would presumably be achieved by applying a homography transformation by perspectivetransform
+                maybe simply matrix multiplication. But will the angle scaling be handled then?? how to compensate?
+            -Option three is to actually move the region of interest to always look down. Have not thought this through
+                but could be an approach. Will the flow field be trackable over changing RoI positions?
+        - In any case. the K matrix could be expressed in terms of the RoI alone. only the cx,cy should change
+            Before any illustration is done, the coordinates are shifted back to full image coordinates.
 */
 
 namespace vo{
