@@ -20,12 +20,12 @@ also extracts and draws the flowfield
 /* Draws arrows between the point correspondances and scale them
  *
  */
-void drawArrows(cv::Mat img,cv::Mat& outputImg,std::vector<cv::Point2f> features1,std::vector<cv::Point2f> features2,float scale){
+void drawArrows(cv::Mat img,cv::Mat& outputImg,std::vector<cv::Point2f> features1,std::vector<cv::Point2f> features2,float scale, cv::Point2f offset){
     std::vector<cv::Point2f>::iterator it1 = features1.begin();
     std::vector<cv::Point2f>::iterator it2 = features2.begin();
     while(it1!=features1.end()){
-        cv::Point2f from = *it1;
-        cv::Point2f to = (*it2 - from)*scale + from;
+        cv::Point2f from = *it1 + offset;
+        cv::Point2f to = (*it2 - from)*scale + from + offset;
         cv::arrowedLine(outputImg,from,to,CV_RGB(200,50,0),2,cv::LINE_8,0,0.1);
         it1++;
         it2++;
@@ -143,7 +143,7 @@ cv::Mat colorFrame;//For illustration
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
-        float roll = 0.1;
+        float roll = 0;
         float pitch = 0;//3.1415/10;
         float height = 0.7;//Används bara av odometer
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
@@ -174,6 +174,7 @@ cv::Mat colorFrame;//For illustration
         std::vector<cv::Point2f> activeFeatures1,activeFeatures2;
         noOfTracked = FlowField.extractActiveFeatures(features,status,activeFeatures1,focusOffset);
         FlowField.extractActiveFeatures(updatedFeatures,status,activeFeatures2,focusOffset);
+        std::cout << "Features size: " << features.size() << std::endl;
     //At this point the flow field is retrieved as point correspondeances activeFeatures1, activeFeatures2 given in whole image coordinate system
 
 
@@ -196,7 +197,7 @@ cv::Mat colorFrame;//For illustration
         rawFrame.copyTo(colorFrame);
         //cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
         float scale = 3;
-        drawArrows(colorFrame,colorFrame,activeFeatures1,activeFeatures2,scale);
+        drawArrows(colorFrame,colorFrame,activeFeatures1,activeFeatures2,scale,focusOffset);
         //drawFeatures(colorFrame, features, colorFrame, CV_RGB(2,200,0));
         cv::rectangle(colorFrame,focusArea,CV_RGB(255,0,0),2,cv::LINE_8,0);
         cv::imshow("Chess board", colorFrame);
