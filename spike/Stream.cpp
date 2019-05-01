@@ -1,8 +1,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <unistd.h> //For sleep
-#include "../src/VisPos.cpp"
-#include "../src/videoStream.cpp"
+#include "../src/videoStream.hpp"
 #include "../src/argumentParser.cpp"
 
 using namespace cv;
