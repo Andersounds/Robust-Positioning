@@ -8,9 +8,9 @@ public:
     cv::Mat baseScene;
     cv::Mat_<float> K;                      //K mat that satisfies specifications
     cv::Mat_<float> K_inv;                  //Inverse of K mat that satisfies specifications
-    cv::Mat_<float> T;                      //T matrix. Camera orientation as related to UAV orientation
     cv::Mat_<float> R1;                     //Base rotation of CAMERA
     cv::Mat_<float> t1;                     //Base coordinate of CAMERA
+    cv::Mat_<float> T_z;                    //T matrix. Camera orientation as related to UAV orientation
     float d;                                //d in base plane definition.
     simulatePose(void);                     //Constructor that sets default values to attributes
     void setBaseScene(int,int,int);         //Defines default chessboard pattern as base scene

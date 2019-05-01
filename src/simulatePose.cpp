@@ -15,8 +15,8 @@ This class generates a visual simulation environment to evaluate VO-algorithm
         Example: Camera coordinate t and rotation R, with focal length f (or wide angle) gives undistorted projection
     The object the constructs the camera K that fulfills the specifications
 -   For each new physical camera coordinate and pose [m],[rad], the object calculates the corresponding image warp
-TODO:   -Let user define general global coordinate at base scene
-        -
+TODO:   -Let user define general global coordinate at base scene DONE
+        -Relate UAV to camera pose with T matrix. needed?
 */
 simulatePose::simulatePose(void){
     //Variables for definition of K matrix
@@ -31,7 +31,7 @@ simulatePose::simulatePose(void){
     yaw_base  = 0;
     pitch_base= 0;
     roll_base = 0;
-    T = cv::Mat_<float>::eye(3,4);              //Base conversion from UAV frame to camera frame
+    T_z = cv::Mat_<float>::eye(3,3);              //Base conversion from UAV frame to camera frame PURE ROTATION
     //Physical scale variables
     sceneWidth = 0;//Maybe have dafault 1?
     angle = 0;

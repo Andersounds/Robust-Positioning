@@ -66,26 +66,22 @@ int main(void){
 // Init simulation environment
     simulatePose warper;
 
-    //warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
-    cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",CV_32FC3);
+    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
+/*cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",CV_32FC3);
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
-    /*cv::imshow("Chess board",floor);
-    cv::waitKey(0);*/
+*/
+/*
+    cv::imshow("Chess board",floor);
+    cv::waitKey(0);
+*/
 
-
-    /*
-    warper.setParam("z",-1); //En meter i neg z-led (upp)
-    warper.setParam("x",0);
-    warper.setParam("y",0);
-    warper.setParam("yaw",-3.1415/2);//To define that global system is aligned with image coordinate system
-    */
     warper.setParam("d",1);             //Camera in base pose is 1 m from scene
-    warper.setParam("sceneWidth",2.5);    //Scenewidth is 2m
+    warper.setParam("sceneWidth",3);    //Scenewidth is 2m
     warper.setParam("yaw",-3.1415/2);   // Camera is rotated 90 deg cc in base pose
-    warper.setParam("x",1);         //Set global origin at (-x,-y) from basepose
-    warper.setParam("y",0.5);
+    warper.setParam("x",1.5);         //Set global origin at (-x,-y) from basepose
+    warper.setParam("y",0.75);
     warper.setParam("z",-warper.d); //Set scene in xy plane at z=0
     warper.init(0);//Initialize with configuration 0
 
@@ -96,19 +92,22 @@ int main(void){
 /*
     float length = 150;
     std::vector<float> xPath = linSpace(0,2,length);
-    std::vector<float> yPath = linSpace(0,1,length);
+    std::vector<float> yPath = linSpace(0,0,length);
 */
+
     #include "testPath.cpp"
     float length = xPath.size();
-    std::vector<float> zPath = linSpace(-0.7,-0.7,length);
+
     std::vector<float> yawPath = xPath;
-    //std::vector<float> yawPath = linSpace(0,0,length);
+
+    std::vector<float> zPath = linSpace(-0.7,-0.7,length);
 
 
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
     std::vector<std::vector <float>> input{xPath,yPath,zPath,yawPath};
     build_path(input,file_true);
     file_true.close();
+
 //Init flowField object with default settings
     featureVO FlowField;
     FlowField.setFeatureDefaultSettings();
@@ -118,6 +117,15 @@ int main(void){
     cv::Mat_<float> T = warper.getZRot(-3.1415/2);//UAV frame is x forward, camera frame is -y forward
     std::cout<< "OBS - Make T matrix correct" << std::endl;
     vo::planarHomographyVO odometer(K,T);
+    //Initial values of UAV position
+    //cv::Mat_<float> R = warper.getZRot(yawPath[0]);
+    cv::Mat_<float> R = warper.getZRot(0);
+    cv::Mat_<float> t = cv::Mat_<float>::zeros(3,1);
+    t(0,0) = xPath[0];//-1.299;
+    t(1,0) = yPath[0];//-3.398;
+    t(2,0) = zPath[0];// 1.664;
+
+
 //Set some parameters that are used trhoughout the program
 //and initialize some variables on bottom of stack
     std::vector<cv::Point2f> features; //The vector that keeps all the current features
@@ -129,12 +137,6 @@ int main(void){
     cv::Rect_<float> focusArea = FlowField.getFocusArea(cols,rows,130,130);//(cols,rows,size,size)
     cv::Point2f focusOffset(focusArea.x,focusArea.y);
     cv::Mat subPrevFrame;//For finding new corners
-//Initial values of UAV position
-    cv::Mat_<float> R = warper.getZRot(yawPath[0]);
-    cv::Mat_<float> t = cv::Mat_<float>::zeros(3,1);
-    t(0,0) = xPath[0];//-1.299;
-    t(1,0) = yPath[0];//-3.398;
-    t(2,0) = zPath[0];// 1.664;
 
 
 cv::Mat colorFrame;//For illustration
@@ -178,11 +180,9 @@ cv::Mat colorFrame;//For illustration
 
         //std::cout << t(0,0)<< ", "<<t(1,0)<< ", "<<t(2,0)<<"; ";
 
-
-
         bool odometerSuccess = odometer.process(activeFeatures1,activeFeatures2,roll,pitch,height,t,R);
         float z_sin = R(0,1);
-        float zAngle_sin = std::asin(R(0,1));
+        float zAngle_sin = std::atan2(R(0,1),R(0,0));//tan with quadrant checking
 
 
         //Write to file
@@ -203,8 +203,8 @@ cv::Mat colorFrame;//For illustration
         if(i==0){//If first lap
             cv::waitKey(0);
         }
-        if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
-        //cv::waitKey(0);
+        //if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
+        cv::waitKey(0);
         //Time-shift frames and features
         features = activeFeatures2;
         subFrame.copyTo(subPrevFrame);//Could just shift prevframe and subprevframe would be automatically shifted?
