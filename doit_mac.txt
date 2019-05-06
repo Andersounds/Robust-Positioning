@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ "$#" -eq 0 ];then
+	echo Give the main file name as argument in order to compile
+	exit 0
+fi
+
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/objectDetection/detection.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp -o bin/tryIt
 
 #This is for feature based anchors
@@ -14,12 +19,34 @@
 #Generate and show test dataset
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimStream.cpp -o bin/tryIt
 
-#KLT flow field with test set
-#g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimFlowField.cpp src/homographyVO.cpp -o bin/flowField
+if [ ”$1” = ”basicStream” ];then
+	#Just basic stream
+	echo Compiling basicStream
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicStream.cpp src/videoStream.cpp -o bin/basicStream
+	echo Run with command ./bin/basicStream ”streamMode”
+fi
 
-#KLT flow field with test set. version 2 tomography
-g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimFlowField.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/flowField
+if [ ”$1” = ”basicSimFlowField” ];then
+	#KLT flow field with test set. version 2 tomography
+	echo Compiling basicSimFlowField
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimFlowField.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/flowField
+	echo Run with command .bin/flowField
+fi
 
+if [ ”$1” = ”basicGimLee” ];then
+	#KLT flow field with test set. version 2 tomography
+	echo Compiling basicGimLee streamer
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicGimLee.cpp -o bin/basicGimLee
+	echo Run with command ./bin/basicGimLee
+
+fi
+if [ ”$1” = ”basicAruco” ];then
+	#KLT flow field with test set. version 2 tomography
+	echo Compiling  basic Aruco with streamer
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicAruco.cpp src/videoStream.cpp -o bin/basicAruco
+	echo Run with command ./bin/basicAruco -mode-
+
+fi
 
 
 #Just stream images and data from gimlee
@@ -37,3 +64,6 @@ g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimFlowField
 #debug:
 #lldb ./bin/tryIt 3
 #compile flag -ggdb
+
+
+echo done
