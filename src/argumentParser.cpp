@@ -19,7 +19,7 @@ int argumentParser(int argc, char** argv, streamArguments& arguments){
     //                        "2. (rpi cam)",
     //                        "3. Dataset stream with hardcoded path/[<specified path>]"};
 
-
+    if(argc==1){std::cout << "Not enough input arguments. please state stream mode (1,2,3)" << std::endl; return 0;}
   arguments.datasetPath = "";
   arguments.streamMode = std::stoi(argv[1]);
   arguments.cam = 0;
