@@ -54,10 +54,13 @@ public:
                 cv::Rect2f roi = cv::Rect2f(x,y,h,h);
                 double response;
                 cv::Point2d flow = cv::phaseCorrelate(src1_32C1(roi), src2_32C1(roi),hann,&response);
-                if(response<thresh){
-                    std::cout << "Too low thresh" <<std::endl;return 0;}
                 cv::Point2f center = cv::Point2f(x+h/2,y+h/2);
                 cv::Point2f flow32 = cv::Point2f((float)flow.x,(float)flow.y) + center;
+                if(response<thresh){
+                    std::cout << "Too low thresh" <<std::endl;
+                    points1.clear();//Clear them so that VO does not process trash data
+                    points2.clear();
+                    return 0;}
                 points1.push_back(center);                                      //Add the center coordinate of the current ROI
                 points2.push_back(flow32);                                      //Add the corresponding flow vector
             }
