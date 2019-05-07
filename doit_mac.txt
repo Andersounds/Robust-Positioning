@@ -47,6 +47,13 @@ if [ ”$1” = ”basicAruco” ];then
 	echo Run with command ./bin/basicAruco -mode-
 
 fi
+#################  Generate a 2d Aruco simulation scene
+if [ ”$1” = ”generateArucoScene” ];then
+	echo Compiling  simulation ArUco scene
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/generateArucoScene.cpp src/videoStream.cpp -o bin/arucoScene
+	echo Run with command ./bin/arucoScene -mode-
+
+fi
 
 
 #Just stream images and data from gimlee
