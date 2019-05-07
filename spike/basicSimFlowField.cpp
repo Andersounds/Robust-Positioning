@@ -221,8 +221,8 @@ cv::Mat colorFrame;//For illustration
         //Time-shift frames and features
         //features = activeFeatures2;
 
-        features.clear();//These two lines are here because the algorithm performs much better when features are just thorwn away and found again
-        noOfTracked = 0;
+        features.clear(); // These two lines are here because the algorithm performs much better when features are just thorwn away and found again
+        noOfTracked = 0;  // WHen timing manually it is actually  a tiny bit faster. probably because the copying takes time.
 
         subFrame.copyTo(subPrevFrame);//Could just shift prevframe and subprevframe would be automatically shifted?
     }
