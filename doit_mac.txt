@@ -25,7 +25,7 @@ if [ ”$1” = ”basicStream” ];then
 	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicStream.cpp src/videoStream.cpp -o bin/basicStream
 	echo Run with command ./bin/basicStream ”streamMode”
 fi
-
+################# Simulation with virtual scene and VO algorithm using KLRT flow running
 if [ ”$1” = ”basicSimFlowField” ];then
 	#KLT flow field with test set. version 2 tomography
 	echo Compiling basicSimFlowField
@@ -40,8 +40,8 @@ if [ ”$1” = ”basicGimLee” ];then
 	echo Run with command ./bin/basicGimLee
 
 fi
+################# Aruco tracker with normal videostream
 if [ ”$1” = ”basicAruco” ];then
-	#KLT flow field with test set. version 2 tomography
 	echo Compiling  basic Aruco with streamer
 	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicAruco.cpp src/videoStream.cpp -o bin/basicAruco
 	echo Run with command ./bin/basicAruco -mode-
@@ -55,6 +55,13 @@ if [ ”$1” = ”generateArucoScene” ];then
 
 fi
 
+################# Simulation with virtual scene and VO algorithm using Correlationflow running
+if [ ”$1” = ”basicSimCorrField” ];then
+	#KLT flow field with test set. version 2 tomography
+	echo Compiling basicSimCorrField
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimCorrField.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/corrField
+	echo Run with command ./bin/corrField
+fi
 
 #Just stream images and data from gimlee
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicGimLee.cpp -o bin/gimlee
