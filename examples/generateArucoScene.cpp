@@ -106,7 +106,7 @@ std::vector<float> sequence(float start,float step,float max){
 }
 int main(int argc, char** argv){
     // Read base scene image
-    std::string scenePath = "/Users/Fredrik/Datasets/FloorTextures/gold_red_tiles.jpg";
+    std::string scenePath = "/Users/Fredrik/Datasets/FloorTextures/wood-floor-pattern-calculator-ideas-photos_771567.jpg";
     cv::Mat baseScene = cv::imread(scenePath,cv::IMREAD_COLOR);     //Read the scene image as 8uC3
 
 
@@ -146,7 +146,7 @@ int main(int argc, char** argv){
     }
 
     createArucoScene(baseScene, sceneWidth, cv::aruco::DICT_4X4_50,markers);
-    std::string filename = "/Users/Fredrik/Datasets/FloorTextures/test1.png";
+    std::string filename = "/Users/Fredrik/Datasets/FloorTextures/test2.png";
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_PNG_STRATEGY_DEFAULT);
     cv::imwrite(filename,baseScene,compression_params);
