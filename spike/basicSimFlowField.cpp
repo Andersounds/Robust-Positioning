@@ -71,14 +71,14 @@ int main(void){
 // Init simulation environment
     simulatePose warper;
 
-//    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
+    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
 //cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",cv::IMREAD_COLOR);
 //cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv::IMREAD_COLOR);
-cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv::IMREAD_REDUCED_COLOR_2);
+/*cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv::IMREAD_REDUCED_COLOR_2);
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
-
+*/
 /*
     cv::imshow("Chess board",floor);
     cv::waitKey(0);
@@ -104,11 +104,24 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv:
 */
 
     #include "testPath.cpp"
+    //xmax ca 1.9
+    std::vector<float> yawPath =xPath;
+    float pathScale = 1.8;
+    std::vector<float>::iterator xIt = xPath.begin();
+    std::vector<float>::iterator yIt = yPath.begin();
+
+    while(xIt != xPath.end()){
+            *xIt*=pathScale;
+            *yIt*=pathScale;
+
+            xIt++;
+            yIt++;
+    }
    float length = xPath.size();
 
-    std::vector<float> yawPath = linSpace(0,3.15,length);//xPath;
 
-    std::vector<float> zPath = linSpace(-0.7,-0.7,length);
+
+    std::vector<float> zPath = linSpace(-1,-1,length);
 
 
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
@@ -124,8 +137,8 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv:
     cv::Mat_<float> K;
     warper.K.copyTo(K);//Can not assign with = as they then refer to same object. edit one edits the other
 //Edit K matrix to work with image input of RoI-size
-    K(0,2) = 65;
-    K(1,2) = 65;
+    K(0,2) = 75;
+    K(1,2) = 75;
     cv::Mat_<float> T = warper.getZRot(-3.1415/2);//UAV frame is x forward, camera frame is -y forward
     vo::planarHomographyVO odometer(K,T);
     //Initial values of UAV position
@@ -145,7 +158,7 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv:
     float maskDir = -1;//to choose mask. init value -1 for whole scene
     int cols = warper.baseScene.cols;//boxWidth*colsOfBoxes;
     int rows = warper.baseScene.rows;//boxWidth*rowsOfBoxes;
-    cv::Rect_<float> focusArea = FlowField.getFocusArea(cols,rows,130,130);//(cols,rows,size,size)
+    cv::Rect_<float> focusArea = FlowField.getFocusArea(cols,rows,150,150);//(cols,rows,size,size)
     cv::Point2f focusOffset(focusArea.x,focusArea.y);
     cv::Mat subPrevFrame;//For finding new corners
 
@@ -156,7 +169,7 @@ cv::Mat colorFrame;//For illustration
 //Get new image
         float roll = 0;
         float pitch = 0;//3.1415/10;
-        float height = 0.7;//Används bara av odometer
+        float height = 1;//Används bara av odometer
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
 
         //std::cout << "Coordinates true: "<< trueCoordinate[0] <<", " << trueCoordinate[1] << ", "<< trueCoordinate[2] << std::endl;
@@ -219,10 +232,10 @@ cv::Mat colorFrame;//For illustration
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
         //cv::waitKey(0);
         //Time-shift frames and features
-        //features = activeFeatures2;
+        features = activeFeatures2;
 
-        features.clear(); // These two lines are here because the algorithm performs much better when features are just thorwn away and found again
-        noOfTracked = 0;  // WHen timing manually it is actually  a tiny bit faster. probably because the copying takes time.
+        //features.clear(); // These two lines are here because the algorithm performs much better when features are just thorwn away and found again
+        //noOfTracked = 0;  // WHen timing manually it is actually  a tiny bit faster. probably because the copying takes time.
 
         subFrame.copyTo(subPrevFrame);//Could just shift prevframe and subprevframe would be automatically shifted?
     }

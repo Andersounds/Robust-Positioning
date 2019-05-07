@@ -106,7 +106,7 @@ std::vector<float> sequence(float start,float step,float max){
 }
 int main(int argc, char** argv){
     // Read base scene image
-    std::string scenePath = "/Users/Fredrik/Datasets/FloorTextures/wood-floor-pattern-calculator-ideas-photos_771567.jpg";
+    std::string scenePath = "/Users/Fredrik/Datasets/FloorTextures/gold_red_tiles.jpg";
     cv::Mat baseScene = cv::imread(scenePath,cv::IMREAD_COLOR);     //Read the scene image as 8uC3
 
 

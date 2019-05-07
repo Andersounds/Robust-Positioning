@@ -36,6 +36,13 @@ public:
 
     //Methods
     void setFeatureSettings(double qualityLevel_, double minDistance_,int blockSize_,bool useHarris_,double k_){
+        std::cout << "Other correlation based optical flow https://arxiv.org/abs/1802.07078" << std::endl;
+        /*
+        Do this by first compensate for perspective warp. Then do coorelation to get translation and rotation
+        */
+
+
+
         qualityLevel= qualityLevel_;
         minDistance = minDistance_;
         blockSize = blockSize_;
@@ -43,9 +50,10 @@ public:
         k = k_;
     }
     void setFeatureDefaultSettings(void){
-        qualityLevel= 0.3;//0.5;
-        minDistance = 10;//20
-        blockSize = 4;//3;
+        std::cout << "Other correlation based optical flow https://arxiv.org/abs/1802.07078" << std::endl;
+        qualityLevel= 0.8;//0.5;
+        minDistance = 20;
+        blockSize = 3;
         k = 0.04;
         useHarris = false;
         std::cout << "-----Open issue with Flowfield: features are lost every other frame" << std::endl;
@@ -58,7 +66,7 @@ public:
     }
     void setKLTDefaultSettings(void){
         flags = 0;//No flag. Use normal L2 norm error
-        windowSize = 20;//51;
+        windowSize = 51;//51;
         maxLevel = 2;
         termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 20, 0.01);
     }
