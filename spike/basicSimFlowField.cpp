@@ -75,7 +75,7 @@ int main(void){
     simulatePose warper;
 
 //    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
-cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",CV_32FC3);
+cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",cv::IMREAD_COLOR);
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
