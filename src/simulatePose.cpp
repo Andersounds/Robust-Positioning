@@ -19,6 +19,7 @@ TODO:   -Let user define general global coordinate at base scene DONE
         -Relate UAV to camera pose with T matrix. needed?
 */
 simulatePose::simulatePose(void){
+    std::cout << "Open issue in simulatepose: translation scaling. How should d be used to compensate?" <<std::endl;
     //Variables for definition of K matrix
     N = 0;
     cx = 0;
@@ -113,7 +114,7 @@ int simulatePose::setParam(std::string parameterName,float value){
         std::vector<std::string> param6{"roll",         "UAV roll in base pose                          [rad]"};
         std::vector<std::string> param7{"x",            "UAV Base pose coordinate in x-direction        [m]"};
         std::vector<std::string> param8{"y",            "UAV Base pose coordinate in y-direction        [m]"};
-        std::vector<std::string> param9{"z",            "UAV Base pose coordinate in z-direction        [m]"};
+
 
 
         validParameters_.push_back(param0);
@@ -125,7 +126,6 @@ int simulatePose::setParam(std::string parameterName,float value){
         validParameters_.push_back(param6);
         validParameters_.push_back(param7);
         validParameters_.push_back(param8);
-        validParameters_.push_back(param9);
         validParameters = validParameters_; //Save as object attribute
         std::vector<std::vector<int>> validConfigurations_;
         std::vector<int> conf0{0,1};//sceneWidth and distance to base scene
@@ -146,6 +146,7 @@ int simulatePose::setParam(std::string parameterName,float value){
     }
     else if(parameterName == "d"){
         d = abs(value);
+        z_base = -d; //Coordinate system is ALWAYS fix in base scenez=0 in the plane
     }
     /*else if(parameterName == "z"){
         z_base = value; //Only valid if base plane is horizontal and coplanar with base camera
@@ -164,9 +165,6 @@ int simulatePose::setParam(std::string parameterName,float value){
     }
     else if(parameterName == "x"){
         x_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }
-    else if(parameterName == "z"){
-        z_base = value; //Only valid if base plane is horizontal and coplanar with base camera
     }
     else if(parameterName == "yaw"){
         yaw_base = value; //Only valid if base plane is horizontal and coplanar with base camera
@@ -284,7 +282,8 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
     t2(2,0) = z;
 
     //Define T-matrix according to 4.8 Wadenbaeck
-    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t();
+    //cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t();
+    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t()/d;//Scale with initial d.
 
     //Define Homography according to 4.7. Wadenbaeck. Apply the inverse.
     // x,y,z,yaw are positive. roll, pitch are negative
@@ -307,7 +306,7 @@ cv::Mat simulatePose::getWarpedImage(cv::Mat_<float> R2,cv::Mat_<float> t2){
         return out;
     }
     //Define T-matrix according to 4.8 Wadenbaeck
-    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t();
+    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t()/d;//Scale with initial d.
     //Define Homography according to 4.7. Wadenbaeck. Apply the inverse.
     // x,y,z,yaw are positive. roll, pitch are negative
     cv::Mat_<float> H = K *R2*T* K_inv;

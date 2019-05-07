@@ -9,8 +9,6 @@
 #include "../src/save2file.cpp"
 
 
-
-
 /*
 This code is a basic stream of sim chessboard warped images that
 also extracts and draws the flowfield
@@ -22,7 +20,6 @@ VO algorithm performs MUCH better when tracked features are simply thrown away e
     Is there a bug? can I handle it somehow?
 
 */
-
 
 
 /* Draws arrows between the point correspondances and scale them
@@ -75,7 +72,9 @@ int main(void){
     simulatePose warper;
 
 //    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
-cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",cv::IMREAD_COLOR);
+//cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",cv::IMREAD_COLOR);
+//cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv::IMREAD_COLOR);
+cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv::IMREAD_REDUCED_COLOR_2);
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
@@ -85,12 +84,13 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wa
     cv::waitKey(0);
 */
 
-    warper.setParam("d",1);             //Camera in base pose is 1 m from scene
-    warper.setParam("sceneWidth",3);    //Scenewidth is 2m
+    warper.setParam("d",2);             //Camera in base pose is 1 m from scene
+    warper.setParam("sceneWidth",4);    //Scenewidth is 2m
     warper.setParam("yaw",-3.1415/2);   // Camera is rotated 90 deg cc in base pose
-    warper.setParam("x",1.5);         //Set global origin at (-x,-y) from basepose
-    warper.setParam("y",0.75);
-    warper.setParam("z",-warper.d); //Set scene in xy plane at z=0
+
+    warper.setParam("x",2);         //Set global origin at (-x,-y) from basepose
+    warper.setParam("y",1);
+
     warper.init(0);//Initialize with configuration 0
 
 
@@ -98,15 +98,15 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wa
 
     //Start out aligned with x-y of global coordinate system
 /*
-    float length = 150;
-    std::vector<float> xPath = linSpace(0,2,length);
+    float length = 200;
+    std::vector<float> xPath = linSpace(0,4,length);
     std::vector<float> yPath = linSpace(0,0,length);
 */
 
     #include "testPath.cpp"
-    float length = xPath.size();
+   float length = xPath.size();
 
-    std::vector<float> yawPath = xPath;
+    std::vector<float> yawPath = linSpace(0,3.15,length);//xPath;
 
     std::vector<float> zPath = linSpace(-0.7,-0.7,length);
 
@@ -127,7 +127,6 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wa
     K(0,2) = 65;
     K(1,2) = 65;
     cv::Mat_<float> T = warper.getZRot(-3.1415/2);//UAV frame is x forward, camera frame is -y forward
-    std::cout<< "OBS - Make T matrix correct" << std::endl;
     vo::planarHomographyVO odometer(K,T);
     //Initial values of UAV position
     //cv::Mat_<float> R = warper.getZRot(yawPath[0]);
@@ -163,6 +162,7 @@ cv::Mat colorFrame;//For illustration
         //std::cout << "Coordinates true: "<< trueCoordinate[0] <<", " << trueCoordinate[1] << ", "<< trueCoordinate[2] << std::endl;
         //std::cout << "Coordinates est init: "<< t << std::endl;
         std::vector<float> angles{yawPath[i],pitch,roll};
+//        cv::Mat rawFrame = warper.getWarpedImage(angles,trueCoordinate);
         cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
@@ -186,7 +186,7 @@ cv::Mat colorFrame;//For illustration
         std::vector<cv::Point2f> activeFeatures1,activeFeatures2;
         noOfTracked = FlowField.extractActiveFeatures(features,status,activeFeatures1,focusOffset);
         FlowField.extractActiveFeatures(updatedFeatures,status,activeFeatures2,focusOffset);
-        std::cout << "Features size: " << features.size() << std::endl;
+        // std::cout << "Features size: " << features.size() << std::endl;
     //At this point the flow field is retrieved as point correspondeances activeFeatures1, activeFeatures2 given in whole image coordinate system
 
 
