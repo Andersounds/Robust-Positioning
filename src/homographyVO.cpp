@@ -96,6 +96,7 @@ bool vo::planarHomographyVO::odometry(std::vector<cv::Point2f>& p1,
     int n = cv::decomposeHomographyMat(H,K,rotations,translations,normals);
     //printmats(rotations, translations,normals);
     int validIndex = getValidDecomposition(p1,rotations,translations,normals);
+    //std::cout << "Valid index " << validIndex << std::endl;
     if(validIndex<0){std::cout <<"Validindex: "<< validIndex<<", No decomposition found" << std::endl;
         return false;
     }
@@ -300,9 +301,9 @@ void vo::planarHomographyVO::deRotateFlowField(std::vector<cv::Point2f>& src, fl
     //float pitch = -3.1415/4;
     //std::vector<cv::Point2f> src{cv::Point3f(-scale,-scale,1),cv::Point3f(-scale,scale,1),cv::Point3f(scale,scale,1),cv::Point3f(scale,-scale,1)};
     std::vector<cv::Point2f> dst;
-    cv::Mat R_x = getYRot(-pitch);
-    std::cout << "obs Y rot not X rot now" << std::endl;
-    cv::Mat H = K*R_x.t()*K_inv;//Transpose to flip the pitch back
+    cv::Mat R_x = getYRot(pitch);//Double minus? minus här och R transponat?
+    //std::cout << "obs Y rot not X rot now" << std::endl;
+    cv::Mat H = K*R_x*K_inv;//Transpose to flip the pitch back
     VOperspectiveTransform(src,dst,H);
     src.clear();
     for(cv::Point2f point:dst){

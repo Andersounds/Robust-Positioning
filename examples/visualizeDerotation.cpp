@@ -8,6 +8,7 @@
 #include "../src/homographyVO.hpp"
 #include "../src/save2file.cpp"
 
+#include "../src/corrFlowField.cpp"
 
 /*
 This code is a basic stream of sim chessboard warped images that
@@ -97,8 +98,8 @@ int main(void){
     warper.setParam("sceneWidth",4);    //Scenewidth is 2m
     warper.setParam("yaw",-3.1415/2);   // Camera is rotated 90 deg cc in base pose
 
-    //warper.setParam("x",2);         //Set global origin at (-x,-y) from basepose
-//    warper.setParam("y",1);
+    warper.setParam("x",2);         //Set global origin at (-x,-y) from basepose
+    warper.setParam("y",0.7);
 
     warper.init(0);//Initialize with configuration 0
 
@@ -107,27 +108,32 @@ int main(void){
 
     //Start out aligned with x-y of global coordinate system
 
-    float length = 200;
+    /*float length = 200;
     std::vector<float> xPath = linSpace(0,0,length);
     std::vector<float> yPath = linSpace(0,0,length);
-    std::vector<float> rollPath = linSpace(3.14/7,3.14/7,length);
+*/
 
-
-    //#include "testPath.cpp"
+    #include "../spike/testPath.cpp"
+    float length = xPath.size();
     //xmax ca 1.9
-    std::vector<float> yawPath =linSpace(0,6,length);;
-    float pathScale = 1.8;
+    std::vector<float> yawPath =linSpace(0,6,length);
+    std::vector<float> t_vector=linSpace(0,30,length);
+    std::vector<float> rollPath;// = linSpace(0,3.1415/5,length);
+    for(int i=0;i<length;i++){
+        rollPath.push_back(sin(t_vector[i])*3.14/8);
+    }
+
+    float pathScale = 1;
     std::vector<float>::iterator xIt = xPath.begin();
     std::vector<float>::iterator yIt = yPath.begin();
 
     while(xIt != xPath.end()){
             *xIt*=pathScale;
             *yIt*=pathScale;
-
             xIt++;
             yIt++;
     }
-   //float length = xPath.size();
+
 
 
 
@@ -175,6 +181,9 @@ int main(void){
 
 
 cv::Mat colorFrame;//For illustration
+
+
+    corrFlowField corrTracker;
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
@@ -191,6 +200,7 @@ cv::Mat colorFrame;//For illustration
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
 //Process image...
         cv::Mat subFrame = frame(focusArea);
+
         if(noOfTracked<=28){//if(noOfTracked<=noOfCorners*0.7){
             int noOfNew = noOfCorners-noOfTracked;
             std::vector<cv::Point2f> newFeatures;
@@ -210,6 +220,14 @@ cv::Mat colorFrame;//For illustration
         noOfTracked = FlowField.extractActiveFeatures(features,status,activeFeatures1,focusOffset);
         FlowField.extractActiveFeatures(updatedFeatures,status,activeFeatures2,focusOffset);
 
+
+/////////
+/*
+std::vector<cv::Point2f> activeFeatures1;
+std::vector<cv::Point2f> activeFeatures2;
+corrTracker.corrFlow(subPrevFrame,subFrame,activeFeatures1,activeFeatures2);
+*/
+//////////
         std::vector<cv::Point2f> p1_original;
         std::vector<cv::Point2f> p2_original;
         for(int i=0;i<noOfTracked;i++){
@@ -259,8 +277,8 @@ cv::Mat colorFrame;//For illustration
         if(i==0){//If first lap
             cv::waitKey(0);
         }
-        //if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
-        cv::waitKey(0);
+        if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
+        //cv::waitKey(0);
 
 
 
