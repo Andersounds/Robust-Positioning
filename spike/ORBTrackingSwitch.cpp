@@ -42,7 +42,7 @@ int main(int argc, char** argv){
     clock_t tStart = clock();
     //Data streamer
     Streamer* C;
-    C = Streamer::make_streamer(3,"",0);//"/Users/Fredrik/Datasets/Euroc/V102/cam0/data/cam0_%04d.png"
+    C = Streamer::make_streamer(1,"",0);//"/Users/Fredrik/Datasets/Euroc/V102/cam0/data/cam0_%04d.png"
     //Trackers
     KLT_ORB_Tracker tracker, roiTracker;
     roiTracker.setNfeatures(roiFeatures);   //Finds fewer keypoints in region of interest
