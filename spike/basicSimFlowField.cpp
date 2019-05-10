@@ -74,7 +74,7 @@ int main(void){
     warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
 //cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",cv::IMREAD_COLOR);
 //cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv::IMREAD_COLOR);
-/*cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv::IMREAD_REDUCED_COLOR_2);
+/*cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv::IMREAD_REDUCED_COLOR_4);
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
@@ -88,8 +88,8 @@ int main(void){
     warper.setParam("sceneWidth",4);    //Scenewidth is 2m
     warper.setParam("yaw",-3.1415/2);   // Camera is rotated 90 deg cc in base pose
 
-    warper.setParam("x",2);         //Set global origin at (-x,-y) from basepose
-    warper.setParam("y",1);
+    //warper.setParam("x",2);         //Set global origin at (-x,-y) from basepose
+//    warper.setParam("y",1);
 
     warper.init(0);//Initialize with configuration 0
 
@@ -97,15 +97,16 @@ int main(void){
 //Create path of camera and save to output file
 
     //Start out aligned with x-y of global coordinate system
-/*
-    float length = 200;
-    std::vector<float> xPath = linSpace(0,4,length);
-    std::vector<float> yPath = linSpace(0,0,length);
-*/
 
-    #include "testPath.cpp"
+    float length = 200;
+    std::vector<float> xPath = linSpace(0,0,length);
+    std::vector<float> yPath = linSpace(0,0,length);
+    std::vector<float> rollPath = linSpace(0,0,length);
+
+
+    //#include "testPath.cpp"
     //xmax ca 1.9
-    std::vector<float> yawPath =xPath;
+    std::vector<float> yawPath =linSpace(0,6,length);;
     float pathScale = 1.8;
     std::vector<float>::iterator xIt = xPath.begin();
     std::vector<float>::iterator yIt = yPath.begin();
@@ -117,11 +118,11 @@ int main(void){
             xIt++;
             yIt++;
     }
-   float length = xPath.size();
+   //float length = xPath.size();
 
 
 
-    std::vector<float> zPath = linSpace(-1,-1,length);
+    std::vector<float> zPath = linSpace(-0.5,-0.5,length);
 
 
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
@@ -159,6 +160,7 @@ int main(void){
     int cols = warper.baseScene.cols;//boxWidth*colsOfBoxes;
     int rows = warper.baseScene.rows;//boxWidth*rowsOfBoxes;
     cv::Rect_<float> focusArea = FlowField.getFocusArea(cols,rows,150,150);//(cols,rows,size,size)
+    focusArea.x+=150;
     cv::Point2f focusOffset(focusArea.x,focusArea.y);
     cv::Mat subPrevFrame;//For finding new corners
 
@@ -167,14 +169,13 @@ cv::Mat colorFrame;//For illustration
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
-        float roll = 0;
-        float pitch = 0;//3.1415/10;
-        float height = 1;//Används bara av odometer
+        float pitch = 0;
+        float height = 0.5;//Används bara av odometer
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
 
         //std::cout << "Coordinates true: "<< trueCoordinate[0] <<", " << trueCoordinate[1] << ", "<< trueCoordinate[2] << std::endl;
         //std::cout << "Coordinates est init: "<< t << std::endl;
-        std::vector<float> angles{yawPath[i],pitch,roll};
+        std::vector<float> angles{yawPath[i],pitch,rollPath[i]};
 //        cv::Mat rawFrame = warper.getWarpedImage(angles,trueCoordinate);
         cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
@@ -199,14 +200,15 @@ cv::Mat colorFrame;//For illustration
         std::vector<cv::Point2f> activeFeatures1,activeFeatures2;
         noOfTracked = FlowField.extractActiveFeatures(features,status,activeFeatures1,focusOffset);
         FlowField.extractActiveFeatures(updatedFeatures,status,activeFeatures2,focusOffset);
-        // std::cout << "Features size: " << features.size() << std::endl;
-    //At this point the flow field is retrieved as point correspondeances activeFeatures1, activeFeatures2 given in whole image coordinate system
 
+        std::vector<cv::Point2f> p1_original;
+        std::vector<cv::Point2f> p2_original;
+        for(int i=0;i<noOfTracked;i++){
+            p1_original.push_back(activeFeatures1[i]);
+            p2_original.push_back(activeFeatures2[i]);
+        }
 
-
-        //std::cout << t(0,0)<< ", "<<t(1,0)<< ", "<<t(2,0)<<"; ";
-
-        bool odometerSuccess = odometer.process(activeFeatures1,activeFeatures2,roll,pitch,height,t,R);
+        bool odometerSuccess = odometer.process(activeFeatures1,activeFeatures2,rollPath[i],pitch,height,t,R);
         float z_sin = R(0,1);
         float zAngle_sin = std::atan2(R(0,1),R(0,0));//tan with quadrant checking
 
@@ -219,20 +221,26 @@ cv::Mat colorFrame;//For illustration
 
 
         //Illustrate
+        //Simulation image
         rawFrame.copyTo(colorFrame);
         //cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
         float scale = 10;
         drawArrows(colorFrame,colorFrame,activeFeatures1,activeFeatures2,scale,focusOffset);
         //drawFeatures(colorFrame, features, colorFrame, CV_RGB(2,200,0));
         cv::rectangle(colorFrame,focusArea,CV_RGB(255,0,0),2,cv::LINE_8,0);
+
         cv::imshow("Chess board", colorFrame);
         if(i==0){//If first lap
             cv::waitKey(0);
         }
-        if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
-        //cv::waitKey(0);
+        //if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
+        cv::waitKey(0);
+
+
+
+
         //Time-shift frames and features
-        features = activeFeatures2;
+        //features = activeFeatures2;
 
         //features.clear(); // These two lines are here because the algorithm performs much better when features are just thorwn away and found again
         //noOfTracked = 0;  // WHen timing manually it is actually  a tiny bit faster. probably because the copying takes time.
