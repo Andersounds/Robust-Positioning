@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 if [ "$#" -eq 0 ];then
@@ -6,9 +7,12 @@ if [ "$#" -eq 0 ];then
 fi
 
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/objectDetection/detection.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp -o bin/tryIt
-
-#This is for feature based anchors
-#g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/ORBTrackingSwitch.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp src/trackedObjectClass.cpp -o bin/tryIt
+if [ ”$1” = ”featureBased” ];then
+	#This is for feature based anchors
+	echo Compiling feature based anchors stream
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/ORBTrackingSwitch.cpp src/houghDetector.cpp src/videoStream.cpp src/KLT_ORB_Tracker.cpp src/trackedObjectClass.cpp -o bin/featureUSB
+	echo run with ./bin/feature -streamoption-q
+fi
 
 #OF-VO
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/OF_VO_v2.cpp src/KLT_ORB_Tracker.cpp -o bin/tryIt
@@ -25,12 +29,20 @@ if [ ”$1” = ”basicStream” ];then
 	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicStream.cpp src/videoStream.cpp -o bin/basicStream
 	echo Run with command ./bin/basicStream ”streamMode”
 fi
-################# Simulation with virtual scene and VO algorithm using KLRT flow running
+################# Simulation with virtual scene and VO algorithm using KLT flow running
 if [ ”$1” = ”basicSimFlowField” ];then
 	#KLT flow field with test set. version 2 tomography
 	echo Compiling basicSimFlowField
 	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimFlowField.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/flowField
-	echo Run with command .bin/flowField
+	echo Run with command ./bin/flowField
+fi
+
+################# Simulation with virtual scene and VO algorithm using KLT flow. Visualizes the derotation flow field roll/pitch
+if [ ”$1” = ”derotField” ];then
+	#KLT flow field with test set. version 2 tomography
+	echo Compiling derotation
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/visualizeDerotation.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/derotField
+	echo Run with command ./bin/derotField
 fi
 
 if [ ”$1” = ”basicGimLee” ];then
@@ -59,7 +71,12 @@ fi
 if [ ”$1” = ”basicSimCorrField” ];then
 	#KLT flow field with test set. version 2 tomography
 	echo Compiling basicSimCorrField
-	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimCorrField.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/corrField
+	
+#g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicSimCorrField.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/corrField
+
+g++ -std=c++11 -ggdb $(pkg-config --libs opencv) spike/basicSimCorrField.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/corrField
+
+
 	echo Run with command ./bin/corrField
 fi
 
