@@ -50,6 +50,10 @@ namespace vo{
         void printmats(std::vector<cv::Mat>,
                         std::vector<cv::Mat>,
                         std::vector<cv::Mat>);
+        /*
+         *This is here to de rotate flow field
+         */
+        void deRotateFlowField(std::vector<cv::Point2f>&, float);
     private:
         /* Performs the odometry itself
          * Accepts point correspondances, instantaneous pitch, roll, height, and the current global pose
@@ -101,6 +105,8 @@ namespace vo{
          * NOTE: I could instead directly define a rotation matrix using negative angles -Faster
          */
         cv::Mat_<float> deRotateHomography(cv::Mat_<float>&, float,float);
+        cv::Mat getXRot(float);
+        cv::Mat getYRot(float);
         /* This method defines a de-rotation matrix by defining rotation with negative angles
          * Standard rotation sequence is Z-Y-X (yaw-pitch-roll)
          * Retotation is thus done by Z-Y-X-(-X)-(-Y)
@@ -109,6 +115,7 @@ namespace vo{
          * Does not significantly affect result...
          */
         cv::Mat_<float> deRotMat(float, float);
+        void VOperspectiveTransform(std::vector<cv::Point2f>,std::vector<cv::Point2f>&,cv::Mat_<float>);
     };
 }
 #endif

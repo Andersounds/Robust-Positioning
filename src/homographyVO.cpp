@@ -72,10 +72,23 @@ bool vo::planarHomographyVO::odometry(std::vector<cv::Point2f>& p1,
     if((p1.size()<3)|| (p2.size()<3)){//std::cout << "Not enough point correspondances" << std::endl;
         return false;
     }
-    cv::Mat_<float> H_rot = cv::findHomography(p1,p2,homoGraphyMethod,ransacReprojThreshold);
-    if(H_rot.empty()){//std::cout << "No homography found" << std::endl;
+
+    deRotateFlowField(p1, roll);
+    deRotateFlowField(p2, roll);
+//To offset like this when there is no tilt. and Roi is shifted by 100,40, succeeds in getting the right homography (pure rotation)
+    /*for(int i=0;i<p1.size();i++){
+        p1[i].x+=0;
+        p1[i].y-=250;
+        p2[i].x+=0;
+        p2[i].y-=250;
+    }*/
+
+
+
+    cv::Mat_<float> H = cv::findHomography(p1,p2,homoGraphyMethod,ransacReprojThreshold);
+    if(H.empty()){//std::cout << "No homography found" << std::endl;
         return false;}
-    cv::Mat_<float> H = deRotateHomography(H_rot,roll,pitch);
+
     //Init vector for decomposition. the mats are Matx33d. i.e. each element contains a CV_64FC1
     std::vector<cv::Mat> rotations;
     std::vector<cv::Mat> translations;
@@ -252,7 +265,8 @@ int vo::planarHomographyVO::getValidDecomposition(std::vector<cv::Point2f> p_ref
     std::cout << "Reached too far in getValidDecomposition. check input size." << std::endl;
     return -2; //If we reach this point then something is wrong also. return negative to indicate
 }
-/* This method de-rotates a Homography matrix using the supplies tait-bryan angles
+/* SEE  deRotateFlowField FOR OTHER VERSION OF THIS
+ * This method de-rotates a Homography matrix using the supplies tait-bryan angles
  * For ref. see M.Wadenbaeck phd Thesis p.25
  * R(a,b,c) = R_x(a)*R_y(b)*R_z(c)
  *  H = inv(R_(psi,theta)) * H_rot * transpose(inv(R_(psi,theta)))
@@ -262,13 +276,51 @@ int vo::planarHomographyVO::getValidDecomposition(std::vector<cv::Point2f> p_ref
     X: Forward facing               -> roll     ()      Last rotation
  * NOTE: It de-rotates by inverting the roll and pitch rotation matrix.
  * NOTE: I could instead directly define a rotation matrix using negative angles -Faster
+
+ Kind of works? some scaling error
  */
 cv::Mat_<float> vo::planarHomographyVO::deRotateHomography(cv::Mat_<float>& H_rot, float roll,float pitch){
-    return H_rot;
+    //return H_rot;
     cv::Mat_<float> R_left = deRotMat(roll,pitch); //THIS SHOULD BE CORRECT
     cv::Mat_<float> R_right = R_left.t();
-    cv::Mat_<float> H = R_left*H_rot*R_right;
-    //return H;
+    cv::Mat_<float> H = K*R_left*H_rot*R_right*K_inv;
+    return H;
+}
+/* This method de-rotates (the pitch of) the flow field.
+ * It achieves this directly on the coordinates by
+ * 1. Perspective transformation. Illustrated as a warp of the coordinates around the x-axis of image
+ * 2. Shift of rotation center.
+ * 3? adapt height
+
+ * TODO:::: implement roll compensation as well. Also some general way to pass roll and pitch if camera-UAV relationship changes
+ * PASS INVERSE OF DeROT???
+ */
+void vo::planarHomographyVO::deRotateFlowField(std::vector<cv::Point2f>& src, float pitch){
+    //float scale = 100;
+    //float pitch = -3.1415/4;
+    //std::vector<cv::Point2f> src{cv::Point3f(-scale,-scale,1),cv::Point3f(-scale,scale,1),cv::Point3f(scale,scale,1),cv::Point3f(scale,-scale,1)};
+    std::vector<cv::Point2f> dst;
+    cv::Mat R_x = getYRot(-pitch);
+    std::cout << "obs Y rot not X rot now" << std::endl;
+    cv::Mat H = K*R_x.t()*K_inv;//Transpose to flip the pitch back
+    VOperspectiveTransform(src,dst,H);
+    src.clear();
+    for(cv::Point2f point:dst){
+        src.push_back(point);
+        //std::cout << point.x <<", " <<point.y<<";" << std::endl;
+    }
+}
+/*Own implementation of perspective transform of vector<point2f>. Normalizes to z=1
+ *  Points are considered as being column vectors and are right-multiplied with H
+ */
+void vo::planarHomographyVO::VOperspectiveTransform(std::vector<cv::Point2f> src,std::vector<cv::Point2f>&dst,cv::Mat_<float>H){
+    dst.clear();//Make sure that dst is empty
+    for(cv::Point2f point:src){
+        float x = point.x*H(0,0) + point.y*H(0,1) + H(0,2);
+        float y = point.x*H(1,0) + point.y*H(1,1) + H(1,2);
+        float z = point.x*H(2,0) + point.y*H(2,1) + H(2,2);
+        dst.push_back(cv::Point2f(x/z,y/z));//Normalized do z=1
+    }
 }
 /* This method defines a de-rotation matrix by defining rotation with negative angles
  * Standard rotation sequence is Z-Y-X (yaw-pitch-roll)
@@ -300,4 +352,29 @@ cv::Mat_<float> vo::planarHomographyVO::deRotMat(float roll, float pitch){
     cv::Mat_<float> R_derotate = R_x*R_y;
     //cv::Mat_<float> R_derotate = R_y*R_x;
     return R_derotate;
+}
+/* Functions for defining roll, pitch, and yaw rotation matrices
+ * Increase speed by passing reference and edit in place?
+ */
+cv::Mat vo::planarHomographyVO::getXRot(float roll){
+    float sinX = std::sin(roll);
+    float cosX = std::cos(roll);
+    cv::Mat_<float> R_x = cv::Mat_<float>::zeros(3,3);
+    R_x(0,0) = 1;
+    R_x(1,1) = cosX;
+    R_x(1,2) = -sinX;
+    R_x(2,1) = sinX;
+    R_x(2,2) = cosX;
+    return R_x;
+}
+cv::Mat vo::planarHomographyVO::getYRot(float pitch){
+    float sinY = std::sin(pitch);
+    float cosY = std::cos(pitch);
+    cv::Mat_<float> R_y = cv::Mat_<float>::zeros(3,3);
+    R_y(0,0) = cosY;
+    R_y(0,2) = sinY;
+    R_y(1,1) = 1;
+    R_y(2,0) = -sinY;
+    R_y(2,2) = cosY;
+    return R_y;
 }
