@@ -29,28 +29,43 @@ class corrFlowField{
  *  They must already be pitch/roll compensated and in CV_8UC1 format
  */
 public:
+    float qualityLevel;
+
+    int trackCorr(const cv::Mat& src1, const cv::Mat& src2, std::vector<cv::Point2f>& points1,std::vector<cv::Point2f>& points2){
+        int success = 1;
+        static int init = 0;
+        if(!init){
+            src2.copyTo(src1);
+            init = 1;
+        }
+return 1;
+        //success = deRotate()
+        //success = corrFlow();
+    }
+
     int corrFlow(const cv::Mat& src1, const cv::Mat& src2,
                     std::vector<cv::Point2f>& points1,std::vector<cv::Point2f>& points2){
         if(src1.rows<1 || src1.cols<1 || src2.rows<1 || src2.cols<1){return 0;}
+        float res = 3;
         //Make sure that they are empty
         points1.clear();
         points2.clear();
-        double thresh = 0.5;
+        double thresh = 0;
         //Convert mats to float
         cv::Mat src1_32C1;
         cv::Mat src2_32C1;
-        double scale = 200;//Not fully scaled, but somewhere inbetween in order to avoid rounding errors
+        double scale = 2000;//Not fully scaled, but somewhere inbetween in order to avoid rounding errors
         double offset = 0;
         src1.convertTo(src1_32C1,CV_32FC1,scale,offset);
         src2.convertTo(src2_32C1,CV_32FC1,scale,offset);
 //        cv::createHanningWindow(hann, src1_32C1.size(), CV_32FC1);
         //Calculate ROI size. This may be done in class before so that it does not have to be recalculated
-        float h = ((float)src1.cols)/3;//h is width of subsquares. Right now make sure that src1 is proportional to 3 in widht/height
+        float h = ((float)src1.cols)/res;//h is width of subsquares. Right now make sure that src1 is proportional to 3 in widht/height
         cv::Mat hann;
         cv::createHanningWindow(hann,cv::Size(h,h), CV_32FC1);
 
-        for(float y=0;y<3*h;y+=h){ //eller 2h?
-            for(float x=0;x<3*h;x+=h){
+        for(float y=0;y<res*h;y+=h){ //eller 2h?
+            for(float x=0;x<res*h;x+=h){
                 cv::Rect2f roi = cv::Rect2f(x,y,h,h);
                 double response;
                 cv::Point2d flow = cv::phaseCorrelate(src1_32C1(roi), src2_32C1(roi),hann,&response);
