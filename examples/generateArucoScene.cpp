@@ -32,7 +32,57 @@ struct marker{
         rotation=rotation_;
     }
 };
-
+std::vector<std::string> parse(std::string line){
+    char delim = ',';
+    std::vector<std::string> parsed;
+    std::string::iterator it = line.begin();
+    while(it!=line.end()){
+        std::string word;
+        while(it!=line.end()){
+            if(isspace(*it)){it++;}//Remove leading whitespaces
+            else{break;}
+        }
+        while(it!=line.end()){
+            if(*it != delim){
+                word+=*it;//Append the char to the temporary string
+                it++;
+            }//Go through until deliminator
+            else{it++;
+                break;}
+        }
+        parsed.push_back(word);//Push back the parsed word onto the return vector
+    }
+    return parsed;
+}
+/*Takes a path and reads the file into two vectors, vector<int> IDs and vector<mat> coordinates
+ * Ignores any LEADING whitespaces and rows not containing exactly 4 data fields. delimiter is char ','
+ * Each anchor shall be specified as id,x,y,z\n (Whit optional whitespaces after any comma)
+ */
+int readToDataBase(std::string path,std::vector<int>& IDs, std::vector<cv::Mat_<float>>& coordinates){
+    std::string line;
+    std::string delim = ",";
+    std::ifstream file;
+    file.open(path);
+    if(file.is_open()){
+         while(getline(file,line)){
+            std::vector<std::string> parsed = parse(line);
+            if(parsed.size()==4){//Disregard any lines that are not exactly 4 elements long
+                int id      =   std::stoi(parsed[0]);
+                float x     =   std::stof(parsed[1]);
+                float y     =   std::stof(parsed[2]);
+                float z     =   std::stof(parsed[3]);
+                cv::Mat_<float> coord = cv::Mat_<float>::zeros(3,1);
+                coord(0,0) = x;
+                coord(0,1) = y;
+                coord(0,2) = z;
+                IDs.push_back(id);
+                coordinates.push_back(coord);
+            }
+         }
+    }else{return 0;}
+    file.close();
+    return 1;
+}
 
 int createArucoScene(cv::Mat& baseScene,float sceneWidth,
                         int dictType,                                           //As specified in aruco. Ex. cv::aruco::DICT_4X4_50
@@ -107,45 +157,24 @@ std::vector<float> sequence(float start,float step,float max){
 int main(int argc, char** argv){
     // Read base scene image
     std::string scenePath = "/Users/Fredrik/Datasets/FloorTextures/wood-floor-pattern-calculator-ideas-photos_771567.jpg";
+    std::string anchorLocationPath = "anchors.txt";
     cv::Mat baseScene = cv::imread(scenePath,cv::IMREAD_COLOR);     //Read the scene image as 8uC3
 
+    std::vector<int> IDs;
+    std::vector<cv::Mat_<float>> coordinates;
+    readToDataBase(anchorLocationPath,IDs,coordinates);
+    float amount = (float) IDs.size();
 
-    float sceneWidth = 4;                                   //Scene width in meter
-    float number = 10;
-    std::vector<float> x1=linSpace(0.4,3.6,number);
-    std::vector<float> x2=linSpace(0.3,3,number);
-    std::vector<float> x3=linSpace(0.2,3.9,number);
-    std::vector<float> x4=linSpace(0.25,3.8,number);
-    std::vector<float> y1=linSpace(0.2,0.2,number);
-    std::vector<float> y2=linSpace(1,1,number);
-    std::vector<float> y3=linSpace(1.6,1.6,number);
-    std::vector<float> y4=linSpace(2,2.1,number);
-    
-    std::vector<float> markerSizes1=linSpace(0.08,0.15,number);
-    std::vector<float> markerSizes2=linSpace(0.15,0.10,number);
-    std::vector<float> markerSizes3=linSpace(0.1,0.15,number);
-    std::vector<float> markerSizes4=linSpace(0.08,0.12,number);
-    std::vector<float> rotations1 = linSpace(0,0,number);
-    std::vector<float> rotations2 = linSpace(3.1416,3.1416,number);
-    std::vector<float> rotations3 = linSpace(0,0,number);
-    std::vector<float> rotations4 = linSpace(0,0,number);
-
+    std::vector<float> markerSizes=linSpace(0.1,0.15,amount);
+    std::vector<float> rotations = linSpace(0,0,amount);
 
 
     std::vector<marker> markers;
-    for(int i=0;i<x1.size();i++){
-        markers.push_back(marker(i,x1[i],y1[i],markerSizes1[i], rotations1[i]));
-    }
-    for(int i=0;i<x2.size();i++){
-        markers.push_back(marker(i,x2[i],y2[i],markerSizes2[i], rotations2[i]));
-    }
-    for(int i=0;i<x2.size();i++){
-        markers.push_back(marker(i,x3[i],y3[i],markerSizes3[i], rotations3[i]));
-    }
-    for(int i=0;i<x2.size();i++){
-        markers.push_back(marker(i,x4[i],y4[i],markerSizes4[i], rotations4[i]));
+    for(int i=0;i<amount;i++){
+        markers.push_back(marker(IDs[i],coordinates[i](0,0),coordinates[i](1,0),markerSizes[i], rotations[i]));
     }
 
+    float sceneWidth = 4;                                   //Scene width in meter
     createArucoScene(baseScene, sceneWidth, cv::aruco::DICT_4X4_50,markers);
     std::string filename = "/Users/Fredrik/Datasets/FloorTextures/test2.png";
     std::vector<int> compression_params;
