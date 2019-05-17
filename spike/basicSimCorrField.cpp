@@ -189,20 +189,9 @@ cv::Mat colorFrame;//For illustration
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
 //Process image...
         cv::Mat subFrame = frame(focusArea);
-std::vector<cv::Point2f> updatedFeatures;
-std::vector<cv::Point2f> features;
+        std::vector<cv::Point2f> updatedFeatures;
+        std::vector<cv::Point2f> features;
         corrTracker.corrFlow(subPrevFrame,subFrame,features,updatedFeatures);
-
-        //Get just the correspondance pairs that are active. AND SHIFT TO IMAGE COORD
-        ////std::vector<cv::Point2f> activeFeatures1,activeFeatures2;
-        ////noOfTracked = FlowField.extractActiveFeatures(features,status,activeFeatures1,focusOffset);
-        ///FlowField.extractActiveFeatures(updatedFeatures,status,activeFeatures2,focusOffset);
-        // std::cout << "Features size: " << features.size() << std::endl;
-    //At this point the flow field is retrieved as point correspondeances activeFeatures1, activeFeatures2 given in whole image coordinate system
-
-
-
-        //std::cout << t(0,0)<< ", "<<t(1,0)<< ", "<<t(2,0)<<"; ";
 
         bool odometerSuccess = odometer.process(features,updatedFeatures,roll,pitch,height,t,R);
         float z_sin = R(0,1);

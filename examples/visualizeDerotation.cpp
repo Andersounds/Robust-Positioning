@@ -10,6 +10,8 @@
 
 #include "../src/corrFlowField.cpp"
 
+
+#define PI 3.14159
 /*
 This code is a basic stream of sim chessboard warped images that
 also extracts and draws the flowfield
@@ -89,10 +91,10 @@ int main(void){
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
 */
-/*
-    cv::imshow("Chess board",floor);
-    cv::waitKey(0);
-*/
+
+//    cv::imshow("Chess board",floor);
+//    cv::waitKey(0);
+
 
     warper.setParam("d",2);             //Camera in base pose is 1 m from scene
     warper.setParam("sceneWidth",4);    //Scenewidth is 2m
@@ -200,6 +202,8 @@ cv::Mat colorFrame;//For illustration
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
 //Process image...
         cv::Mat subFrame = frame(focusArea);
+////////
+
 
         if(noOfTracked<=28){//if(noOfTracked<=noOfCorners*0.7){
             int noOfNew = noOfCorners-noOfTracked;
@@ -211,6 +215,7 @@ cv::Mat colorFrame;//For illustration
             FlowField.getCorners(subPrevFrame, newFeatures,noOfNew);//,dirMask);
             FlowField.conCat(features,newFeatures);//Add the new features to old vector
         }
+
         std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
         std::vector<uchar> status;
         std::vector<float> errors;
@@ -220,6 +225,8 @@ cv::Mat colorFrame;//For illustration
         noOfTracked = FlowField.extractActiveFeatures(features,status,activeFeatures1,focusOffset);
         FlowField.extractActiveFeatures(updatedFeatures,status,activeFeatures2,focusOffset);
 
+
+/////////
 
 /////////
 /*

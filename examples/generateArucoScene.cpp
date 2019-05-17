@@ -120,14 +120,15 @@ int main(int argc, char** argv){
     std::vector<float> y2=linSpace(1,1,number);
     std::vector<float> y3=linSpace(1.6,1.6,number);
     std::vector<float> y4=linSpace(2,2.1,number);
-    std::vector<float> markerSizes1=linSpace(0.1,0.2,number);
-    std::vector<float> markerSizes2=linSpace(0.25,0.15,number);
+    
+    std::vector<float> markerSizes1=linSpace(0.08,0.15,number);
+    std::vector<float> markerSizes2=linSpace(0.15,0.10,number);
     std::vector<float> markerSizes3=linSpace(0.1,0.15,number);
     std::vector<float> markerSizes4=linSpace(0.08,0.12,number);
-    std::vector<float> rotations1 = linSpace(0,1000,number);
-    std::vector<float> rotations2 = linSpace(170,400,number);
-    std::vector<float> rotations3 = linSpace(90,180,number);
-    std::vector<float> rotations4 = linSpace(90,1800,number);
+    std::vector<float> rotations1 = linSpace(0,0,number);
+    std::vector<float> rotations2 = linSpace(3.1416,3.1416,number);
+    std::vector<float> rotations3 = linSpace(0,0,number);
+    std::vector<float> rotations4 = linSpace(0,0,number);
 
 
 

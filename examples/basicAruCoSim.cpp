@@ -23,17 +23,61 @@ std::vector<float> linSpace(float start,float stop,float length){
     return path;
 }
 
-int readToDataBase(std::string path,std::vector<int> IDs, std::vector<cv::Mat_<float>> coordinates){
+
+//This function takes a line and parses it into a vector<string> using "," as deliminator and disregarding LEADING whitespaces
+std::vector<std::string> parse(std::string line){
+    char delim = ',';
+    std::vector<std::string> parsed;
+    std::string::iterator it = line.begin();
+    while(it!=line.end()){
+        std::string word;
+        while(it!=line.end()){
+            if(isspace(*it)){it++;}//Remove leading whitespaces
+            else{break;}
+        }
+        while(it!=line.end()){
+            if(*it != delim){
+                word+=*it;//Append the char to the temporary string
+                it++;
+            }//Go through until deliminator
+            else{it++;
+                break;}
+        }
+        parsed.push_back(word);//Push back the parsed word onto the return vector
+    }
+    return parsed;
+}
+
+
+int readToDataBase(std::string path,std::vector<int>& IDs, std::vector<cv::Mat_<float>>& coordinates){
     std::string line;
+    std::string delim = ",";
     std::ifstream file;
     file.open(path);
     if(file.is_open()){
-         while(getline(file,line) )
-         std::cout << "LINE: " << line << std::endl;
+         while(getline(file,line)){
+            std::vector<std::string> parsed = parse(line);
+            if(parsed.size()==4){//Disregard any lines that are not exactly 4 elements long
+                int id      =   std::stoi(parsed[0]);
+                float x     =   std::stof(parsed[1]);
+                float y     =   std::stof(parsed[2]);
+                float z     =   std::stof(parsed[3]);
+                cv::Mat_<float> coord = cv::Mat_<float>::zeros(3,1);
+                coord(0,0) = x;
+                coord(0,1) = y;
+                coord(0,2) = z;
+                IDs.push_back(id);
+                coordinates.push_back(coord);
+            }
+         }
     }else{return 0;}
     file.close();
     return 1;
 }
+
+
+
+
 
 
 
@@ -105,7 +149,7 @@ cv::Mat colorFrame;//For illustration
 std::vector<int> IDs;
 std::vector<cv::Mat_<float>> coordinates;
 std::string path = "anchors.txt";
-int diditwork = readToDataBase(path,IDs,coordinates);
+if(!readToDataBase(path,IDs,coordinates)){std::cout << "Could not read anchor database from file"<<std::endl;}
 //Aruco init
 cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50);
 //Go through whole path
