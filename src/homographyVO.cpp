@@ -24,6 +24,8 @@
  * T_:  Camera frame orientation in relation to UAV coordinate frame
  */
 vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T_){
+    std::cout << "TODO: 1. de-rotate both roll and pitch." <<std::endl;
+    std::cout << "      2. Scale flow correctly when camera is tilted."<< std::endl;
     K=K_;
     K_inv = K.inv();
     T=T_;                                   //Rotation matrix around Z relating UAV with Camera
