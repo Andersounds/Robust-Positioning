@@ -59,6 +59,13 @@ if [ ”$1” = ”basicAruco” ];then
 	echo Run with command ./bin/basicAruco -mode-
 
 fi
+################# Aruco tracker with simulated scene
+if [ ”$1” = ”basicArucoSim” ];then
+	echo Compiling  basic Aruco with streamer
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicArucoSim.cpp src/simulatePose.cpp -o bin/basicArucoSim
+	echo Run with command ./bin/basicArucoSim
+
+fi
 #################  Generate a 2d Aruco simulation scene
 if [ ”$1” = ”generateArucoScene” ];then
 	echo Compiling  simulation ArUco scene
