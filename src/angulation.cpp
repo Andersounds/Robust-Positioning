@@ -79,3 +79,83 @@ std::vector<std::string> ang::angulation::parse(std::string line){
     }
     return parsed;
 }
+/* Performs the position and azimuth calculation
+ * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
+ */
+int ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,float roll,float pitch){
+    //Calculate uLOS-vectors v from K,T and locations
+    std::vector<cv::Mat_<float>> v;
+    pix2uLOS(locations,v);
+    std::vector<cv::Mat_<float>> q;
+    dataBase2q(IDs,q);
+
+    az::azipe(v,q,roll,pitch);
+    return 1;
+}
+
+/*Overloaded version of calculate. It takes the mean value of the provided vector<point2f> for each ID and then
+ * calls standard caluclate-method
+ */
+int ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,float roll,float pitch){
+    std::vector<cv::Point2f> anchorLocations;
+    for(int i=0;i<cornerLocations.size();i++){//Go through all anchors
+        std::vector<cv::Point2f>::iterator cornerIt = cornerLocations[i].begin();
+        cv::Point2f location(0,0);
+        while(cornerIt != cornerLocations[i].end()){
+            location += *cornerIt;
+            cornerIt++;
+        }
+        location.x /= cornerLocations[i].size();
+        location.y /= cornerLocations[i].size();
+        anchorLocations.push_back(location);
+    }
+    //Do standard function call to calculate
+    int status = calculate(anchorLocations,IDs,roll,pitch);
+    return status;
+}
+/*Converts a vector of camera pixel coordinates to a vector of uLOS vectors expressed as Mat_<float>
+ *
+ */
+void ang::angulation::pix2uLOS(const std::vector<cv::Point2f>& points,std::vector<cv::Mat_<float>>& uLOS){
+    uLOS.clear();              //Define vector to be returned
+    //Loop through pixel points vector and build
+    std::vector<cv::Point2f>::const_iterator it = points.begin();
+    while(it!=points.end()){
+        // Create a mat_<float> with pixel coordinates and z coordinte = 1
+        cv::Mat_<float> point_mat = cv::Mat_<float>::ones(3,1);
+        point_mat(0,0) = it->x;
+        point_mat(1,0) = it->y;
+        //Transform to 3d image plane coordinates, then transfrom from image frame to uav frame
+        cv::Mat_<float> direction = T_inv * K_inv * point_mat;
+        //Normalize to length one
+        cv::Mat_<float> norm = cv::Mat_<float>::ones(1,3)*direction;//Norm is evaluated to 1x1 mat
+        direction /= norm(0,0);
+        std::cout << "Is this norm correct? Or must I divide by sqrt(x^2+y^2+z^2) ??? In angulation::pix2uLOS" << std::endl;
+        //Add to uLOS vector
+        uLOS.push_back(direction);
+        //Iterate
+        it++;
+    }
+}
+/* Takes IDs and returns vector of corresponding q vectors
+ */
+void ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_<float>>& q_vectors){
+    for(int i:IDs){
+        std::vector<cv::Mat_<float>>::iterator ptr = dataBase.begin();
+        ptr+=i;//i is not an incremented variable. i takes the value if IDs at an incremented position
+        q_vectors.push_back(*ptr);
+    }
+}
+
+/* Interface mathod used to set K mat and calculate its inverse
+ */
+void ang::angulation::setKmat(cv::Mat_<float>K_){
+    K = K_;
+    K_inv = K.inv();
+}
+/* Interface method used to set T mat. T is transformation fro  uav frame to camera frame
+ */
+void ang::angulation::setTmat(cv::Mat_<float> T_){
+    T = T_;
+    T_inv = T.inv();
+}
