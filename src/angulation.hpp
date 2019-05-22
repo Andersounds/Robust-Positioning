@@ -27,8 +27,8 @@ namespace ang{
         void setKmat(cv::Mat_<float>);          //Camera matrix
         void setTmat(cv::Mat_<float>);          //uav -to- camera frame transformation matrix
         int addAnchor(int,cv::Mat_<float>);     //Add an anchor to database (id and 3d coordinate)
-        int calculate(std::vector<cv::Point2f>&, std::vector<int>&,float,float); //Take pixel coordinates and IDs of anchors and calculate AZIPE
-        int calculate(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,float,float);// Overloaded. takes mean of pixel group first
+        float calculate(std::vector<cv::Point2f>&, std::vector<int>&,cv::Mat_<float>&,float,float); //Take pixel coordinates and IDs of anchors and calculate AZIPE
+        float calculate(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,cv::Mat_<float>&,float,float);// Overloaded. takes mean of pixel group first
     };
 
 

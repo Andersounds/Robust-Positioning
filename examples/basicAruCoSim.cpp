@@ -6,7 +6,7 @@
 #include "../src/save2file.cpp"
 #include <opencv2/aruco.hpp>
 
-
+#define PI 3.1416
 /*
 This code is a basic stream of sim warped images
 */
@@ -23,7 +23,13 @@ std::vector<float> linSpace(float start,float stop,float length){
     }
     return path;
 }
-
+std::vector<float> sinVector(std::vector<float> t,float scale){
+    std::vector<float> sin_;
+    for(float i:t){
+        sin_.push_back(std::sin(i)*scale);
+    }
+    return sin_;
+}
 
 
 int main(void){
@@ -51,21 +57,30 @@ int main(void){
     warper.setParam("sceneWidth",4);    //Scenewidth is 2m
     warper.setParam("yaw",-3.1415/2);   // Camera is rotated 90 deg cc in base pose
     warper.setParam("x",2);         //Set global origin at (-x,-y) from basepose
-    warper.setParam("y",1);
+    float y_ = ((float)floor.rows)*2/((float)floor.cols);//Calculate y coordinate in base pose [m]
+    warper.setParam("y",y_);
     warper.init(0);//Initialize with configuration 0
 
     //Create path of camera and save to output file
     #include "../spike/testPath.cpp"
+    //std::vector<float> xPath = linSpace(2,2,300);
+    //std::vector<float> yPath = linSpace(1,1,300);
     float length = xPath.size();
-    std::vector<float> yawPath =linSpace(0,6,length);
-    std::vector<float> rollPath = linSpace(0,0,length);
-    std::vector<float> zPath = linSpace(-0.8,-0.8,length);
+    std::vector<float> yawPath =linSpace(0,2*PI,length);
+    std::vector<float> t1 = linSpace(0,5*PI,length);
+    std::vector<float> rollPath = sinVector(t1,0.2);
+    std::vector<float> t2 = linSpace(0,8*PI,length);
+    std::vector<float> pitchPath = sinVector(t2,0.12);
+    std::vector<float> zPath = linSpace(-1,-1,length);
     float pathScale = 1.8;
     std::vector<float>::iterator xIt = xPath.begin();
     std::vector<float>::iterator yIt = yPath.begin();
+    std::vector<float>::iterator rollIt = rollPath.begin();
+    std::vector<float>::iterator pitchIt = pitchPath.begin();
     while(xIt != xPath.end()){
             *xIt*=pathScale;
             *yIt*=pathScale;
+
             xIt++;
             yIt++;
     }
@@ -81,7 +96,7 @@ int main(void){
 //Init odometry object
     cv::Mat_<float> K;
     warper.K.copyTo(K);//Can not assign with = as they then refer to same object. edit one edits the other
-    cv::Mat_<float> T = warper.getZRot(-3.1415/2);//UAV frame is x forward, camera frame is -y forward
+    cv::Mat_<float> T = warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
 
 
     //Initial values of UAV position
@@ -93,17 +108,19 @@ int main(void){
     t(2,0) = zPath[0];// 1.664;
 
 
-cv::Mat colorFrame;//For illustration
-//angulation init
-ang::angulation azipe(maxId,anchorPath);
-//Aruco init
-cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50);
+    cv::Mat colorFrame;//For illustration
+    //angulation init
+    ang::angulation azipe(maxId,anchorPath);
+    azipe.setKmat(K);
+    azipe.setTmat(T);
+    //Aruco init
+    cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50);
 //Go through whole path
     for(int i=0;i<(int)length;i++){
 //Get new image
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
         float pitch = 0;
-        std::vector<float> angles{yawPath[i],pitch,rollPath[i]};
+        std::vector<float> angles{yawPath[i],pitchPath[i],rollPath[i]};
         cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
@@ -113,12 +130,20 @@ cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(c
         std::vector<int> ids;
         std::vector<std::vector<cv::Point2f> > corners;
         cv::aruco::detectMarkers(frame, dictionary, corners, ids);
-        std::cout << "size: " << corners.size() << std::endl;
+
+
+        t(0,0) = xPath[i];
+        t(1,0) = yPath[i];
+        t(2,0) = zPath[i];
+
+        float zAngle_sin = azipe.calculate(corners,ids,t,rollPath[i],pitchPath[i]);
+        //std::cout << "Est: " << zAngle_sin<<", True: " << yawPath[i] << std::endl;
+
         cv::aruco::drawDetectedMarkers(colorFrame, corners, ids, CV_RGB(0,250,0));
 
 
 
-        float zAngle_sin = 1;
+        //float zAngle_sin = 1;
         //Write to file
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),zAngle_sin};
         file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
