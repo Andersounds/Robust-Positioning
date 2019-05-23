@@ -10,7 +10,6 @@
 
 #include "../src/corrFlowField.cpp"
 
-
 #define PI 3.14159
 /*
 This code is a basic stream of sim chessboard warped images that
