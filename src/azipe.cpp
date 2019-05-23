@@ -161,16 +161,21 @@ float az::azipe(const std::vector<cv::Mat_<float>>& v,
         float delta_neg = std::abs((P_vehicle_neg(2,0)-position(2,0)));
         if(delta_pos < delta_neg && !isnan(delta_pos)){//Choose the angle that corresponds with smallest difference in z-coordinate since last calculation
             P_vehicle_pos.copyTo(position);
-            if(v.size()>=3){//Demand a minimum of 3 active anchors
+            if(v.size()>=2){//Demand a minimum of 2 active anchors
                 return azimuth_pos;
             }
         }else if(!isnan(delta_neg)){
             P_vehicle_neg.copyTo(position);
-            if(v.size()>=3){//Demand a minimum of 3 active anchors
+            if(v.size()>=2){//Demand a minimum of 2 active anchors
                 return azimuth_neg;
             }
         }
         //std::cout << ", \t z: " << P_vehicle(2,0) << std::endl;
+        cv::Mat_<float> P_zero = cv::Mat_<float>::zeros(3,1);
+        P_zero(0,0) = NAN;
+        P_zero(1,0) = NAN;
+        P_zero(2,0) = NAN;
+        P_zero.copyTo(position);
         return NAN; //Should never reach this
 
 /*
