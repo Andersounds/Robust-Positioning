@@ -66,23 +66,25 @@ int main(void){
     //std::vector<float> xPath = linSpace(2,2,300);
     //std::vector<float> yPath = linSpace(1,1,300);
     float length = xPath.size();
-    std::vector<float> yawPath =linSpace(0,2*PI,length);
+    std::vector<float> t0 = linSpace(0,6*PI,length);
+    std::vector<float> yawPath =sinVector(t0,1.1);
     std::vector<float> t1 = linSpace(0,5*PI,length);
-    std::vector<float> rollPath = sinVector(t1,0.2);
+    std::vector<float> rollPath = sinVector(t1,0.08);
     std::vector<float> t2 = linSpace(0,8*PI,length);
     std::vector<float> pitchPath = sinVector(t2,0.12);
-    std::vector<float> zPath = linSpace(-1,-1,length);
+    std::vector<float> zPath = linSpace(-0.9,-0.9,length);
     float pathScale = 1.8;
     std::vector<float>::iterator xIt = xPath.begin();
     std::vector<float>::iterator yIt = yPath.begin();
-    std::vector<float>::iterator rollIt = rollPath.begin();
-    std::vector<float>::iterator pitchIt = pitchPath.begin();
+    std::vector<float>::iterator yawIt = yawPath.begin();
+
     while(xIt != xPath.end()){
             *xIt*=pathScale;
             *yIt*=pathScale;
-
+            *yawIt += 1.15;
             xIt++;
             yIt++;
+            yawIt++;
     }
 
 
