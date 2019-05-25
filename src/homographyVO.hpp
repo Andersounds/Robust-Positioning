@@ -18,25 +18,38 @@
 */
 
 namespace vo{
+    #define USE_HOMOGRAPHY 1
+    #define USE_AFFINETRANSFORM 2
 
     class planarHomographyVO{
     public:
         cv::Mat_<float> K;
         cv::Mat_<float> K_inv;
-        cv::Mat_<float> T;
+        cv::Mat_<float> T;              //Transformation matrix from UAV to Camera
+        cv::Mat_<float> T_inv;
         // findHomography parameters
         int homoGraphyMethod;
         double ransacReprojThreshold;
         int maxIters;
         double confidence;
         float sanityLimit;
+        bool activateDerotation;
+        int mode; // 1: use homography, 2: use derotation and estimateRigidTransform
+        // getAffineTransform parameters
+        cv::Mat opa;
+        int method_;
+        double ransacReprojThreshold_;
+        size_t maxIters_;
+        double confidence_;
+        size_t 	refineIters_;
+
 
         /*Constructor. Define the camera intrinsic parameters and some other settings
          * Arguments:
          * 1: Camera K matrix
          * 2: Transformation (pure rotation) from UAV frame to camera frame
         */
-        planarHomographyVO(cv::Mat_<float>,cv::Mat_<float>);
+        planarHomographyVO(cv::Mat_<float>,cv::Mat_<float>,int);
         /*Function called to process point correspondances and estimate global movement
         -------SHOULD HAVE CONST POINT INPUT
          */
@@ -53,7 +66,7 @@ namespace vo{
         /*
          *This is here to de rotate flow field
          */
-        void deRotateFlowField(std::vector<cv::Point2f>&, float);
+        void deRotateFlowField(std::vector<cv::Point2f>&, float,float);
     private:
         /* Performs the odometry itself
          * Accepts point correspondances, instantaneous pitch, roll, height, and the current global pose

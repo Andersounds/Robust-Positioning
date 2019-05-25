@@ -23,18 +23,30 @@
  * K_:  Intrinsic camera matrix
  * T_:  Camera frame orientation in relation to UAV coordinate frame
  */
-vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T_){
+vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T_,int mode_){
     std::cout << "TODO: 1. de-rotate both roll and pitch." <<std::endl;
     std::cout << "      2. Scale flow correctly when camera is tilted."<< std::endl;
     K=K_;
     K_inv = K.inv();
-    T=T_;                                   //Rotation matrix around Z relating UAV with Camera
+    T=T_;             //Rotation matrix around Z relating UAV with Camera (From UAV to Camera)
+    T_inv = T.inv();
     // findHomography parameters
     homoGraphyMethod = cv::RANSAC;
     ransacReprojThreshold = 3;
     maxIters = 2000;
     confidence = 0.995;
+    // getAffineTransform parameters
+    method_ = cv::RANSAC;
+    ransacReprojThreshold_ = 3;
+    maxIters_ = 2000;
+    confidence_ = 0.995;
+    refineIters_ = 10;
+    //Other paramters
     sanityLimit = 10000;//Limit of sum of squares in insanitycheck.
+    activateDerotation = true;
+    std::cout << "Flow field de-rotation is active (planarHomographyVO::deRotateFlowField). " << std::endl;
+    std::cout << "\t deactivate by setting .activateDerotation = false " << std::endl;
+    mode = mode_;
 }
 /*Complete process of odometry. Calls odometry method and updates t and R if possible
  * p1,p2:       Point correspondances (p1 old image, p2 new image)
@@ -71,40 +83,87 @@ bool vo::planarHomographyVO::odometry(std::vector<cv::Point2f>& p1,
                 float roll,float pitch, float height,
                 cv::Mat_<double>& b,
                 cv::Mat_<double>& A){
+    static float roll_prev = 0;
+    static float pitch_prev = 0;
+
+//roll_prev = roll;
+//pitch_prev = pitch;
+    //Check that there are enough point correspondances
     if((p1.size()<3)|| (p2.size()<3)){//std::cout << "Not enough point correspondances" << std::endl;
         return false;
     }
 
-    deRotateFlowField(p1, roll);
-    deRotateFlowField(p2, roll);
-//To offset like this when there is no tilt. and Roi is shifted by 100,40, succeeds in getting the right homography (pure rotation)
-    /*for(int i=0;i<p1.size();i++){
-        p1[i].x+=0;
-        p1[i].y-=250;
-        p2[i].x+=0;
-        p2[i].y-=250;
-    }*/
+
+    if(mode == USE_HOMOGRAPHY){
+        if(activateDerotation){
+            deRotateFlowField(p1, roll_prev, pitch_prev);
+            deRotateFlowField(p2, roll, pitch);
+        }
+        cv::Mat_<float> H = cv::findHomography(p1,p2,homoGraphyMethod,ransacReprojThreshold);
+        if(H.empty()){//std::cout << "No homography found" << std::endl;
+            return false;}
+        //Init vector for decomposition. the mats are Matx33d. i.e. each element contains a CV_64FC1
+        std::vector<cv::Mat> rotations;
+        std::vector<cv::Mat> translations;
+        std::vector<cv::Mat> normals;
+        int n = cv::decomposeHomographyMat(H,K,rotations,translations,normals);
+        //printmats(rotations, translations,normals);
+        int validIndex = getValidDecomposition(p1,rotations,translations,normals);
+        //std::cout << "Valid index " << validIndex << std::endl;
+        if(validIndex<0){std::cout <<"Validindex: "<< validIndex<<", No decomposition found" << std::endl;
+            return false;
+        }
+        //Return the valid rotation and translation mats
+        b = translations[validIndex]*height*cos(roll)*cos(pitch); //Maybe flip signs or something? how to express this as camera movement and not scene movement?
+        A = rotations[validIndex];
 
 
-
-    cv::Mat_<float> H = cv::findHomography(p1,p2,homoGraphyMethod,ransacReprojThreshold);
-    if(H.empty()){//std::cout << "No homography found" << std::endl;
-        return false;}
-
-    //Init vector for decomposition. the mats are Matx33d. i.e. each element contains a CV_64FC1
-    std::vector<cv::Mat> rotations;
-    std::vector<cv::Mat> translations;
-    std::vector<cv::Mat> normals;
-    int n = cv::decomposeHomographyMat(H,K,rotations,translations,normals);
-    //printmats(rotations, translations,normals);
-    int validIndex = getValidDecomposition(p1,rotations,translations,normals);
-    //std::cout << "Valid index " << validIndex << std::endl;
-    if(validIndex<0){std::cout <<"Validindex: "<< validIndex<<", No decomposition found" << std::endl;
-        return false;
+    }else if(mode == USE_AFFINETRANSFORM){
+        //De-rotate
+        deRotateFlowField(p1, roll_prev, pitch_prev);
+        deRotateFlowField(p2, roll, pitch);
+        //Translate flow field to camera coordinate system. ie origin is in the middle
+        //cv::Point2f offset(K(0,2),K(1,2));
+        cv::Point2f offset(K(0,2),K(1,2));
+        std::vector<cv::Point2f>::iterator it1 = p1.begin();
+        std::vector<cv::Point2f>::iterator it2 = p2.begin();
+        while(it1 != p1.end()){
+            *it1 -= offset;
+            *it1 /= K(0,0);
+            *it2 -= offset;
+            *it2 /= K(1,1);
+            it1++;
+            it2++;
+        }
+        //cv::Mat At = cv::estimateRigidTransform(p1,p2,false);
+        cv::Mat At = cv::estimateAffinePartial2D(p1,p2,opa,method_,ransacReprojThreshold_,maxIters,confidence_,refineIters_);
+        if(At.empty()){return false;}
+        //Calculate scale
+        cv::Mat_<double> R_ = At(cv::Rect(0,0,2,2));
+        double s = sqrt(cv::determinant(R_));
+        R_ /= s;
+        //Update rotation matrix Note: only azimuthal rotation
+        //Update coordinates
+        if(A.empty()){
+            cv::Mat_<double> A_ = cv::Mat_<double>::zeros(3,3);
+            cv::Mat_<double> b_ = cv::Mat_<double>::zeros(3,1);
+            R_.copyTo(A_(cv::Rect(0,0,2,2)));
+            At(cv::Rect(2,0,1,2)).copyTo(b_(cv::Rect(0,0,1,2))); //Set x-y values
+            b_(2,0) /=s;//Set height according to scale change
+            A_.copyTo(A);
+            b_.copyTo(b);
+        }else{
+            R_.copyTo(A(cv::Rect(0,0,2,2)));
+            At(cv::Rect(0,2,1,2)).copyTo(b(cv::Rect(0,0,1,2))); //Set x-y values
+            b(2,0) /=s;//Set height according to scale change
+        }
+        //Scale x-y with height
+        b(0,0) *= height;
+        b(1,0) *= height;
     }
-    //Return the valid rotation and translation mats
-    b = translations[validIndex]*height; //Maybe flip signs or something? how to express this as camera movement and not scene movement?
-    A = rotations[validIndex];
+    //Shift roll and pitch static variables
+    roll_prev = roll;
+    pitch_prev = pitch;
     return true;
 }
 /* Updates the global coordinate and rotation from the given b and A matrices
@@ -284,8 +343,14 @@ int vo::planarHomographyVO::getValidDecomposition(std::vector<cv::Point2f> p_ref
  */
 cv::Mat_<float> vo::planarHomographyVO::deRotateHomography(cv::Mat_<float>& H_rot, float roll,float pitch){
     //return H_rot;
+    //cv::Mat R_x = getXRot(roll);
+    //cv::Mat R_y = getYRot(pitch);
+    //cv::Mat_<float> R_left = R_y*R_x;
+
+
     cv::Mat_<float> R_left = deRotMat(roll,pitch); //THIS SHOULD BE CORRECT
     cv::Mat_<float> R_right = R_left.t();
+    //cv::Mat_<float> H = T*R_y*R_x*H_rot*R_x.t()*R_y.t()*T_inv;
     cv::Mat_<float> H = K*R_left*H_rot*R_right*K_inv;
     return H;
 }
@@ -298,14 +363,14 @@ cv::Mat_<float> vo::planarHomographyVO::deRotateHomography(cv::Mat_<float>& H_ro
  * TODO:::: implement roll compensation as well. Also some general way to pass roll and pitch if camera-UAV relationship changes
  * PASS INVERSE OF DeROT???
  */
-void vo::planarHomographyVO::deRotateFlowField(std::vector<cv::Point2f>& src, float pitch){
-    //float scale = 100;
-    //float pitch = -3.1415/4;
-    //std::vector<cv::Point2f> src{cv::Point3f(-scale,-scale,1),cv::Point3f(-scale,scale,1),cv::Point3f(scale,scale,1),cv::Point3f(scale,-scale,1)};
+void vo::planarHomographyVO::deRotateFlowField(std::vector<cv::Point2f>& src, float roll, float pitch){
     std::vector<cv::Point2f> dst;
-    cv::Mat R_x = getYRot(pitch);//Double minus? minus här och R transponat?
+    cv::Mat R_x = getXRot(roll);
+    cv::Mat R_y = getYRot(pitch);
     //std::cout << "obs Y rot not X rot now" << std::endl;
-    cv::Mat H = K*R_x*K_inv;//Transpose to flip the pitch back
+//cv::Mat H = K*R_x*K_inv;//Transpose to flip the pitch back
+    cv::Mat H = K*T* R_y*R_x* T_inv*K_inv;//Right to left: pixel to camera, camera to UAV, roll, pitch, UAV to camera, camera to pixel
+//cv::Mat H = T*K *R_y*R_x* K_inv*T_inv;
     VOperspectiveTransform(src,dst,H);
     src.clear();
     for(cv::Point2f point:dst){
@@ -322,7 +387,7 @@ void vo::planarHomographyVO::VOperspectiveTransform(std::vector<cv::Point2f> src
         float x = point.x*H(0,0) + point.y*H(0,1) + H(0,2);
         float y = point.x*H(1,0) + point.y*H(1,1) + H(1,2);
         float z = point.x*H(2,0) + point.y*H(2,1) + H(2,2);
-        dst.push_back(cv::Point2f(x/z,y/z));//Normalized do z=1
+        dst.push_back(cv::Point2f(x/z,y/z));//Normalized to z=1
     }
 }
 /* This method defines a de-rotation matrix by defining rotation with negative angles
