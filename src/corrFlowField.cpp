@@ -38,7 +38,7 @@ public:
             src2.copyTo(src1);
             init = 1;
         }
-return 1;
+        return 1;
         //success = deRotate()
         //success = corrFlow();
     }
