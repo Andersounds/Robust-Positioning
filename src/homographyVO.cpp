@@ -187,6 +187,7 @@ void vo::planarHomographyVO::updateGlobalPosition(bool VOSuccess,
         //t = t_new;
     }
     //Increment
+    
     t_new = t+t_d;
     cv::Mat_<float> R_new = R_d*R;
     //Update pose
