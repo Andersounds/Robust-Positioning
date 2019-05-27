@@ -67,7 +67,7 @@ void of::opticalFlow::setDefaultSettings(void){
         termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 20, 0.01);
         init = true;
     } else if(mode == USE_CORR){
-        corrQualityLevel = 0;
+        corrQualityLevel = 0.3;
         init = true;
     }
 
@@ -103,6 +103,7 @@ int of::opticalFlow::getFlow(const cv::Mat& src1, const cv::Mat& src2,
  */
 int of::opticalFlow::corrFlow(const cv::Mat& src1, const cv::Mat& src2,
                 std::vector<cv::Point2f>& points1,std::vector<cv::Point2f>& points2){
+    int success = 0;
     //Convert mats to float
     cv::Mat src1_32C1;
     cv::Mat src2_32C1;
@@ -118,19 +119,15 @@ int of::opticalFlow::corrFlow(const cv::Mat& src1, const cv::Mat& src2,
 //cv::imshow("Chess board", src1_32C1);
 //cv::waitKey(0);
         cv::Point2d flow = cv::phaseCorrelate(src1_32C1(roi), src2_32C1(roi),hann,&response);//Perform phase correlation calculation
-        if(response<corrQualityLevel){
-            std::cout << "Too low threshold (of::opticalFlow::corrFlow)" <<std::endl;
-            points1.clear();//Clear them so that VO does not process trash data
-            points2.clear();
-            return false;
+        if(response >= corrQualityLevel){
+            points1.push_back(*cntr);
+            cv::Point2f flow32 = cv::Point2f((float)flow.x,(float)flow.y) + *cntr;
+            points2.push_back(flow32);
+            success++;
         }
-        points1.push_back(*cntr);
-        cv::Point2f flow32 = cv::Point2f((float)flow.x,(float)flow.y) + *cntr;
-
-        points2.push_back(flow32);
         cntr++;
     }
-    return true;
+    return success;
 }
 
 /* This method implements a pyramidal KLT  optical flow algorithm without feature searching
