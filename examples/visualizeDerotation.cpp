@@ -21,6 +21,8 @@ Issue:
 VO algorithm performs MUCH better when tracked features are simply thrown away every frame.
     Is there a bug? can I handle it somehow?
 
+Standardizer order of roll/pitch?
+
 */
 
 
@@ -67,7 +69,13 @@ std::vector<float> linSpace(float start,float stop,float length){
     }
     return path;
 }
-//std::vector<float>
+std::vector<float> sinVector(std::vector<float> t,float scale){
+    std::vector<float> sin_;
+    for(float i:t){
+        sin_.push_back(std::sin(i)*scale);
+    }
+    return sin_;
+}
 
 
 
@@ -109,20 +117,20 @@ int main(void){
 
     //Start out aligned with x-y of global coordinate system
 
-    /*float length = 200;
-    std::vector<float> xPath = linSpace(0,0,length);
-    std::vector<float> yPath = linSpace(0,0,length);
+/*    float length = 200;
+    std::vector<float> xPath = linSpace(2,2,length);
+    std::vector<float> yPath = linSpace(0.7,0.7,length);
 */
 
     #include "../spike/testPath.cpp"
     float length = xPath.size();
     //xmax ca 1.9
     std::vector<float> yawPath =linSpace(0,6,length);
-    std::vector<float> t_vector=linSpace(0,30,length);
-    std::vector<float> rollPath;// = linSpace(0,3.1415/5,length);
-    for(int i=0;i<length;i++){
-        rollPath.push_back(sin(t_vector[i])*3.14/8);
-    }
+    std::vector<float> t_roll=linSpace(0,60,length);
+    std::vector<float> t_pitch=linSpace(0,30,length);
+    std::vector<float> rollPath = sinVector(t_roll,PI/16);
+    std::vector<float> pitchPath = linSpace(0,0,length);//sinVector(t_pitch,3.14/12);
+
 
     float pathScale = 1;
     std::vector<float>::iterator xIt = xPath.begin();
@@ -135,10 +143,7 @@ int main(void){
             yIt++;
     }
 
-
-
-
-    std::vector<float> zPath = linSpace(-0.5,-0.5,length);
+    std::vector<float> zPath = linSpace(-0.8,-0.7,length);
 
 
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
@@ -157,20 +162,21 @@ int main(void){
     K(0,2) = 75;
     K(1,2) = 75;
     cv::Mat_<float> T = warper.getZRot(-3.1415/2);//UAV frame is x forward, camera frame is -y forward
-    vo::planarHomographyVO odometer(K,T);
+    vo::planarHomographyVO odometer(K,T,USE_AFFINETRANSFORM); //USE_HOMOGRAPHY
+    //odometer.activateDerotation = false;//Deactivate derotation. is it needed even?
     //Initial values of UAV position
     //cv::Mat_<float> R = warper.getZRot(yawPath[0]);
     cv::Mat_<float> R = warper.getZRot(0);
     cv::Mat_<float> t = cv::Mat_<float>::zeros(3,1);
-    t(0,0) = xPath[0];//-1.299;
-    t(1,0) = yPath[0];//-3.398;
-    t(2,0) = zPath[0];// 1.664;
+    t(0,0) = xPath[0];
+    t(1,0) = yPath[0];
+    t(2,0) = zPath[0];
 
 
 //Set some parameters that are used trhoughout the program
 //and initialize some variables on bottom of stack
     std::vector<cv::Point2f> features; //The vector that keeps all the current features
-    int noOfCorners = 30;
+    int noOfCorners = 20;
     int noOfTracked = 0;//Init
     float maskDir = -1;//to choose mask. init value -1 for whole scene
     int cols = warper.baseScene.cols;//boxWidth*colsOfBoxes;
@@ -189,12 +195,12 @@ cv::Mat colorFrame;//For illustration
     for(int i=0;i<(int)length;i++){
 //Get new image
         float pitch = 0;
-        float height = 0.5;//Används bara av odometer
+        float height = abs(zPath[i])/(cos(pitchPath[i])*cos(rollPath[i]));//Används bara av odometer
         std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
 
         //std::cout << "Coordinates true: "<< trueCoordinate[0] <<", " << trueCoordinate[1] << ", "<< trueCoordinate[2] << std::endl;
         //std::cout << "Coordinates est init: "<< t << std::endl;
-        std::vector<float> angles{yawPath[i],pitch,rollPath[i]};
+        std::vector<float> angles{yawPath[i],pitchPath[i],rollPath[i]};
 //        cv::Mat rawFrame = warper.getWarpedImage(angles,trueCoordinate);
         cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
@@ -204,7 +210,7 @@ cv::Mat colorFrame;//For illustration
 ////////
 
 
-        if(noOfTracked<=28){//if(noOfTracked<=noOfCorners*0.7){
+        if(noOfTracked<=7){//if(noOfTracked<=noOfCorners*0.7){
             int noOfNew = noOfCorners-noOfTracked;
             std::vector<cv::Point2f> newFeatures;
             cv::Point2f dir(0,0);
@@ -241,12 +247,13 @@ corrTracker.corrFlow(subPrevFrame,subFrame,activeFeatures1,activeFeatures2);
             p2_original.push_back(activeFeatures2[i]);
         }
 
-        bool odometerSuccess = odometer.process(activeFeatures1,activeFeatures2,rollPath[i],pitch,height,t,R);
+        bool odometerSuccess = odometer.process(activeFeatures1,activeFeatures2,rollPath[i],pitchPath[i],height,t,R);
         float z_sin = R(0,1);
         float zAngle_sin = std::atan2(R(0,1),R(0,0));//tan with quadrant checking
 
 
         //Write to file
+        if(zAngle_sin<0){zAngle_sin+=(2*PI);}
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),zAngle_sin};
         file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
         build_row(estimation,file_estimated);
@@ -265,13 +272,16 @@ corrTracker.corrFlow(subPrevFrame,subFrame,activeFeatures1,activeFeatures2);
 
         //Straight image
         std::vector<cv::Point2f> roiCorners{cv::Point2f(0,0),cv::Point2f(150,0),cv::Point2f(150,150),cv::Point2f(0,150)};
-        odometer.deRotateFlowField(roiCorners, angles[2]);
+        float pitch__ = angles[2];
+        float roll__ = 0;
+        odometer.deRotateFlowField(roiCorners, rollPath[i],pitchPath[i]);
         angles[2]=0;
         cv::Mat straightFrame = warper.uav2BasePose(angles,trueCoordinate);
         drawArrows(straightFrame,straightFrame,activeFeatures1,activeFeatures2,scale,focusOffset);
         cv::putText(straightFrame, "No-pitch view with derotated flow field",cv::Point(20, 20),cv::FONT_HERSHEY_DUPLEX,0.7,CV_RGB(118, 185, 0),2);
         drawLines(straightFrame,roiCorners,focusOffset);
 
+        //Create new image with both scenes
         cv::Mat both(cv::Size(colorFrame.rows*2,colorFrame.cols),colorFrame.type(),cv::Scalar(0));
         cv::Mat roi1 = both(cv::Rect(0,0,colorFrame.cols,colorFrame.rows));
         colorFrame.copyTo(roi1);
