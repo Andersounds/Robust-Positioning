@@ -9,6 +9,7 @@
  *
  */
 of::opticalFlow::opticalFlow(int mode_, int grid_, int roiSize){
+    init = false;
     mode = mode_;
     grid = grid_;
     //Calculate integer distance between each flow arrow
@@ -37,8 +38,6 @@ of::opticalFlow::opticalFlow(int mode_, int grid_, int roiSize){
 
 
     }else if(mode == USE_CORR){
-
-        thresh = 0;
         //Define subRoI vector
         std::vector<cv::Rect2f> subRoI_;
         float h_half = floor( h/2 );
@@ -58,37 +57,51 @@ of::opticalFlow::opticalFlow(int mode_, int grid_, int roiSize){
     }
 }
 /* Used to set default settings for the optical flow algorithms
- *
+ * TODO: maybe check that windowsize is small enough for the grid used?
  */
 void of::opticalFlow::setDefaultSettings(void){
+    if(mode == USE_KLT){
+        flags = 0;//No flag. Use normal L2 norm error
+        windowSize = 51;//51;
+        maxLevel = 2;
+        termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 20, 0.01);
+        init = true;
+    } else if(mode == USE_CORR){
+        corrQualityLevel = 0;
+        init = true;
+    }
 
 
 }
 /* Wrapper function to calculate the optical flow. Calles either KLT or Corr depending on mode
  *
  */
-bool of::opticalFlow::getFlow(const cv::Mat& src1, const cv::Mat& src2,
+int of::opticalFlow::getFlow(const cv::Mat& src1, const cv::Mat& src2,
                 std::vector<cv::Point2f>& points1,std::vector<cv::Point2f>& points2){
+    //Check that initialized
+    if(!init){std::cout << "optical flow not initialized. run (of::opticalFlow::setDefaultSettings)"<<std::endl;return 0;}
+    //Check that data is fine
+    if(src1.rows<1 || src1.cols<1 || src2.rows<1 || src2.cols<1){return false;}//Assert that we actually have two RoI images
+    //-----------Assert mat type here?
+    //Make sure that they are empty
+    points1.clear();
+    points2.clear();
     if(mode == USE_KLT){
-        return false;
+        return KLTFlow(src1,src2,points1,points2);
     }else if(mode == USE_CORR){
         return corrFlow(src1,src2,points1,points2);
     } else{
         std::cout << "Invalid mode (of::opticalFlow::getFlow)" << std::endl;
-        return false;
+        return 0;
     }
 }
 
 /* This method implements a variant of Walter18:s phase correlation optical flow
- *
+ * TODO: use quality level and return parital flow field if some is not successful
+ * TODO: Check that images are converted correctly. When printing they look very white do we loose information?
  */
-bool of::opticalFlow::corrFlow(const cv::Mat& src1, const cv::Mat& src2,
+int of::opticalFlow::corrFlow(const cv::Mat& src1, const cv::Mat& src2,
                 std::vector<cv::Point2f>& points1,std::vector<cv::Point2f>& points2){
-    if(src1.rows<1 || src1.cols<1 || src2.rows<1 || src2.cols<1){return false;}//Assert that we actually have two RoI images
-    //Assert mat type here?
-    //Make sure that they are empty
-    points1.clear();
-    points2.clear();
     //Convert mats to float
     cv::Mat src1_32C1;
     cv::Mat src2_32C1;
@@ -104,7 +117,7 @@ bool of::opticalFlow::corrFlow(const cv::Mat& src1, const cv::Mat& src2,
 //cv::imshow("Chess board", src1_32C1);
 //cv::waitKey(0);
         cv::Point2d flow = cv::phaseCorrelate(src1_32C1(roi), src2_32C1(roi),hann,&response);//Perform phase correlation calculation
-        if(response<thresh){
+        if(response<corrQualityLevel){
             std::cout << "Too low threshold (of::opticalFlow::corrFlow)" <<std::endl;
             points1.clear();//Clear them so that VO does not process trash data
             points2.clear();
@@ -117,4 +130,41 @@ bool of::opticalFlow::corrFlow(const cv::Mat& src1, const cv::Mat& src2,
         cntr++;
     }
     return true;
+}
+
+/* This method implements a pyramidal KLT  optical flow algorithm without feature searching
+ * i.e features to track is not found with goodFeaturesToTrack or similar. They are specified beforehand
+ * to be located on a n-by-n grid. This methods proved to be more robust in low contrast environments in initial tests
+ */
+int of::opticalFlow::KLTFlow(const cv::Mat& src1, const cv::Mat& src2,
+                std::vector<cv::Point2f>& points1,std::vector<cv::Point2f>& points2){
+    std::vector<uchar> status;
+    std::vector<float> errors;
+    std::vector<cv::Point2f> p1_ = p1;
+    std::vector<cv::Point2f> p2;
+
+    cv::calcOpticalFlowPyrLK(src1,src2,p1_,p2,
+                            status,
+                            errors,
+                            cv::Size(windowSize,windowSize),
+                            maxLevel,
+                            termcrit,
+                            flags,//For special operation
+                            0.001);
+    //Only return the flow corresponcences that have no error. Go through the vectors returned by PyrLK
+    std::vector<uchar>::iterator it0 = status.begin();
+    std::vector<cv::Point2f>::iterator it1 = p1.begin();
+    std::vector<cv::Point2f>::iterator it2 = p2.begin();
+    int success = 0;
+    while( it0 != status.end()){
+        if(*it0){ //If tracking was successful
+            points1.push_back(*it1);
+            points2.push_back(*it2);
+            it0++;
+            it1++;
+            it2++;
+            success++;
+        }
+    }
+    return success;
 }

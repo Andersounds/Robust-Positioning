@@ -21,9 +21,10 @@ namespace of{
     class opticalFlow{
     public:
         opticalFlow(int,int,int);
-        bool getFlow(const cv::Mat&, const cv::Mat&,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&);
+        int getFlow(const cv::Mat&, const cv::Mat&,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&);
         void setDefaultSettings(void);
     private:
+        bool init;
         int mode; //Either USE_CORR or USE_KLT
         int grid; //specifies size of flow grid (number of flow arrows in x and y direction). Total flow field will be grid^2 points arranged in a grid
         float h; //The distance between each flow arrow in x-and y direction. Also the width of each sub roi
@@ -31,10 +32,17 @@ namespace of{
         float grid_y; //See above
         std::vector<cv::Point2f> p1; //First points in point correspondances (In grid shape)
         //Parameters for phase correlation flow field
-        double thresh;
-        std::vector<cv::Rect2f> subRoI; //Coordinates of all subRects that are used for phase-correlation
         cv::Mat hann; //Hanning window to reduce edge effects in phase correlation
-        bool corrFlow(const cv::Mat&, const cv::Mat&,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&);
+        double corrQualityLevel;
+        std::vector<cv::Rect2f> subRoI; //Coordinates of all subRects that are used for phase-correlation
+        int corrFlow(const cv::Mat&, const cv::Mat&,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&);
+        //Parameters for KLT pyramidal flow field
+        //KLT track parameters
+        int flags;
+        int windowSize;
+        int maxLevel;
+        cv::TermCriteria termcrit;
+        int KLTFlow(const cv::Mat&, const cv::Mat&,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&);
 
         //Parameters for KLT pyramidal flow field
 
