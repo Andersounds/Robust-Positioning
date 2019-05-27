@@ -9,7 +9,7 @@
 #include "../src/save2file.cpp"
 #include "../src/corrFlowField.cpp"
 
-
+#define PI 3.1416
 /*
 This code is a basic stream of sim chessboard warped images that
 also extracts and draws the flowfield
@@ -72,14 +72,14 @@ int main(void){
 // Init simulation environment
     simulatePose warper;
 
-    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
+//    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
 //cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/light_stone_wall.jpg",cv::IMREAD_COLOR);
 //cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test1.png",cv::IMREAD_COLOR);
-/*cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv::IMREAD_REDUCED_COLOR_4);
+cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv::IMREAD_REDUCED_COLOR_4);
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
-*/
+
 /*
     cv::imshow("Chess board",floor);
     cv::waitKey(0);
@@ -89,8 +89,8 @@ int main(void){
     warper.setParam("sceneWidth",4);    //Scenewidth is 2m
     warper.setParam("yaw",-3.1415/2);   // Camera is rotated 90 deg cc in base pose
 
-    warper.setParam("x",1.8);         //Set global origin at (-x,-y) from basepose
-    warper.setParam("y",0.7);
+    warper.setParam("x",2);         //Set global origin at (-x,-y) from basepose
+    warper.setParam("y",1);
 
     warper.init(0);//Initialize with configuration 0
 
@@ -99,15 +99,16 @@ int main(void){
 
     //Start out aligned with x-y of global coordinate system
 
-    /*float length = 200;
-    std::vector<float> xPath = linSpace(0,0,length);
-    std::vector<float> yPath = linSpace(0,0,length);
-*/
+    float length = 130;
+    std::vector<float> xPath = linSpace(1,1,length);
+    std::vector<float> yPath = linSpace(0.5,0.5,length);
+    std::vector<float> pitchPath = linSpace(PI/12,PI/12,length);
+    std::vector<float> rollPath = linSpace(0,0,length);
 
-    #include "testPath.cpp"
+//    #include "testPath.cpp"
     //xmax ca 1.9
-    std::vector<float> yawPath =xPath;
-    float pathScale = 1.3;
+    std::vector<float> yawPath =linSpace(0,4,length);
+    float pathScale = 1;
     std::vector<float>::iterator xIt = xPath.begin();
     std::vector<float>::iterator yIt = yPath.begin();
     std::vector<float>::iterator yawIt = yawPath.begin();
@@ -121,7 +122,7 @@ int main(void){
             yIt++;
             yawIt++;
     }
-   float length = xPath.size();
+   //float length = xPath.size();
 
 
     std::vector<float> zPath = linSpace(-1,-1,length);
@@ -182,7 +183,7 @@ cv::Mat colorFrame;//For illustration
 
         //std::cout << "Coordinates true: "<< trueCoordinate[0] <<", " << trueCoordinate[1] << ", "<< trueCoordinate[2] << std::endl;
         //std::cout << "Coordinates est init: "<< t << std::endl;
-        std::vector<float> angles{yawPath[i],pitch,roll};
+        std::vector<float> angles{yawPath[i],pitchPath[i],rollPath[i]};
 //        cv::Mat rawFrame = warper.getWarpedImage(angles,trueCoordinate);
         cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
@@ -193,15 +194,15 @@ cv::Mat colorFrame;//For illustration
         std::vector<cv::Point2f> features;
         corrTracker.corrFlow(subPrevFrame,subFrame,features,updatedFeatures);
 
-        bool odometerSuccess = odometer.process(features,updatedFeatures,roll,pitch,height,t,R);
-        float z_sin = R(0,1);
+        bool odometerSuccess = odometer.process(features,updatedFeatures,rollPath[i],pitchPath[i],height,t,R);
+        //float z_sin = R(0,1);
         float zAngle_sin = std::atan2(R(0,1),R(0,0));//tan with quadrant checking
 
         //Write to file
+        if(zAngle_sin<0){zAngle_sin += 2*PI;}
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),zAngle_sin};
         file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
         build_row(estimation,file_estimated);
-
         file_estimated.close();
 
 
