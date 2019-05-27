@@ -17,6 +17,18 @@ TODO: Standardizer order of roll/pitch?
 
 */
 
+/* Function to perform matrix transformation of vector<point2f>
+ *  Performs a multiplication H*b where b is vector 2xn
+ */
+void VOperspectiveTransform(std::vector<cv::Point2f> src,std::vector<cv::Point2f>&dst,cv::Mat_<float>H){
+    dst.clear();//Make sure that dst is empty
+    for(cv::Point2f point:src){
+        float x = point.x*H(0,0) + point.y*H(0,1) + H(0,2);
+        float y = point.x*H(1,0) + point.y*H(1,1) + H(1,2);
+        float z = point.x*H(2,0) + point.y*H(2,1) + H(2,2);
+        dst.push_back(cv::Point2f(x/z,y/z));//Normalized to z=1
+    }
+}
 /* Draws arrows between the point correspondances and scale them
  *
  */
@@ -116,7 +128,7 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv:
     std::vector<float> t_pitch=linSpace(0,30,length);
     std::vector<float> rollPath = sinVector(t_roll,PI/16);
     std::vector<float> pitchPath = linSpace(0,0,length);//sinVector(t_pitch,3.14/12);
-
+    std::vector<float> zPath = linSpace(-0.8,-0.8,length);
 
     float pathScale = 1;
     std::vector<float>::iterator xIt = xPath.begin();
@@ -127,23 +139,28 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv:
             xIt++;
             yIt++;
     }
-
-    std::vector<float> zPath = linSpace(-0.8,-0.8,length);
-
-
+//Write true path to file
     file_true.open("truePath.txt", std::ios::out | std::ios::app);
     std::vector<std::vector <float>> input{xPath,yPath,zPath,yawPath};
     build_path(input,file_true);
     file_true.close();
+//Define the focus area. size and position
+    int cols = warper.baseScene.cols;//boxWidth*colsOfBoxes;
+    int rows = warper.baseScene.rows;//boxWidth*rowsOfBoxes;
+    float roiWidth = 150;
+    float x_ = (float) cols/2 - 75;
+    float y_ = (float) rows/2 - 75;
+    cv::Rect_<float> focusArea(x_,y_,roiWidth,roiWidth);
+    cv::Point2f focusOffset(focusArea.x,focusArea.y);
 //Init flowField object with default settings
-    of::opticalFlow FlowField(USE_KLT,3,150);
+    of::opticalFlow FlowField(USE_CORR,3,roiWidth);
     FlowField.setDefaultSettings();
 //Init odometry object
     cv::Mat_<float> K;
     warper.K.copyTo(K);//Can not assign with = as they then refer to same object. edit one edits the other
 //Edit K matrix to work with image input of RoI-size
-    K(0,2) = 75;
-    K(1,2) = 75;
+    K(0,2) = roiWidth/2;
+    K(1,2) = roiWidth/2;
     cv::Mat_<float> T = warper.getZRot(-3.1415/2);//UAV frame is x forward, camera frame is -y forward
     vo::planarHomographyVO odometer(K,T,USE_AFFINETRANSFORM); //USE_HOMOGRAPHY
     //odometer.activateDerotation = false;//Deactivate derotation. is it needed even?
@@ -154,19 +171,8 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv:
     t(1,0) = yPath[0];
     t(2,0) = zPath[0];
 
-
 //Set some parameters that are used trhoughout the program
 //and initialize some variables on bottom of stack
-    //std::vector<cv::Point2f> features; //The vector that keeps all the current features
-    int cols = warper.baseScene.cols;//boxWidth*colsOfBoxes;
-    int rows = warper.baseScene.rows;//boxWidth*rowsOfBoxes;
-// TODO --- an easier way of setting the focusarea. should only define it once
-
-    float x_ = (float) cols/2 - 75;
-    float y_ = (float) rows/2 - 75;
-    cv::Rect_<float> focusArea(x_,y_,150,150);
-    cv::Point2f focusOffset(focusArea.x,focusArea.y);
-
     cv::Mat subPrevFrame;//For finding new corners
     cv::Mat colorFrame;//For illustration
 
@@ -219,7 +225,7 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv:
         cv::rectangle(colorFrame,focusArea,CV_RGB(255,0,0),2,cv::LINE_8,0);
         cv::putText(colorFrame, "Original view and flow field",cv::Point(20, 20),cv::FONT_HERSHEY_DUPLEX,0.7,CV_RGB(118, 185, 0),2);
         //Straight image
-        std::vector<cv::Point2f> roiCorners{cv::Point2f(0,0),cv::Point2f(150,0),cv::Point2f(150,150),cv::Point2f(0,150)};
+        std::vector<cv::Point2f> roiCorners{cv::Point2f(0,0),cv::Point2f(roiWidth,0),cv::Point2f(roiWidth,roiWidth),cv::Point2f(0,roiWidth)};
         odometer.deRotateFlowField(roiCorners, rollPath[i],pitchPath[i]);
         //Set roll and pitch to zero. ORDER????
         angles[1] = 0;
@@ -227,7 +233,12 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv:
         cv::Mat straightFrame = warper.uav2BasePose(angles,trueCoordinate);
         odometer.deRotateFlowField(features, rollPath[i],pitchPath[i]);
         odometer.deRotateFlowField(updatedFeatures, rollPath[i],pitchPath[i]);
-        drawArrows(straightFrame,features,updatedFeatures,scale,focusOffset);
+        std::vector<cv::Point2f> deRotatedFeatures;
+        std::vector<cv::Point2f> deRotatedUpdatedFeatures;
+        //Try to transform them back to the correct domain. but does not work. i am thinking something wrong
+        VOperspectiveTransform(features,deRotatedFeatures,K);
+        VOperspectiveTransform(updatedFeatures,deRotatedUpdatedFeatures,K);
+        drawArrows(straightFrame,deRotatedFeatures,deRotatedUpdatedFeatures,scale,focusOffset);
         cv::putText(straightFrame, "No-pitch view with derotated flow field",cv::Point(20, 20),cv::FONT_HERSHEY_DUPLEX,0.7,CV_RGB(118, 185, 0),2);
         drawLines(straightFrame,roiCorners,focusOffset);
         //Create new image with both scenes
