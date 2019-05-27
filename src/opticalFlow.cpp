@@ -99,6 +99,7 @@ int of::opticalFlow::getFlow(const cv::Mat& src1, const cv::Mat& src2,
 /* This method implements a variant of Walter18:s phase correlation optical flow
  * TODO: use quality level and return parital flow field if some is not successful
  * TODO: Check that images are converted correctly. When printing they look very white do we loose information?
+ * TODO: filter the flow field?
  */
 int of::opticalFlow::corrFlow(const cv::Mat& src1, const cv::Mat& src2,
                 std::vector<cv::Point2f>& points1,std::vector<cv::Point2f>& points2){
@@ -160,11 +161,11 @@ int of::opticalFlow::KLTFlow(const cv::Mat& src1, const cv::Mat& src2,
         if(*it0){ //If tracking was successful
             points1.push_back(*it1);
             points2.push_back(*it2);
-            it0++;
-            it1++;
-            it2++;
             success++;
         }
+        it0++;
+        it1++;
+        it2++;
     }
     return success;
 }
