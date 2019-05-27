@@ -63,7 +63,12 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
     //
     cv::Mat_<double> b_double;//odometry estimation of translation in camera frame
     cv::Mat_<double> A_double;//odometry estimation of rotation in camera frame
-    bool success = odometry(p1,p2,roll,pitch,height,b_double,A_double);
+    bool success;
+    if(USE_AFFINETRANSFORM){
+        success = odometryAffine(p1,p2,roll,pitch,height,b_double,A_double);
+    }else if(USE_HOMOGRAPHY){
+        success = odometryHom(p1,p2,roll,pitch,height,b_double,A_double);
+    }else{std::cout << "Invalid homography mode (vo::planarHomographyVO::process)";return false;}
     //Convert to float
     cv::Mat_<float> b;//odometry estimation of translation in camera frame
     cv::Mat_<float> A;
@@ -77,8 +82,9 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
 /* Performs the odometry itself
  * Estimates camera movement between frames as expressed in the coordinate system of the camera of frame 1
  * Accepts point correspondances, instantaneous pitch, roll, height, and the current global pose
+ * Uses complete homography for estimation
  */
-bool vo::planarHomographyVO::odometry(std::vector<cv::Point2f>& p1,
+bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1,
                 std::vector<cv::Point2f>& p2,
                 float roll,float pitch, float height,
                 cv::Mat_<double>& b,
@@ -92,75 +98,93 @@ bool vo::planarHomographyVO::odometry(std::vector<cv::Point2f>& p1,
     if((p1.size()<3)|| (p2.size()<3)){//std::cout << "Not enough point correspondances" << std::endl;
         return false;
     }
-
-
-    if(mode == USE_HOMOGRAPHY){
-        if(activateDerotation){
-            deRotateFlowField(p1, roll_prev, pitch_prev);
-            deRotateFlowField(p2, roll, pitch);
-        }
-        cv::Mat_<float> H = cv::findHomography(p1,p2,homoGraphyMethod,ransacReprojThreshold);
-        if(H.empty()){//std::cout << "No homography found" << std::endl;
-            return false;}
-        //Init vector for decomposition. the mats are Matx33d. i.e. each element contains a CV_64FC1
-        std::vector<cv::Mat> rotations;
-        std::vector<cv::Mat> translations;
-        std::vector<cv::Mat> normals;
-        int n = cv::decomposeHomographyMat(H,K,rotations,translations,normals);
-        //printmats(rotations, translations,normals);
-        int validIndex = getValidDecomposition(p1,rotations,translations,normals);
-        //std::cout << "Valid index " << validIndex << std::endl;
-        if(validIndex<0){std::cout <<"Validindex: "<< validIndex<<", No decomposition found" << std::endl;
-            return false;
-        }
-        //Return the valid rotation and translation mats
-        b = translations[validIndex]*height*cos(roll)*cos(pitch); //Maybe flip signs or something? how to express this as camera movement and not scene movement?
-        A = rotations[validIndex];
-
-
-    }else if(mode == USE_AFFINETRANSFORM){
-        //De-rotate
+    if(activateDerotation){
         deRotateFlowField(p1, roll_prev, pitch_prev);
         deRotateFlowField(p2, roll, pitch);
-        //Translate flow field to camera coordinate system. ie origin is in the middle
-        //cv::Point2f offset(K(0,2),K(1,2));
-        cv::Point2f offset(K(0,2),K(1,2));
-        std::vector<cv::Point2f>::iterator it1 = p1.begin();
-        std::vector<cv::Point2f>::iterator it2 = p2.begin();
-        while(it1 != p1.end()){
-            *it1 -= offset;
-            *it1 /= K(0,0);
-            *it2 -= offset;
-            *it2 /= K(1,1);
-            it1++;
-            it2++;
-        }
-        //cv::Mat At = cv::estimateRigidTransform(p1,p2,false);
-        cv::Mat At = cv::estimateAffinePartial2D(p1,p2,opa,method_,ransacReprojThreshold_,maxIters,confidence_,refineIters_);
-        if(At.empty()){return false;}
-        //Calculate scale
-        cv::Mat_<double> R_ = At(cv::Rect(0,0,2,2));
-        double s = sqrt(cv::determinant(R_));
-        R_ /= s;
-        //Update rotation matrix Note: only azimuthal rotation
-        //Update coordinates
-        if(A.empty()){
-            cv::Mat_<double> A_ = cv::Mat_<double>::zeros(3,3);
-            cv::Mat_<double> b_ = cv::Mat_<double>::zeros(3,1);
-            R_.copyTo(A_(cv::Rect(0,0,2,2)));
-            At(cv::Rect(2,0,1,2)).copyTo(b_(cv::Rect(0,0,1,2))); //Set x-y values
-            b_(2,0) /=s;//Set height according to scale change
-            A_.copyTo(A);
-            b_.copyTo(b);
-        }else{
-            R_.copyTo(A(cv::Rect(0,0,2,2)));
-            At(cv::Rect(0,2,1,2)).copyTo(b(cv::Rect(0,0,1,2))); //Set x-y values
-            b(2,0) /=s;//Set height according to scale change
-        }
-        //Scale x-y with height
-        b(0,0) *= height;
-        b(1,0) *= height;
     }
+    cv::Mat_<float> H = cv::findHomography(p1,p2,homoGraphyMethod,ransacReprojThreshold);
+    if(H.empty()){//std::cout << "No homography found" << std::endl;
+        return false;}
+    //Init vector for decomposition. the mats are Matx33d. i.e. each element contains a CV_64FC1
+    std::vector<cv::Mat> rotations;
+    std::vector<cv::Mat> translations;
+    std::vector<cv::Mat> normals;
+    int n = cv::decomposeHomographyMat(H,K,rotations,translations,normals);
+    //printmats(rotations, translations,normals);
+    int validIndex = getValidDecomposition(p1,rotations,translations,normals);
+    //std::cout << "Valid index " << validIndex << std::endl;
+    if(validIndex<0){std::cout <<"Validindex: "<< validIndex<<", No decomposition found" << std::endl;
+        return false;
+    }
+    //Return the valid rotation and translation mats
+    b = translations[validIndex]*height*cos(roll)*cos(pitch); //Maybe flip signs or something? how to express this as camera movement and not scene movement?
+    A = rotations[validIndex];
+    //Shift roll and pitch static variables
+    roll_prev = roll;
+    pitch_prev = pitch;
+    return true;
+}
+/* Performs the odometry itself
+ * Estimates camera movement between frames as expressed in the coordinate system of the camera of frame 1
+ * Accepts point correspondances, instantaneous pitch, roll, height, and the current global pose
+ * Uses 4d affine transformation instead of complete homography. Mandatory de-rotation
+ */
+bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
+                std::vector<cv::Point2f>& p2,
+                float roll,float pitch, float height,
+                cv::Mat_<double>& b,
+                cv::Mat_<double>& A){
+    static float roll_prev = 0;
+    static float pitch_prev = 0;
+
+//roll_prev = roll;
+//pitch_prev = pitch;
+    //Check that there are enough point correspondances
+    if((p1.size()<3)|| (p2.size()<3)){//std::cout << "Not enough point correspondances" << std::endl;
+        return false;
+    }
+    //De-rotate
+    deRotateFlowField(p1, roll_prev, pitch_prev);
+    deRotateFlowField(p2, roll, pitch);
+    //Translate flow field to camera coordinate system. ie origin is in the middle
+    //cv::Point2f offset(K(0,2),K(1,2));
+    cv::Point2f offset(K(0,2),K(1,2));
+    std::vector<cv::Point2f>::iterator it1 = p1.begin();
+    std::vector<cv::Point2f>::iterator it2 = p2.begin();
+    while(it1 != p1.end()){
+        *it1 -= offset;
+        *it1 /= K(0,0);
+        *it2 -= offset;
+        *it2 /= K(1,1);
+        it1++;
+        it2++;
+    }
+    //cv::Mat At = cv::estimateRigidTransform(p1,p2,false);
+    cv::Mat At = cv::estimateAffinePartial2D(p1,p2,opa,method_,ransacReprojThreshold_,maxIters,confidence_,refineIters_);
+    if(At.empty()){return false;}
+    //Calculate scale
+    cv::Mat_<double> R_ = At(cv::Rect(0,0,2,2));
+    double s = sqrt(cv::determinant(R_));
+    R_ /= s;
+    //Update rotation matrix Note: only azimuthal rotation
+    //Update coordinates
+    if(A.empty()){
+        cv::Mat_<double> A_ = cv::Mat_<double>::zeros(3,3);
+        cv::Mat_<double> b_ = cv::Mat_<double>::zeros(3,1);
+        R_.copyTo(A_(cv::Rect(0,0,2,2)));
+        At(cv::Rect(2,0,1,2)).copyTo(b_(cv::Rect(0,0,1,2))); //Set x-y values
+        b_(2,0) /=s;//Set height according to scale change
+        A_.copyTo(A);
+        b_.copyTo(b);
+    }else{
+        R_.copyTo(A(cv::Rect(0,0,2,2)));
+        At(cv::Rect(0,2,1,2)).copyTo(b(cv::Rect(0,0,1,2))); //Set x-y values
+        b(2,0) /=s;//Set height according to scale change
+    }
+    //Scale x-y with height
+    b(0,0) *= height;
+    b(1,0) *= height;
+
     //Shift roll and pitch static variables
     roll_prev = roll;
     pitch_prev = pitch;
@@ -187,7 +211,7 @@ void vo::planarHomographyVO::updateGlobalPosition(bool VOSuccess,
         //t = t_new;
     }
     //Increment
-    
+
     t_new = t+t_d;
     cv::Mat_<float> R_new = R_d*R;
     //Update pose

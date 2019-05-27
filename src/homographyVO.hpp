@@ -70,8 +70,20 @@ namespace vo{
     private:
         /* Performs the odometry itself
          * Accepts point correspondances, instantaneous pitch, roll, height, and the current global pose
+         * Performs odometry from a complete homography estimation. Optional derotation
          */
-        bool odometry(std::vector<cv::Point2f>&,
+        bool odometryHom(std::vector<cv::Point2f>&,
+                        std::vector<cv::Point2f>&,
+                        float,float,float,
+                        cv::Mat_<double>&,
+                        cv::Mat_<double>&);
+        /* Performs the odometry itself
+         * Accepts point correspondances, instantaneous pitch, roll, height, and the current global pose
+         * Performs odometry by calculationg affine 4-dim transform between derotated point-correspondances
+         * Uses roll/pitch do de-rotate field
+         * Solves for x,y,azimuth,scale
+         */
+        bool odometryAffine(std::vector<cv::Point2f>&,
                         std::vector<cv::Point2f>&,
                         float,float,float,
                         cv::Mat_<double>&,
