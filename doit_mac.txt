@@ -41,7 +41,7 @@ fi
 if [ ”$1” = ”derotField” ];then
 	#KLT flow field with test set. version 2 tomography
 	echo Compiling derotation
-	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/visualizeDerotation.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/derotField
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/visualizeDerotation.cpp src/homographyVO.cpp src/simulatePose.cpp src/opticalFlow.cpp -o bin/derotField
 	echo Run with command ./bin/derotField
 fi
 
@@ -86,6 +86,15 @@ g++ -std=c++11 -ggdb $(pkg-config --libs opencv) spike/basicSimCorrField.cpp src
 
 	echo Run with command ./bin/corrField
 fi
+
+################# CORR TEST
+if [ ”$1” = ”ct” ];then
+	#KLT flow field with test set. version 2 tomography
+	echo Compiling cor tracker test
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/corrfield_test.cpp src/opticalFlow.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/ct
+	echo Run with command ./bin/ct
+fi
+
 
 #Just stream images and data from gimlee
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicGimLee.cpp -o bin/gimlee
