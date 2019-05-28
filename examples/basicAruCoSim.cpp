@@ -138,7 +138,8 @@ int main(void){
         t(1,0) = yPath[i];
         t(2,0) = zPath[i];
 
-        float zAngle_sin = azipe.calculate(corners,ids,t,rollPath[i],pitchPath[i]);
+        float zAngle_sin;
+        bool success = azipe.calculate(corners,ids,t,zAngle_sin,rollPath[i],pitchPath[i]);
         //std::cout << "Est: " << zAngle_sin<<", True: " << yawPath[i] << std::endl;
 
         cv::aruco::drawDetectedMarkers(colorFrame, corners, ids, CV_RGB(0,250,0));

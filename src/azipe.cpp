@@ -3,13 +3,49 @@
 #include "azipe.hpp"
 #include "../include/Quartic-master/quartic.h"
 
+
+/*
+AZIPE - AZImuth and Position Estimation
+This class implements the AZIPE-algorithm, as presented in
+
+J. Kim and H. Hmam, \3D Self-Localisation from Angle of Arrival Measurements,"
+Weapons Systems Division, 2009.
+
+It solves the quartic equation using the package
+
+https://github.com/sasamil/Quartic
+
+Inputs:
+vector<Mat> v   A set of unit-Line-of-Sight vectors in the vehicle frame (measured) to each of the visible anchors
+vector<Mat> q   A corresponding set of 3d-coordinates of each anchor in the global frame
+Mat  position   An inputoutput array of the vehicle position. Its input value is used to estimate distances to observed anchors
+                -If localisation is successful, its value is updated with the new estimation
+float    yaw    An inputoutput value where the azimuth (yaw) angle is returned if estimation is successful. Input value is not used
+float    roll   A value representing the roll of the vehicle as related to the global frame expressed in radians.
+float   pitch   A value representing the pitch of the vehicle as related to the global frame expressed in radians.
+
+Outputs:
+Mat position    An inputoutput array that is updated with the new localisation estimation if it is successful
+float    yaw    An inputoutput value where the azimuth (yaw) angle is returned if estimation is successful. Input value is not used
+bool  RETURN    A success-value indicating successful or failed localization
+Notes:
+Roll and pitch are to be expressed as Euler angles from the rotational sequence yaw-pitch-roll, where yaw is unknown
+yaw     - rotation about the z-axis.    (=Azimuth angle)
+pitch   - rotation about the y-axis.
+roll    - rotation about the x-axis.
+*/
+
+
+
+
 void p(std::string out_){
     std::cout << out_ << std::endl;
 }
 
-float az::azipe(const std::vector<cv::Mat_<float>>& v,
+bool az::azipe(const std::vector<cv::Mat_<float>>& v,
             const std::vector<cv::Mat_<float>>& q,
             cv::Mat_<float>& position,
+            float& yaw,
             float roll,float pitch){
         //Define some per-position-constant quantities
         float phi = -roll; //Note the sign on this!
@@ -162,12 +198,14 @@ float az::azipe(const std::vector<cv::Mat_<float>>& v,
         if(delta_pos < delta_neg && !isnan(delta_pos)){//Choose the angle that corresponds with smallest difference in z-coordinate since last calculation
             P_vehicle_pos.copyTo(position);
             if(v.size()>=2){//Demand a minimum of 2 active anchors
-                return azimuth_pos;
+                yaw = azimuth_pos;
+                return true;
             }
         }else if(!isnan(delta_neg)){
             P_vehicle_neg.copyTo(position);
             if(v.size()>=2){//Demand a minimum of 2 active anchors
-                return azimuth_neg;
+                yaw = azimuth_neg;
+                return true;
             }
         }
         //std::cout << ", \t z: " << P_vehicle(2,0) << std::endl;
@@ -176,7 +214,7 @@ float az::azipe(const std::vector<cv::Mat_<float>>& v,
         P_zero(1,0) = NAN;
         P_zero(2,0) = NAN;
         P_zero.copyTo(position);
-        return NAN; //Should never reach this
+        return false; //Should never reach this
 
 /*
 1. Beräkna R

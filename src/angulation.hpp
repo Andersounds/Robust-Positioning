@@ -3,7 +3,7 @@
 
 /*
     This class implements a framework for angulation from a database of anchors with known ID:s and 3d locations
-    The angulation is calculated in 3d and azimuth, from the AZIPE algorithm. pixel coordinates of anchors and their ID
+    The angulation is calculated in 3d and azimuth, from the AZIPE algorithm. Pixel coordinates of anchors and their ID
     are taken as input. if enough anchors are present, full AZIPE will be calculated.
 */
 
@@ -27,8 +27,8 @@ namespace ang{
         void setKmat(cv::Mat_<float>);          //Camera matrix
         void setTmat(cv::Mat_<float>);          //uav -to- camera frame transformation matrix
         int addAnchor(int,cv::Mat_<float>);     //Add an anchor to database (id and 3d coordinate)
-        float calculate(std::vector<cv::Point2f>&, std::vector<int>&,cv::Mat_<float>&,float,float); //Take pixel coordinates and IDs of anchors and calculate AZIPE
-        float calculate(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,cv::Mat_<float>&,float,float);// Overloaded. takes mean of pixel group first
+        bool calculate(std::vector<cv::Point2f>&, std::vector<int>&,cv::Mat_<float>&,float&,float,float); //Take pixel coordinates and IDs of anchors and calculate AZIPE
+        bool calculate(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,cv::Mat_<float>&,float&,float,float);// Overloaded. takes mean of pixel group first
     };
 
 
