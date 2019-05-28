@@ -10,6 +10,7 @@
 */
 ang::angulation::angulation(int maxId_,std::string path){
     maxId = maxId_;
+    minAnchors = 2;             //At least visible anchors are needed to attempt AZIPE angulation
     for(int i=0;i<maxId;i++){
         dataBase.push_back(cv::Mat_<float>::zeros(3,1));//Set empty mat
         activeAnchors.push_back(false);                 //Set all anchors to inactive
@@ -83,12 +84,12 @@ std::vector<std::string> ang::angulation::parse(std::string line){
  * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
  */
 bool ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
-    //Calculate uLOS-vectors v from K,T and locations
+    //Calculate uLOS-vectors v from K,T
     std::vector<cv::Mat_<float>> v;
     pix2uLOS(locations,v);
+    //Get locations of visible anchors
     std::vector<cv::Mat_<float>> q;
     dataBase2q(IDs,q);
-
     return az::azipe(v,q,pos,yaw,roll,pitch);
 
 }
