@@ -100,7 +100,7 @@ fi
 if [ ”$1” = ”basicPositioningSim” ];then
 	#KLT flow field with test set. version 2 tomography
 	echo Compiling basicPositioningSim test
-	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicPositioningSim.cpp src/opticalFlow.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/basicPositioningSim
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicPositioningSim.cpp src/angulation.cpp src/azipe.cpp src/positioning.cpp include/Quartic-master/quartic.cpp -o bin/basicPositioningSim
 	echo Run with command ./bin/basicPositioningSim
 fi
 
