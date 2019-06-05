@@ -10,7 +10,7 @@
 */
 ang::angulation::angulation(int maxId_,std::string path){
     maxId = maxId_;
-    minAnchors = 2;             //At least visible anchors are needed to attempt AZIPE angulation
+    //minAnchors = 2;             //At least visible anchors are needed to attempt AZIPE angulation
     for(int i=0;i<maxId;i++){
         dataBase.push_back(cv::Mat_<float>::zeros(3,1));//Set empty mat
         activeAnchors.push_back(false);                 //Set all anchors to inactive
