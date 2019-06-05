@@ -23,10 +23,10 @@ This constructor first edits the given K-matrix to work with the given region of
 Assumption! centered roi. If ROI is not centered then instead call the other constructor and define K metrix before
 */
 vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T_,int mode_,cv::Rect2f roi){
-    float c_x = roi.width/2;    //New x-offset to fit with the given roi
-    float c_y = roi.height/2;   //New y-offset to fit with the given roi
-    K_(0,2) = c_x;
-    K_(1,2) = c_y;
+    //float c_x = roi.width/2;    //New x-offset to fit with the given roi
+    //float c_y = roi.height/2;   //New y-offset to fit with the given roi
+    //K_(0,2) = c_x;
+    //K_(1,2) = c_y;
     //Call ordinary constructor with new K-matrix
     planarHomographyVO(K_,T_,mode_);
 }
