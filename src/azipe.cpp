@@ -195,34 +195,45 @@ bool az::azipe(const std::vector<cv::Mat_<float>>& v,
         //Choose the correct angle based on z-coordinate
         float delta_pos = std::abs((P_vehicle_pos(2,0)-position(2,0)));
         float delta_neg = std::abs((P_vehicle_neg(2,0)-position(2,0)));
-        if(delta_pos < delta_neg && !isnan(delta_pos)){//Choose the angle that corresponds with smallest difference in z-coordinate since last calculation
-            P_vehicle_pos.copyTo(position);
-            if(v.size()>=2){//Demand a minimum of 2 active anchors
+
+        if(!isnan(delta_pos)){
+            if(!isnan(delta_neg)){
+                if(delta_pos < delta_neg){
+                    P_vehicle_pos.copyTo(position);
+                    yaw = azimuth_pos;
+                    return true;
+                }else{
+                    P_vehicle_neg.copyTo(position);
+                    yaw = azimuth_neg;
+                    return true;
+                }
+            }else{
+                P_vehicle_pos.copyTo(position);
                 yaw = azimuth_pos;
                 return true;
             }
         }else if(!isnan(delta_neg)){
             P_vehicle_neg.copyTo(position);
+            yaw = azimuth_neg;
+            return true;
+        }
+
+/*
+        if(delta_pos < delta_neg && !isnan(delta_pos)){//Choose the angle that corresponds with smallest difference in z-coordinate since last calculation
             if(v.size()>=2){//Demand a minimum of 2 active anchors
+                P_vehicle_pos.copyTo(position);
+                yaw = azimuth_pos;
+                return true;
+            }
+        }else if(!isnan(delta_neg)){
+            if(v.size()>=2){//Demand a minimum of 2 active anchors
+                P_vehicle_neg.copyTo(position);
                 yaw = azimuth_neg;
                 return true;
             }
         }
-        //std::cout << ", \t z: " << P_vehicle(2,0) << std::endl;
-        cv::Mat_<float> P_zero = cv::Mat_<float>::zeros(3,1);
-        P_zero(0,0) = NAN;
-        P_zero(1,0) = NAN;
-        P_zero(2,0) = NAN;
-        P_zero.copyTo(position);
-        return false; //Should never reach this
-
-/*
-1. Beräkna R
-2. Beräkna position
-3. time hsift
-4. smart sätt å returna
 */
-
-
+        //If return value is Nan
+        return false; //Should never reach this
 
     }
