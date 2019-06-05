@@ -41,14 +41,16 @@ namespace pos{
     */
     class positioning: public ang::angulation, of::opticalFlow, vo::planarHomographyVO{
         cv::Ptr<cv::aruco::Dictionary> dictionary;//Pointer to Aruco dictionary
+        cv::Rect2f roi;//The region of interest that is to be considered in
     public:
+        /* Constructor. constructs classes that are inherited from and sets default settings*/
         positioning(int,int,int,int,        //Mode settings [Illustrate, optical flow, Visual odometry,aruco dictionary type]
                     int,std::string,        //Aruco init parameters [max marker ID, "Path-to-csv-file"]
                     int,cv::Rect2f,                 //Optical flow parameters [flow grid, roi size]
                     cv::Mat_<float>,cv::Mat_<float> //Visual odometry paramters [K-mat, T-mat]
                 );
-        int process(cv::Mat,float,float);//Perform processing. return value indicates what kind of estimation is done
-
+        int process(cv::Mat&,float,float,float&,cv::Mat_<float>&);//Perform processing. return value indicates what kind of estimation is done
+        int process(cv::Mat&,cv::Mat&,float,float,float&,cv::Mat_<float>&);//Perform processing, but also illustrate by drawing on the second argument matrix
     private:
 
     };

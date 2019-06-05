@@ -6,13 +6,7 @@
 #include "../src/simulatePose.hpp"
 #include "../src/save2file.cpp"
 
-
-
 #define PI 3.1416
-
-
-
-
 
 /*Returns a linspace sequence starting from start with length no of steps of size step
  *
@@ -99,6 +93,11 @@ int main(void){
                         pos::VO_MODE_AFFINE,
                         cv::aruco::DICT_4X4_50,
                         maxIdAruco,anchorPath,flowGrid,roiSize,K,T);
+    //Init values of position and yaw
+    cv::Mat_<float> t = cv::Mat_<float>::zeros(3,1);
+    t(0,0) = xPath[0];//-1.299;
+    t(1,0) = yPath[0];//-3.398;
+    t(2,0) = zPath[0];// 1.664;
 
 
 
@@ -112,6 +111,19 @@ int main(void){
         cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
+
+
+        float roll = rollPath[i];
+        float pitch = pitchPath[i];
+        float yaw = 0;
+        int mode = P.process(frame,rawFrame,roll,pitch,yaw,t);
+        //Write to file
+        std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw};
+        file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
+        build_row(estimation,file_estimated);
+        file_estimated.close();
+
+
         cv::imshow("showit",rawFrame);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
