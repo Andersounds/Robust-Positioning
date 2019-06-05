@@ -96,6 +96,15 @@ if [ ”$1” = ”ct” ];then
 fi
 
 
+################# MASTER POSITIONING EXAMPLE (SIMULATION)
+if [ ”$1” = ”basicPositioningSim” ];then
+	#KLT flow field with test set. version 2 tomography
+	echo Compiling basicPositioningSim test
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicPositioningSim.cpp src/opticalFlow.cpp src/homographyVO.cpp src/simulatePose.cpp -o bin/basicPositioningSim
+	echo Run with command ./bin/basicPositioningSim
+fi
+
+
 #Just stream images and data from gimlee
 #g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicGimLee.cpp -o bin/gimlee
 
