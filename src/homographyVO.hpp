@@ -50,6 +50,7 @@ namespace vo{
          * 2: Transformation (pure rotation) from UAV frame to camera frame
         */
         planarHomographyVO(cv::Mat_<float>,cv::Mat_<float>,int);
+        planarHomographyVO(cv::Mat_<float>,cv::Mat_<float>,int,cv::Rect2f);//This constructor edits the given K-mat to fit roi
         /*Function called to process point correspondances and estimate global movement
         -------SHOULD HAVE CONST POINT INPUT
          */
