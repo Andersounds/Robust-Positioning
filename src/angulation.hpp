@@ -30,8 +30,5 @@ namespace ang{
         bool calculate(std::vector<cv::Point2f>&, std::vector<int>&,cv::Mat_<float>&,float&,float,float); //Take pixel coordinates and IDs of anchors and calculate AZIPE
         bool calculate(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,cv::Mat_<float>&,float&,float,float);// Overloaded. takes mean of pixel group first
     };
-
-
-
 }
 #endif
