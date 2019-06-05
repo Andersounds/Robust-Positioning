@@ -98,6 +98,7 @@ int main(void){
     t(0,0) = xPath[0];//-1.299;
     t(1,0) = yPath[0];//-3.398;
     t(2,0) = zPath[0];// 1.664;
+    float yaw = 0;
 
 
 
@@ -115,8 +116,9 @@ int main(void){
 
         float roll = rollPath[i];
         float pitch = pitchPath[i];
-        float yaw = 0;
+
         int mode = P.process(frame,rawFrame,roll,pitch,yaw,t);
+
         //Write to file
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw};
         file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
