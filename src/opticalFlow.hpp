@@ -16,8 +16,8 @@ Method 2. Phase-correlation based optical flow. The RoI is divided into x-by-x s
     key: USE_CORR
 */
 namespace of{
-    #define USE_KLT 1
-    #define USE_CORR 2
+    const int USE_KLT = 1;
+    const int USE_CORR = 2;
     class opticalFlow{
     public:
         opticalFlow(int,int,int);

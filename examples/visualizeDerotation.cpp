@@ -153,7 +153,7 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv:
     cv::Rect_<float> focusArea(x_,y_,roiWidth,roiWidth);
     cv::Point2f focusOffset(focusArea.x,focusArea.y);
 //Init flowField object with default settings
-    of::opticalFlow FlowField(USE_CORR,3,roiWidth);
+    of::opticalFlow FlowField(of::USE_CORR,3,roiWidth);
     FlowField.setDefaultSettings();
 //Init odometry object
     cv::Mat_<float> K;
