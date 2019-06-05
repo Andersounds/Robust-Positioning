@@ -4,12 +4,18 @@
 #include "azipe.hpp"
 
 
-
+/*
+TODO: in dataBase2q, if there are unknown anchors. raise some flag
+At end of calculate-method, do pnp solve
+pnp fits best here in angulation class
+Then there is no repeated calculations
+*/
 
 /*constructor. Set max id of database, initializes it with the provided path to csv file containing id and coordinates
 */
 ang::angulation::angulation(int maxId_,std::string path){
     maxId = maxId_;
+    minAnchors = 2;
     //minAnchors = 2;             //At least visible anchors are needed to attempt AZIPE angulation
     for(int i=0;i<maxId;i++){
         dataBase.push_back(cv::Mat_<float>::zeros(3,1));//Set empty mat
@@ -22,7 +28,8 @@ ang::angulation::angulation(int maxId_,std::string path){
     }else{
         int index = 0;
         for(int id:ids){
-            coordinates[index].copyTo(dataBase[id]);//Set coordinates to the right anchor ID
+            coordinates[index].copyTo(dataBase[id]);//Assign coordinates to the right anchor ID
+            activeAnchors[id] = true;
             index++;
         }
     }
@@ -84,12 +91,13 @@ std::vector<std::string> ang::angulation::parse(std::string line){
  * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
  */
 bool ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
+    //Get locations of visible anchors
+    std::vector<cv::Mat_<float>> q;
+    if(dataBase2q(IDs,q)<minAnchors){return false;};// not enough known anchors
+
     //Calculate uLOS-vectors v from K,T
     std::vector<cv::Mat_<float>> v;
     pix2uLOS(locations,v);
-    //Get locations of visible anchors
-    std::vector<cv::Mat_<float>> q;
-    dataBase2q(IDs,q);
     return az::azipe(v,q,pos,yaw,roll,pitch);
 
 }
@@ -147,13 +155,20 @@ void ang::angulation::pix2uLOS(const std::vector<cv::Point2f>& points,std::vecto
     call++;*/
 }
 /* Takes IDs and returns vector of corresponding q vectors
+returns the amount of known anchors available
  */
-void ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_<float>>& q_vectors){
+int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_<float>>& q_vectors){
+    int amountOfKnown = 0;
     for(int i:IDs){
         std::vector<cv::Mat_<float>>::iterator ptr = dataBase.begin();
+        std::vector<bool>::iterator active = activeAnchors.begin();
         ptr+=i;//i is not an incremented variable. i takes the value if IDs at an incremented position
+        active+=i;
         q_vectors.push_back(*ptr);
+        *active = true;
+        amountOfKnown++;
     }
+    return amountOfKnown;
 }
 
 /* Interface mathod used to set K mat and calculate its inverse
