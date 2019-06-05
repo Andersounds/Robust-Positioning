@@ -18,8 +18,8 @@
 */
 
 namespace vo{
-    #define USE_HOMOGRAPHY 1
-    #define USE_AFFINETRANSFORM 2
+    const int USE_HOMOGRAPHY = 1;
+    const int USE_AFFINETRANSFORM = 2;
 
     class planarHomographyVO{
     public:
