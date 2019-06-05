@@ -15,17 +15,22 @@ pos::positioning::positioning(int illustrate_mode,
                                 int maxID,
                                 std::string anchorPath,
                                 int flowGrid,
-                                cv::Rect2f roiSize,
+                                cv::Rect2f roi,
                                 cv::Mat_<float> K,
                                 cv::Mat_<float> T):
         ang::angulation(maxID,anchorPath),
-        of::opticalFlow(opticalFlow_mode,flowGrid,roiSize.width),
-        vo::planarHomographyVO(K,T,visualOdometry_mode)
+        of::opticalFlow(opticalFlow_mode,flowGrid,roi.width),
+        vo::planarHomographyVO(K,T,visualOdometry_mode,roi)
 {
+    //Set some settings for angulation object
+    ang::angulation::setKmat(K);
+    ang::angulation::setTmat(T);
     //Initialize the aruco dictionary
     dictionary = cv::aruco::getPredefinedDictionary(arucoDictionary);
-    std::cout << "Edit the visualodometry-K-matrix to work with the roiSize here" << std::endl;
-    //Or change the VO constructor so that it itself sets it upon initialization
+    //Set some settings for Optical Flow object
+    of::opticalFlow::setDefaultSettings();
+    //Set some settings for Visual Odometry object
+    vo::planarHomographyVO::setDefaultSettings();
 }
 
 int pos::positioning::process(cv::Mat frame, float roll, float pitch){
@@ -33,5 +38,8 @@ int pos::positioning::process(cv::Mat frame, float roll, float pitch){
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
     cv::aruco::detectMarkers(frame, dictionary, corners, ids);
+
+
+
     return 1;
 }

@@ -29,32 +29,25 @@ namespace pos{
     const int ILLUSTRATE_ALL   = 2;//Is used for extra vizualisation. In this mode the Flow field and aruco markers will be drawn
     const int ILLUSTRATE_NONE  = 3;//Is used in ASAP-mode. No illustrations, only necessary calculations
     //Flags for the optical flow
-    const int OF_MODE_KLT  = 1;//VO is used as fallback method, optical flow obtained with KLT
-    const int OF_MODE_CORR = 2;//VO is used as fallback method, optical flow obtained with phase correlation
+    const int OF_MODE_KLT  = of::USE_KLT;//Optical flow obtained with KLT
+    const int OF_MODE_CORR = of::USE_CORR;//Optical flow obtained with phase correlation
     //Flags for the Visual Odometry
     const int VO_MODE_HOMOGRAPHY    = vo::USE_HOMOGRAPHY;
     const int VO_MODE_AFFINE        = vo::USE_AFFINETRANSFORM;
 
     //Needed additional settings:
     /*
-        -camera K matrix
-        -UAV-camera T-matrix
-        -RoI size
-        -Flow field size (x-by-x)
-        -All KLT-settings
-        -AruCo dictionary mode
-        -Aruco marker max id. Should be able to contain all markers in the specified dictionary mode
+
     */
     class positioning: public ang::angulation, of::opticalFlow, vo::planarHomographyVO{
         cv::Ptr<cv::aruco::Dictionary> dictionary;//Pointer to Aruco dictionary
     public:
         positioning(int,int,int,int,        //Mode settings [Illustrate, optical flow, Visual odometry,aruco dictionary type]
                     int,std::string,        //Aruco init parameters [max marker ID, "Path-to-csv-file"]
-                    int,cv::Rect2f,                //Optical flow parameters [flow grid, roi size]
+                    int,cv::Rect2f,                 //Optical flow parameters [flow grid, roi size]
                     cv::Mat_<float>,cv::Mat_<float> //Visual odometry paramters [K-mat, T-mat]
                 );
         int process(cv::Mat,float,float);//Perform processing. return value indicates what kind of estimation is done
-        //int init
 
     private:
 
