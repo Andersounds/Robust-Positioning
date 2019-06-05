@@ -18,7 +18,10 @@
         - De-rotation of flow field using IMU rotation rates (even though this may simplify decomposition)
         - The "hand-eye calibration problem" to account for the fact that rotational center is not at camera+imu origin
     */
-
+/*
+This constructor first edits the given K-matrix to work with the given region of interest.
+Assumption! centered roi. If ROI is not centered then instead call the other constructor and define K metrix before
+*/
 vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T_,int mode_,cv::Rect2f roi){
     float c_x = roi.width/2;    //New x-offset to fit with the given roi
     float c_y = roi.height/2;   //New y-offset to fit with the given roi
