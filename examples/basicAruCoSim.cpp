@@ -95,6 +95,10 @@ int main(void){
     file_true.close();
 
 
+
+
+
+
 //Init odometry object
     cv::Mat_<float> K;
     warper.K.copyTo(K);//Can not assign with = as they then refer to same object. edit one edits the other
@@ -110,7 +114,7 @@ int main(void){
     t(2,0) = zPath[0];// 1.664;
 
 
-    cv::Mat colorFrame;//For illustration
+
     //angulation init
     ang::angulation azipe(maxId,anchorPath);
     azipe.setKmat(K);
@@ -126,17 +130,17 @@ int main(void){
         cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
+        cv::Mat colorFrame;//For illustration
         rawFrame.copyTo(colorFrame);
 
 //Aruco detect and draw
         std::vector<int> ids;
         std::vector<std::vector<cv::Point2f> > corners;
         cv::aruco::detectMarkers(frame, dictionary, corners, ids);
-
-
-        t(0,0) = xPath[i];
-        t(1,0) = yPath[i];
-        t(2,0) = zPath[i];
+//Give some offset her. could be random. Just to ot give perfect initial guess
+        t(0,0) = xPath[i]+0.2;
+        t(1,0) = yPath[i]+0.24;
+        t(2,0) = zPath[i]+0.3;
 
         float zAngle_sin;
         bool success = azipe.calculate(corners,ids,t,zAngle_sin,rollPath[i],pitchPath[i]);
