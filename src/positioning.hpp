@@ -23,7 +23,7 @@ Positioning:
 */
 
 namespace pos{
-    //General setting flags
+    //Illustration settings flags
     const int ILLUSTRATE_ARUCO = 0;//Is used for extra vizualisation. In this mode the AruCo-markers will be drawn
     const int ILLUSTRATE_FLOW  = 1;//Is used for extra vizualisation. In this mode the Flow field will be drawn
     const int ILLUSTRATE_ALL   = 2;//Is used for extra vizualisation. In this mode the Flow field and aruco markers will be drawn
@@ -34,11 +34,9 @@ namespace pos{
     //Flags for the Visual Odometry
     const int VO_MODE_HOMOGRAPHY    = vo::USE_HOMOGRAPHY;
     const int VO_MODE_AFFINE        = vo::USE_AFFINETRANSFORM;
+    //Flags for Aruco dictionary. Can choose anone but this is an example
+    const int ARUCO_DICT_DEFAULT    = cv::aruco::DICT_4X4_50;
 
-    //Needed additional settings:
-    /*
-
-    */
     class positioning: public ang::angulation, of::opticalFlow, vo::planarHomographyVO{
         cv::Ptr<cv::aruco::Dictionary> dictionary;//Pointer to Aruco dictionary
         cv::Rect2f roi;//The region of interest that is to be considered in
