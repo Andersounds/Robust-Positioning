@@ -163,6 +163,7 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv:
     K(1,2) = roiWidth/2;
     cv::Mat_<float> T = warper.getZRot(-3.1415/2);//UAV frame is x forward, camera frame is -y forward
     vo::planarHomographyVO odometer(K,T,vo::USE_AFFINETRANSFORM); //USE_HOMOGRAPHY
+    odometer.setDefaultSettings();
     //odometer.activateDerotation = false;//Deactivate derotation. is it needed even?
     //Initial values of UAV position
     cv::Mat_<float> R = warper.getZRot(0);

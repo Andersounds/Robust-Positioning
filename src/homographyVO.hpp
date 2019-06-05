@@ -51,6 +51,10 @@ namespace vo{
         */
         planarHomographyVO(cv::Mat_<float>,cv::Mat_<float>,int);
         planarHomographyVO(cv::Mat_<float>,cv::Mat_<float>,int,cv::Rect2f);//This constructor edits the given K-mat to fit roi
+        /*
+        Default settings function
+        */
+        void setDefaultSettings(void);
         /*Function called to process point correspondances and estimate global movement
         -------SHOULD HAVE CONST POINT INPUT
          */

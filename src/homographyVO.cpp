@@ -41,6 +41,14 @@ vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T
     K_inv = K.inv();
     T=T_;             //Rotation matrix around Z relating UAV with Camera (From UAV to Camera)
     T_inv = T.inv();
+    std::cout << "Flow field de-rotation is active (planarHomographyVO::deRotateFlowField). " << std::endl;
+    std::cout << "\t deactivate by setting .activateDerotation = false " << std::endl;
+    mode = mode_;
+}
+/*
+    Default settings function
+*/
+void vo::planarHomographyVO::setDefaultSettings(void){
     // findHomography parameters
     homoGraphyMethod = cv::RANSAC;
     ransacReprojThreshold = 3;
@@ -55,9 +63,7 @@ vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T
     //Other paramters
     sanityLimit = 10000;//Limit of sum of squares in insanitycheck.
     activateDerotation = true;
-    std::cout << "Flow field de-rotation is active (planarHomographyVO::deRotateFlowField). " << std::endl;
-    std::cout << "\t deactivate by setting .activateDerotation = false " << std::endl;
-    mode = mode_;
+
 }
 /*Complete process of odometry. Calls odometry method and updates t and R if possible
  * p1,p2:       Point correspondances (p1 old image, p2 new image)
