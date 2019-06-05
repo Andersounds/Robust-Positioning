@@ -42,6 +42,7 @@ namespace pos{
     class positioning: public ang::angulation, of::opticalFlow, vo::planarHomographyVO{
         cv::Ptr<cv::aruco::Dictionary> dictionary;//Pointer to Aruco dictionary
         cv::Rect2f roi;//The region of interest that is to be considered in
+        int minAnchors;
     public:
         /* Constructor. constructs classes that are inherited from and sets default settings*/
         positioning(int,int,int,int,        //Mode settings [Illustrate, optical flow, Visual odometry,aruco dictionary type]
