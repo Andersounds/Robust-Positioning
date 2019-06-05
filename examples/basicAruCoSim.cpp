@@ -138,10 +138,10 @@ int main(void){
         std::vector<std::vector<cv::Point2f> > corners;
         cv::aruco::detectMarkers(frame, dictionary, corners, ids);
 //Give some offset her. could be random. Just to ot give perfect initial guess
-        t(0,0) = xPath[i]+0.2;
-        t(1,0) = yPath[i]+0.24;
-        t(2,0) = zPath[i]+0.3;
-
+/*        t(0,0) = xPath[i];
+        t(1,0) = yPath[i];
+        t(2,0) = zPath[i];
+*/
         float zAngle_sin;
         bool success = azipe.calculate(corners,ids,t,zAngle_sin,rollPath[i],pitchPath[i]);
         //std::cout << "Est: " << zAngle_sin<<", True: " << yawPath[i] << std::endl;
