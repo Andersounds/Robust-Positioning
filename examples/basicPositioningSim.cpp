@@ -84,7 +84,7 @@ int main(void){
     int maxIdAruco = 50;
     std::string anchorPath = "anchors.txt";
     int flowGrid = 4;
-    cv::Rect2f roiSize(0,0,150,150);
+    cv::Rect2f roiSize(245,125,150,150);
     cv::Mat_<float> K;
     warper.K.copyTo(K);//Can not assign with = as they then refer to same object. edit one edits the other
     cv::Mat_<float> T = warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
@@ -97,7 +97,7 @@ int main(void){
     t(0,0) = xPath[0];
     t(1,0) = yPath[0];
     t(2,0) = zPath[0];
-    float yaw = 0;
+    float yaw = yawPath[0];
 
 
 
@@ -114,14 +114,15 @@ int main(void){
 
         float roll = rollPath[i];
         float pitch = pitchPath[i];
-        int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,roll,pitch,yaw,t);
+        float dist = -zPath[i];//THIS SHOULD BE "SIMULATED" FROM DATA not exactly height
+        int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t);
 
         //Write to file
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw};
         file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
         build_row(estimation,file_estimated);
         file_estimated.close();
-
+        std::cout << "OPEN ISSUE: CHECK updateglobalposition and K mat in homography" <<std::endl;
         cv::imshow("showit",rawFrame);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
