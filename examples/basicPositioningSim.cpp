@@ -122,7 +122,7 @@ int main(void){
         file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
         build_row(estimation,file_estimated);
         file_estimated.close();
-        std::cout << "OPEN ISSUE: CHECK updateglobalposition and K mat in homography" <<std::endl;
+        
         cv::imshow("showit",rawFrame);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
