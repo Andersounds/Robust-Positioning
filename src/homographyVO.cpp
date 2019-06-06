@@ -268,7 +268,7 @@ void vo::planarHomographyVO::updateGlobalPosition(bool VOSuccess,
     static float timeStamp = 0;
     cv::Mat_<float> t_new = cv::Mat_<float>::zeros(3,1);
     if(VOSuccess){//Assign the new values to the static variables
-        cv::Mat_<float> R = getZRot(yaw);
+        cv::Mat_<float> R = getZRot(-yaw);
         t_d = R.t()*T.t()*b; //Convert translation b from camera frame to UAV frame to global frame
         yaw_d = delta_yaw;             //Assume only rotation around z and uav and camera frame is aligned in z. No conversion needed
         //t_new = t+t_d;//No inertia in translation, only rotation
