@@ -8,8 +8,7 @@
 Master positioning class constructor. Is called after the inherited classes are constructed
 Inherited class constructors are called with relevant arguments after the ":" in the initialization list.
 */
-pos::positioning::positioning(int illustrate_mode,
-                                int opticalFlow_mode,
+pos::positioning::positioning(int opticalFlow_mode,
                                 int visualOdometry_mode,
                                 int arucoDictionary,                            //Example: cv::aruco::DICT_4X4_50
                                 int maxID,
@@ -35,7 +34,7 @@ pos::positioning::positioning(int illustrate_mode,
     vo::planarHomographyVO::setDefaultSettings();
 }
 
-int pos::positioning::process(cv::Mat& frame, float roll, float pitch,float& yaw, cv::Mat_<float>& pos){
+int pos::positioning::process(int mode,cv::Mat& frame, float roll, float pitch,float& yaw, cv::Mat_<float>& pos){
     //Aruco detect and draw
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
@@ -46,7 +45,7 @@ int pos::positioning::process(cv::Mat& frame, float roll, float pitch,float& yaw
     return 1;
 }
 
-int pos::positioning::process(cv::Mat& frame, cv::Mat& outputFrame,float roll, float pitch,float& yaw, cv::Mat_<float>& pos){
+int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float roll, float pitch,float& yaw, cv::Mat_<float>& pos){
     //Aruco detect and draw
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;

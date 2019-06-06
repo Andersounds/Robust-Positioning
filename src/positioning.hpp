@@ -27,7 +27,7 @@ namespace pos{
     const int ILLUSTRATE_ARUCO = 0;//Is used for extra vizualisation. In this mode the AruCo-markers will be drawn
     const int ILLUSTRATE_FLOW  = 1;//Is used for extra vizualisation. In this mode the Flow field will be drawn
     const int ILLUSTRATE_ALL   = 2;//Is used for extra vizualisation. In this mode the Flow field and aruco markers will be drawn
-    const int ILLUSTRATE_NONE  = 3;//Is used in ASAP-mode. No illustrations, only necessary calculations
+    //const int ILLUSTRATE_NONE  = 3;//Is used in ASAP-mode. No illustrations, only necessary calculations
     //Flags for the optical flow
     const int OF_MODE_KLT  = of::USE_KLT;//Optical flow obtained with KLT
     const int OF_MODE_CORR = of::USE_CORR;//Optical flow obtained with phase correlation
@@ -36,6 +36,11 @@ namespace pos{
     const int VO_MODE_AFFINE        = vo::USE_AFFINETRANSFORM;
     //Flags for Aruco dictionary. Can choose anone but this is an example
     const int ARUCO_DICT_DEFAULT    = cv::aruco::DICT_4X4_50;
+    //Flags for process-function call.
+    const int MODE_AZIPE_AND_VO = 0;//Positioning using AZIPE estimation with VO as fallback
+    const int MODE_AZIPE = 1;       //Positioning estimation with only AZIPE angulation
+    const int MODE_VO = 2;          //Positioning estimation with only VO method
+
 
     class positioning: public ang::angulation, of::opticalFlow, vo::planarHomographyVO{
         cv::Ptr<cv::aruco::Dictionary> dictionary;//Pointer to Aruco dictionary
@@ -43,13 +48,15 @@ namespace pos{
         int minAnchors;
     public:
         /* Constructor. constructs classes that are inherited from and sets default settings*/
-        positioning(int,int,int,int,        //Mode settings [Illustrate, optical flow, Visual odometry,aruco dictionary type]
+        positioning(int,int,int,        //Mode settings [optical flow, Visual odometry,aruco dictionary type]
                     int,std::string,        //Aruco init parameters [max marker ID, "Path-to-csv-file"]
                     int,cv::Rect2f,                 //Optical flow parameters [flow grid, roi size]
                     cv::Mat_<float>,cv::Mat_<float> //Visual odometry paramters [K-mat, T-mat]
                 );
-        int process(cv::Mat&,float,float,float&,cv::Mat_<float>&);//Perform processing. return value indicates what kind of estimation is done
-        int process(cv::Mat&,cv::Mat&,float,float,float&,cv::Mat_<float>&);//Perform processing, but also illustrate by drawing on the second argument matrix
+        //ASAP processing. No illustration
+        int process(int,cv::Mat&,float,float,float&,cv::Mat_<float>&);//Perform processing. return value indicates what kind of estimation is done
+        //Illustration processing. Second mat argument is drawn upon.
+        int processAndIllustrate(int,cv::Mat&,cv::Mat&,int,float,float,float&,cv::Mat_<float>&);//Perform processing, but also illustrate by drawing on the second argument matrix
     private:
 
     };

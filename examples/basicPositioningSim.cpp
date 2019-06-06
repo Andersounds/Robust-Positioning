@@ -88,8 +88,7 @@ int main(void){
     cv::Mat_<float> K;
     warper.K.copyTo(K);//Can not assign with = as they then refer to same object. edit one edits the other
     cv::Mat_<float> T = warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
-    pos::positioning P(pos::ILLUSTRATE_ARUCO,
-                        pos::OF_MODE_KLT,
+    pos::positioning P(pos::OF_MODE_KLT,
                         pos::VO_MODE_AFFINE,
                         cv::aruco::DICT_4X4_50,
                         maxIdAruco,anchorPath,flowGrid,roiSize,K,T);
@@ -115,7 +114,7 @@ int main(void){
 
         float roll = rollPath[i];
         float pitch = pitchPath[i];
-        int mode = P.process(frame,rawFrame,roll,pitch,yaw,t);
+        int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,roll,pitch,yaw,t);
 
         //Write to file
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw};
