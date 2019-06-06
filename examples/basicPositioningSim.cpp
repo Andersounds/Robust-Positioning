@@ -2,7 +2,7 @@
 //#include <fstream> //Input stream from file
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
-#include "../src/positioning.hpp"
+#include "../src/vopos.hpp"
 #include "../src/simulatePose.hpp"
 #include "../src/save2file.cpp"
 
@@ -122,7 +122,7 @@ int main(void){
         file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
         build_row(estimation,file_estimated);
         file_estimated.close();
-        
+
         cv::imshow("showit",rawFrame);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
