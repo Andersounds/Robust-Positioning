@@ -22,15 +22,8 @@
 This constructor first edits the given K-matrix to work with the given region of interest.
 Assumption! centered roi. If ROI is not centered then instead call the other constructor and define K metrix before
 */
-vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T_,int mode_,cv::Rect2f roi){
-    float c_x = roi.width/2;    //New x-offset to fit with the given roi
-    float c_y = roi.height/2;   //New y-offset to fit with the given roi
-    cv::Mat_<float> K_roi;
-    K_.copyTo(K_roi);
-    K_roi(0,2) = c_x;
-    K_roi(1,2) = c_y;
-    //Call ordinary constructor with new K-matrix
-    planarHomographyVO(K_roi,T_,mode_);
+vo::planarHomographyVO::planarHomographyVO(int mode_){
+    mode = mode_;
 }
 /*Constructor. Defines some matrices and settings
  * K_:  Intrinsic camera matrix
@@ -46,6 +39,25 @@ vo::planarHomographyVO::planarHomographyVO(cv::Mat_<float> K_, cv::Mat_<float> T
     std::cout << "Flow field de-rotation is active (planarHomographyVO::deRotateFlowField). " << std::endl;
     std::cout << "\t deactivate by setting .activateDerotation = false " << std::endl;
     mode = mode_;
+}
+/*
+    Methods for setting K, and T matrix. The roi is used to offset cx,cy in K mat
+*/
+void vo::planarHomographyVO::setKmat(cv::Mat_<float> K_,cv::Rect2f roi){
+    float c_x = roi.width/2;    //New x-offset to fit with the given roi
+    float c_y = roi.height/2;   //New y-offset to fit with the given roi
+    cv::Mat_<float> K_roi;
+    K_.copyTo(K_roi);
+    K_roi(0,2) = c_x;
+    K_roi(1,2) = c_y;
+    K_roi.copyTo(K);
+    cv::Mat_<float> K_roi_inv = K_roi.inv();
+    K_roi_inv.copyTo(K_inv);
+}
+void vo::planarHomographyVO::setTmat(cv::Mat_<float> T_){
+    T_.copyTo(T);
+    cv::Mat_<float> T__inv = T_.inv();
+    T__inv.copyTo(T_inv);
 }
 /*
     Default settings function
@@ -95,7 +107,11 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
     A_double.convertTo(A,CV_32FC1);
 
 //New updateGlobalPosition does only regard translation and azimuth. NOT COMPLETE 3D ROTATION MATRIX
-    float yaw_delta = std::atan2(A(0,1),A(0,0));//tan with quadrant checking
+    //std::cout << "THIS IS WHERE EG ERROR OCCURS. HomographyVO.cpp line 98" << std::endl;
+    float yaw_delta = 0;
+    if(!A.empty()){
+        yaw_delta = std::atan2(A(0,1),A(0,0));//tan with quadrant checking
+    }
     updateGlobalPosition(success,yaw_delta,b,t,yaw);
 //    updateGlobalPosition(success,A,b,t,R);
 
@@ -252,6 +268,7 @@ void vo::planarHomographyVO::updateGlobalPosition(bool VOSuccess,
     static float timeStamp = 0;
     cv::Mat_<float> t_new = cv::Mat_<float>::zeros(3,1);
     if(VOSuccess){//Assign the new values to the static variables
+        cv::Mat_<float> R = getZRot(yaw);
         t_d = R.t()*T.t()*b; //Convert translation b from camera frame to UAV frame to global frame
         yaw_d = delta_yaw;             //Assume only rotation around z and uav and camera frame is aligned in z. No conversion needed
         //t_new = t+t_d;//No inertia in translation, only rotation
@@ -419,7 +436,6 @@ cv::Mat_<float> vo::planarHomographyVO::deRotateHomography(cv::Mat_<float>& H_ro
     //cv::Mat R_y = getYRot(pitch);
     //cv::Mat_<float> R_left = R_y*R_x;
 
-
     cv::Mat_<float> R_left = deRotMat(roll,pitch); //THIS SHOULD BE CORRECT
     cv::Mat_<float> R_right = R_left.t();
     //cv::Mat_<float> H = T*R_y*R_x*H_rot*R_x.t()*R_y.t()*T_inv;
@@ -441,6 +457,8 @@ void vo::planarHomographyVO::deRotateFlowField(std::vector<cv::Point2f>& src, fl
     cv::Mat R_y = getYRot(pitch);
     //std::cout << "obs Y rot not X rot now" << std::endl;
 //cv::Mat H = K*R_x*K_inv;//Transpose to flip the pitch back
+//std::cout << "mat types: "<<K.type() << ", " << R_y.type() << ", " << T_inv.type() << ", " << K_inv.type() << std::endl;
+//std::cout << "mat sizes: "<<K.size() << ", " << R_y.size() << ", " << T_inv.size() << ", " << K_inv.size() << std::endl;
     cv::Mat H = K*T* R_y*R_x* T_inv*K_inv;//Right to left: pixel to camera, camera to UAV, roll, pitch, UAV to camera, camera to pixel
 //cv::Mat H = T*K *R_y*R_x* K_inv*T_inv;
     VOperspectiveTransform(src,dst,H);
@@ -516,5 +534,16 @@ cv::Mat vo::planarHomographyVO::getYRot(float pitch){
     R_y(1,1) = 1;
     R_y(2,0) = -sinY;
     R_y(2,2) = cosY;
+    return R_y;
+}
+cv::Mat vo::planarHomographyVO::getZRot(float pitch){
+    float sinY = std::sin(pitch);
+    float cosY = std::cos(pitch);
+    cv::Mat_<float> R_y = cv::Mat_<float>::zeros(3,3);
+    R_y(0,0) = cosY;
+    R_y(0,1) = -sinY;
+    R_y(1,0) = sinY;
+    R_y(1,1) = cosY;
+    R_y(2,2) = 1;
     return R_y;
 }

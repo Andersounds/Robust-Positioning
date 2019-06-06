@@ -50,11 +50,13 @@ namespace vo{
          * 2: Transformation (pure rotation) from UAV frame to camera frame
         */
         planarHomographyVO(cv::Mat_<float>,cv::Mat_<float>,int);
-        planarHomographyVO(cv::Mat_<float>,cv::Mat_<float>,int,cv::Rect2f);//This constructor edits the given K-mat to fit roi
+        planarHomographyVO(int);//This constructor does nothing except setting the mode used together with setKmat and setTmat
         /*
         Default settings function
         */
         void setDefaultSettings(void);
+        void setKmat(cv::Mat_<float>,cv::Rect2f);
+        void setTmat(cv::Mat_<float>);
         /*Function called to process point correspondances and estimate global movement
         -------SHOULD HAVE CONST POINT INPUT
          */
@@ -146,6 +148,7 @@ namespace vo{
         cv::Mat_<float> deRotateHomography(cv::Mat_<float>&, float,float);
         cv::Mat getXRot(float);
         cv::Mat getYRot(float);
+        cv::Mat getZRot(float);
         /* This method defines a de-rotation matrix by defining rotation with negative angles
          * Standard rotation sequence is Z-Y-X (yaw-pitch-roll)
          * Retotation is thus done by Z-Y-X-(-X)-(-Y)
