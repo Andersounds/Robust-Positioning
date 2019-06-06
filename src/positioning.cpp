@@ -61,25 +61,29 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     //Draw markers
     cv::aruco::drawDetectedMarkers(outputFrame, corners, ids, CV_RGB(0,250,0));
     //Only do angulation if at least two known anchors are visible
-    //if(ids.size()>=minAnchors){
-    //    bool success = ang::angulation::calculate(corners,ids,pos,yaw,roll,pitch);
-    //}
-
-    //Get flow field
-    std::vector<cv::Point2f> features;
-    std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
-    of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
-    //Draw flow field arrows
-    float scale = 10;
-    cv::Point2f focusOffset(roi.x,roi.y);
-    drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset);
-    cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);
-    bool odometerSuccess = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
-    //std::cout << odometerSuccess << std::endl;
+    bool success = false;
+    int returnMode = pos::RETURN_MODE_AZIPE;
+    if(ids.size()>=minAnchors){
+        success = ang::angulation::calculate(corners,ids,pos,yaw,roll,pitch);
+    }
+    if(!success){
+        //Get flow field
+        std::vector<cv::Point2f> features;
+        std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
+        of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
+        //Draw flow field arrows
+        float scale = 10;
+        cv::Point2f focusOffset(roi.x,roi.y);
+        drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset);
+        cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);
+        success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+        if(success){returnMode = pos::RETURN_MODE_VO;}
+        else{returnMode = pos::RETURN_MODE_INERTIA;}
+    }
 
 
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
-    return 1;
+    return returnMode;
 }
 /* Draws a closed loop between all given points
  */

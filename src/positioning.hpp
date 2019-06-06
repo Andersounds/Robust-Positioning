@@ -40,7 +40,10 @@ namespace pos{
     const int MODE_AZIPE_AND_VO = 0;//Positioning using AZIPE estimation with VO as fallback
     const int MODE_AZIPE = 1;       //Positioning estimation with only AZIPE angulation
     const int MODE_VO = 2;          //Positioning estimation with only VO method
-
+    //Return flags for what positioning algorithm was used
+    const int RETURN_MODE_AZIPE = 0;        //Azipe angulation was used to estimate position
+    const int RETURN_MODE_VO    = 1;        //Visual odometry was used to estimate position (from last)
+    const int RETURN_MODE_INERTIA=2;        //Visual odometry failed, assumed rotational speed kept
 
     class positioning: public ang::angulation, of::opticalFlow, vo::planarHomographyVO{
         cv::Ptr<cv::aruco::Dictionary> dictionary;//Pointer to Aruco dictionary
