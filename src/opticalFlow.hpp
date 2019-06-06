@@ -23,6 +23,7 @@ namespace of{
         opticalFlow(int,int,int);
         int getFlow(const cv::Mat&, const cv::Mat&,std::vector<cv::Point2f>&,std::vector<cv::Point2f>&);
         void setDefaultSettings(void);
+        void drawArrows(cv::Mat&,std::vector<cv::Point2f>,std::vector<cv::Point2f>,float,cv::Point2f);
     private:
         bool init;
         int mode; //Either USE_CORR or USE_KLT

@@ -166,3 +166,21 @@ int of::opticalFlow::KLTFlow(const cv::Mat& src1, const cv::Mat& src2,
     }
     return success;
 }
+
+/* Draws arrows between the point correspondances and scale them
+ *
+ */
+void of::opticalFlow::drawArrows(cv::Mat& outputImg,std::vector<cv::Point2f> features1,std::vector<cv::Point2f> features2,float scale, cv::Point2f offset){
+    std::vector<cv::Point2f>::iterator it1 = features1.begin();
+    std::vector<cv::Point2f>::iterator it2 = features2.begin();
+    while(it1!=features1.end()){
+
+        cv::Point2f from = *it1 + offset;
+        cv::Point2f to = (*it2 - *it1)*scale + *it1 + offset;
+        cv::arrowedLine(outputImg,from,to,CV_RGB(200,50,0),2,cv::LINE_8,0,0.1);
+        //cv::imshow("Chess board", outputImg);
+        //cv::waitKey(0);
+        it1++;
+        it2++;
+    }
+}
