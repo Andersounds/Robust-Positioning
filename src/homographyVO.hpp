@@ -62,7 +62,7 @@ namespace vo{
                         std::vector<cv::Point2f>&,
                             float,float,float,
                             cv::Mat_<float>&,
-                            cv::Mat_<float>&);
+                            float&);
         /* Convenience method to print out decomposition returns
         */
         void printmats(std::vector<cv::Mat>,
@@ -103,6 +103,15 @@ namespace vo{
                                     const cv::Mat_<float>&,
                                     cv::Mat_<float>&,
                                     cv::Mat_<float>&);
+        /* As above but does only consider yaw rotation. Thus arguments are given as a Mat contining coordinate
+         * and a float containing yaw (azimuth) angle
+         *
+         */
+        void updateGlobalPosition(bool,
+                                    float,
+                                    const cv::Mat_<float>&,
+                                    cv::Mat_<float>&,
+                                    float&);
         /* This method projects a set of image plane coordinates via the inverse K-matrix to
          * 3d coordinates in camera frame at z=1
          *

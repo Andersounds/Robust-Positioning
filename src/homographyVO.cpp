@@ -78,8 +78,8 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
                                         std::vector<cv::Point2f>& p2,
                                         float roll,float pitch,float height,
                                         cv::Mat_<float>& t,
-                                        cv::Mat_<float>& R){
-    //
+                                        float& yaw){
+                                        //cv::Mat_<float>& R){
     cv::Mat_<double> b_double;//odometry estimation of translation in camera frame
     cv::Mat_<double> A_double;//odometry estimation of rotation in camera frame
     bool success;
@@ -94,7 +94,10 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
     b_double.convertTo(b,CV_32FC1);
     A_double.convertTo(A,CV_32FC1);
 
-    updateGlobalPosition(success,A,b,t,R);
+//New updateGlobalPosition does only regard translation and azimuth. NOT COMPLETE 3D ROTATION MATRIX
+    float yaw_delta = std::atan2(A(0,1),A(0,0));//tan with quadrant checking
+    updateGlobalPosition(success,yaw_delta,b,t,yaw);
+//    updateGlobalPosition(success,A,b,t,R);
 
     return success;
 }
@@ -156,10 +159,8 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
     static float roll_prev = 0;
     static float pitch_prev = 0;
 
-//roll_prev = roll;
-//pitch_prev = pitch;
     //Check that there are enough point correspondances
-    if((p1.size()<3)|| (p2.size()<3)){//std::cout << "Not enough point correspondances" << std::endl;
+    if((p1.size()<3)|| (p2.size()<3)){std::cout << "Not enough point correspondances" << std::endl;
         return false;
     }
     //De-rotate
@@ -178,13 +179,12 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
         it1++;
         it2++;
     }
-    //cv::Mat At = cv::estimateRigidTransform(p1,p2,false);
     cv::Mat At = cv::estimateAffinePartial2D(p1,p2,opa,method_,ransacReprojThreshold_,maxIters,confidence_,refineIters_);
     if(At.empty()){return false;}
     //Calculate scale
     cv::Mat_<double> R_ = At(cv::Rect(0,0,2,2));
     double s = sqrt(cv::determinant(R_));
-    R_ /= s;
+    R_ /= s;//Scale back by s to obtain rotation matrix
     //Update rotation matrix Note: only azimuthal rotation
     //Update coordinates
     if(A.empty()){
@@ -236,6 +236,34 @@ void vo::planarHomographyVO::updateGlobalPosition(bool VOSuccess,
     //Update pose
     t = t_new;
     R = R_new;
+}
+/* Updates the global coordinate and rotation from the given b matrix and delta-yaw(given as float)
+ *  If the first argument is true (odometry succeeded) then the global position is
+ * updated according to yaw and b. If not, the UAV is assumed to continue along the current path
+ * TODO: scale the inertia-estimation with the time since last measuremnt so that velocity is assumed constant
+ */
+void vo::planarHomographyVO::updateGlobalPosition(bool VOSuccess,
+                            float delta_yaw,
+                            const cv::Mat_<float>& b,
+                            cv::Mat_<float>& t,
+                            float& yaw){
+    static float yaw_d = 0;     //Instantaneous Rotation-difference
+    static cv::Mat_<float> t_d = cv::Mat_<float>::zeros(3,1);   //instantaneous translation-difference
+    static float timeStamp = 0;
+    cv::Mat_<float> t_new = cv::Mat_<float>::zeros(3,1);
+    if(VOSuccess){//Assign the new values to the static variables
+        t_d = R.t()*T.t()*b; //Convert translation b from camera frame to UAV frame to global frame
+        yaw_d = delta_yaw;             //Assume only rotation around z and uav and camera frame is aligned in z. No conversion needed
+        //t_new = t+t_d;//No inertia in translation, only rotation
+        //t = t_new;
+    }
+    //Increment
+
+    t_new = t+t_d;
+    float yaw_new = yaw + yaw_d;
+    //Update pose
+    t = t_new;
+    yaw = yaw_new;
 }
 /* Convenience method to print out decomposition returns
 */
