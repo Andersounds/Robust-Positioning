@@ -58,7 +58,7 @@ namespace pos{
         //Illustration processing. Second mat argument is drawn upon.
         int processAndIllustrate(int,cv::Mat&,cv::Mat&,int,float,float,float,float&,cv::Mat_<float>&);//Perform processing, but also illustrate by drawing on the second argument matrix
     private:
-
+        void drawLines(cv::Mat&,std::vector<cv::Point2f>,cv::Point2f);
     };
 }
 #endif
