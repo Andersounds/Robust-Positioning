@@ -202,7 +202,7 @@ cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv:
         //VO estimation
         float height = abs(zPath[i])/(cos(pitchPath[i])*cos(rollPath[i]));//Används bara av odometer
         bool odometerSuccess = odometer.process(features,updatedFeatures,rollPath[i],pitchPath[i],height,t,R);
-
+std::cout << "Adit function call here. should give yaw as float not comlete R mat" << std::endl;
 
 
 
