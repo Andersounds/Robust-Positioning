@@ -54,9 +54,9 @@ namespace pos{
                     cv::Mat_<float>,cv::Mat_<float> //Visual odometry paramters [K-mat, T-mat]
                 );
         //ASAP processing. No illustration
-        int process(int,cv::Mat&,float,float,float&,cv::Mat_<float>&);//Perform processing. return value indicates what kind of estimation is done
+        int process(int,cv::Mat&,float,float,float,float&,cv::Mat_<float>&);//Perform processing. return value indicates what kind of estimation is done
         //Illustration processing. Second mat argument is drawn upon.
-        int processAndIllustrate(int,cv::Mat&,cv::Mat&,int,float,float,float&,cv::Mat_<float>&);//Perform processing, but also illustrate by drawing on the second argument matrix
+        int processAndIllustrate(int,cv::Mat&,cv::Mat&,int,float,float,float,float&,cv::Mat_<float>&);//Perform processing, but also illustrate by drawing on the second argument matrix
     private:
 
     };
