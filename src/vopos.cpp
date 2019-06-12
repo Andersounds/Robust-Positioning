@@ -96,3 +96,24 @@ void pos::positioning::drawLines(cv::Mat& img,std::vector<cv::Point2f> points,cv
     }
     cv::line(img,offset+points[i],offset+points[0],CV_RGB(255,0,0),2,cv::LINE_8,0);//close loop
 }
+
+/* Fuses the VO position estimation with incomplete angulation measurement (Angular measurement to single anchor)
+ * This is done by obtaining an expression for a possible 3D line where the vehicle can be positioned, assuming known pose, anchor position and angular measurement to anchor
+ * (Pose obtained from IMU (Roll, Pitch), VO-algorithm (Yaw))
+ * The initial 3d coordinate estimation from VO is projected onto the 3D line.
+ * Theory wise will this prevent drift. But is sensitive of roll, pitch, yaw errors. Yaw may be pretty good estimated with VO. roll, pitch
+ * is obtained from Gyro + Accelerometer to improve quality
+ *
+
+    cv::Mat_<float>& pos  : Inputoutputarray: Contains VO pos estimation. Will be updated with improved estimation
+    std::vector<cv::Mat_<float>> q: Input array containing coordinate of known anchor.
+    std::vector<cv::Mat_<float>> v; Input array containging uLOS vectors from vehicle to known anchor(s)
+    std::vector<uchar> mask       : Input array containing a mask to choose which element of q to use. (Will choose first non-zero)
+    float yaw, roll, pitch: Input floats :Pose info
+ */
+void projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat_<float>> q, std::vector<cv::Mat_<float>> v, std::vector<uchar> mask,
+                        float yaw, float roll,float pitch){
+    //Create R mat describing the pose of the vehicle
+    cv::Mat_<float> R = getXRot(roll)*getYRot(pitch)*getZRot(yaw);
+
+}
