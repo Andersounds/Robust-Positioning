@@ -5,7 +5,7 @@
 
 
 /*
-TODO: in dataBase2q, if there are unknown anchors. raise some flag
+TODO: in dataBase2q, if there are unknown anchors. raise some flag. DONE. - inputouput array used as mask
 At end of calculate-method, do pnp solve
 pnp fits best here in angulation class
 Then there is no repeated calculations
@@ -90,11 +90,15 @@ std::vector<std::string> ang::angulation::parse(std::string line){
 /* Performs the position and azimuth calculation
  * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
  */
-bool ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
+int ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
     //Get locations of visible anchors
     std::vector<cv::Mat_<float>> q;
-    if(dataBase2q(IDs,q,mask)<minAnchors){return false;};// not enough known anchors
-
+    int knownAnchors = dataBase2q(IDs,q,mask);
+    if(knownAnchors == 0){
+        return ang::NO_ANCHORS;
+    }else if(knownAnchors<minAnchors){
+        return ang::TOO_FEW_ANCHORS;
+    };
     //Calculate uLOS-vectors v from K,T
     std::vector<cv::Mat_<float>> v;
     pix2uLOS(locations,v);
@@ -104,8 +108,9 @@ bool ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector
 
 /*Overloaded version of calculate. It takes the mean value of the provided vector<point2f> for each ID and then
  * calls standard caluclate-method
+ * This is used if instead of marker location, a vector of the locations of all marker corners are given. mid point is then mean point
  */
-bool ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,std::vector<bool>& mask,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
+int ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,std::vector<bool>& mask,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
     std::vector<cv::Point2f> anchorLocations;
     for(int i=0;i<cornerLocations.size();i++){//Go through all anchors
         std::vector<cv::Point2f>::iterator cornerIt = cornerLocations[i].begin();

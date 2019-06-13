@@ -9,6 +9,10 @@
 
 
 namespace ang{
+    const int NO_ANCHORS = 0;
+    const int TOO_FEW_ANCHORS = 1;
+    const int AZIPE_FAIL = 2;
+
     class angulation{
         cv::Mat_<float> K;                      //Camera matrix
         cv::Mat_<float> K_inv;                  //Inverted Camera matrix
@@ -28,8 +32,8 @@ namespace ang{
         void setKmat(cv::Mat_<float>);          //Camera matrix
         void setTmat(cv::Mat_<float>);          //uav -to- camera frame transformation matrix
         int addAnchor(int,cv::Mat_<float>);     //Add an anchor to database (id and 3d coordinate)
-        bool calculate(std::vector<cv::Point2f>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float); //Take pixel coordinates and IDs of anchors and calculate AZIPE
-        bool calculate(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float);// Overloaded. takes mean of pixel group first
+        int calculate(std::vector<cv::Point2f>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float); //Take pixel coordinates and IDs of anchors and calculate AZIPE
+        int calculate(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float);// Overloaded. takes mean of pixel group first
     };
 }
 #endif
