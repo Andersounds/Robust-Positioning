@@ -96,9 +96,7 @@ int ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<
     int knownAnchors = dataBase2q(IDs,q,mask);
     if(knownAnchors == 0){
         return ang::NO_ANCHORS;
-    }else if(knownAnchors<minAnchors){
-        return ang::TOO_FEW_ANCHORS;
-    };
+    }
     //Calculate uLOS-vectors v from K,T
     std::vector<cv::Mat_<float>> v;
     pix2uLOS(locations,v);

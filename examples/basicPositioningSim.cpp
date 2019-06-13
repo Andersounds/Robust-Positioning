@@ -118,7 +118,7 @@ int main(void){
         int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t);
 
         //Write to file
-        std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw};
+        std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw,(float)mode};
         file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
         build_row(estimation,file_estimated);
         file_estimated.close();
