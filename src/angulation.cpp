@@ -90,10 +90,10 @@ std::vector<std::string> ang::angulation::parse(std::string line){
 /* Performs the position and azimuth calculation
  * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
  */
-bool ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
+bool ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
     //Get locations of visible anchors
     std::vector<cv::Mat_<float>> q;
-    if(dataBase2q(IDs,q)<minAnchors){return false;};// not enough known anchors
+    if(dataBase2q(IDs,q,mask)<minAnchors){return false;};// not enough known anchors
 
     //Calculate uLOS-vectors v from K,T
     std::vector<cv::Mat_<float>> v;
@@ -105,7 +105,7 @@ bool ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector
 /*Overloaded version of calculate. It takes the mean value of the provided vector<point2f> for each ID and then
  * calls standard caluclate-method
  */
-bool ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
+bool ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,std::vector<bool>& mask,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
     std::vector<cv::Point2f> anchorLocations;
     for(int i=0;i<cornerLocations.size();i++){//Go through all anchors
         std::vector<cv::Point2f>::iterator cornerIt = cornerLocations[i].begin();
@@ -119,7 +119,7 @@ bool ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLoc
         anchorLocations.push_back(location);
     }
     //Do standard function call to calculate
-    return calculate(anchorLocations,IDs,pos,yaw,roll,pitch);
+    return calculate(anchorLocations,IDs,mask,pos,yaw,roll,pitch);
 }
 /*Converts a vector of camera pixel coordinates to a vector of uLOS vectors expressed as Mat_<float>
  *
