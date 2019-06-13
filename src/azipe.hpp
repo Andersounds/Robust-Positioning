@@ -13,8 +13,11 @@ Weapons Systems Division, 2009.
 */
 
 namespace az{
+    const int AZIPE_FAIL = 2;
+    const int AZIPE_SUCCESS = 3;
 
-    bool azipe(const std::vector<cv::Mat_<float>>&,
+
+    int azipe(const std::vector<cv::Mat_<float>>&,
                 const std::vector<cv::Mat_<float>>&,
                 cv::Mat_<float>&, float&,
                 float,float);

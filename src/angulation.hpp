@@ -12,6 +12,7 @@ namespace ang{
     const int NO_ANCHORS = 0;
     const int TOO_FEW_ANCHORS = 1;
     const int AZIPE_FAIL = 2;
+    const int AZIPE_SUCCESS = 3;
 
     class angulation{
         cv::Mat_<float> K;                      //Camera matrix

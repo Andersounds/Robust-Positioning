@@ -42,7 +42,7 @@ void p(std::string out_){
     std::cout << out_ << std::endl;
 }
 
-bool az::azipe(const std::vector<cv::Mat_<float>>& v,
+int az::azipe(const std::vector<cv::Mat_<float>>& v,
             const std::vector<cv::Mat_<float>>& q,
             cv::Mat_<float>& position,
             float& yaw,
@@ -201,21 +201,21 @@ bool az::azipe(const std::vector<cv::Mat_<float>>& v,
                 if(delta_pos < delta_neg){
                     P_vehicle_pos.copyTo(position);
                     yaw = azimuth_pos;
-                    return true;
+                    return az::AZIPE_SUCCESS;
                 }else{
                     P_vehicle_neg.copyTo(position);
                     yaw = azimuth_neg;
-                    return true;
+                    return az::AZIPE_SUCCESS;
                 }
             }else{
                 P_vehicle_pos.copyTo(position);
                 yaw = azimuth_pos;
-                return true;
+                return az::AZIPE_SUCCESS;
             }
         }else if(!isnan(delta_neg)){
             P_vehicle_neg.copyTo(position);
             yaw = azimuth_neg;
-            return true;
+            return az::AZIPE_SUCCESS;
         }
 
 /*
@@ -234,6 +234,6 @@ bool az::azipe(const std::vector<cv::Mat_<float>>& v,
         }
 */
         //If return value is Nan
-        return false; //Should never reach this
+        return az::AZIPE_FAIL; //Should never reach this
 
     }
