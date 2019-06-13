@@ -64,6 +64,10 @@ namespace pos{
         void drawLines(cv::Mat&,std::vector<cv::Point2f>,cv::Point2f);
         void projectionFusing(cv::Mat_<float>&,std::vector<cv::Mat_<float>>, std::vector<cv::Mat_<float>>, std::vector<uchar>,
                                 float, float,float);
+        void projectionFusing(cv::Mat_<float>&,std::vector<cv::Mat_<float>>,std::vector<cv::Mat_<float>>,std::vector<bool>,float,float,float);
+        cv::Mat getXRot(float);
+        cv::Mat getYRot(float);
+        cv::Mat getZRot(float);
     };
 }
 #endif

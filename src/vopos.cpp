@@ -61,13 +61,13 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     //Draw markers
     cv::aruco::drawDetectedMarkers(outputFrame, corners, ids, CV_RGB(0,250,0));
     //Only do angulation if at least two known anchors are visible
-    bool success = false;
+    int status = 0;
     int returnMode = pos::RETURN_MODE_AZIPE;
     if(ids.size()>=minAnchors){
         std::vector<bool> mask;
-        success = ang::angulation::calculate(corners,ids,mask,pos,yaw,roll,pitch);
+        status = ang::angulation::calculate(corners,ids,mask,pos,yaw,roll,pitch);
     }
-    if(!success){
+    if(status != ang::AZIPE_SUCCESS){//If not successful (Can fail due to either no known anchors or some azipe error)
         //Get flow field
         std::vector<cv::Point2f> features;
         std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
@@ -77,7 +77,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
         cv::Point2f focusOffset(roi.x,roi.y);
         drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset);
         cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);
-        success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+        bool success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
         if(success){returnMode = pos::RETURN_MODE_VO;}
         else{returnMode = pos::RETURN_MODE_INERTIA;}
     }
@@ -112,13 +112,13 @@ void pos::positioning::drawLines(cv::Mat& img,std::vector<cv::Point2f> points,cv
     std::vector<uchar> mask       : Input array containing a mask to choose which element of q to use. (Will choose first 1)
     float yaw, roll, pitch: Input floats :Pose info
  */
-void projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat_<float>> q, std::vector<cv::Mat_<float>> v, std::vector<uchar> mask,
+void pos::positioning::projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat_<float>> q, std::vector<cv::Mat_<float>> v, std::vector<bool> mask,
                         float yaw, float roll,float pitch){
     //Create R mat describing the pose of the vehicle (Instead directly create inverted R-mat)
     //cv::Mat_<float> R = getXRot(roll)*getYRot(pitch)*getZRot(yaw);
     cv::Mat_<float> R_t = getZRot(-yaw)*getYRot(-pitch)*getXRot(-roll);
     //Find first element with known anchor
-    std::vector<uchar>::iterator it = std::find(mask.begin(), mask.end(), 1);
+    std::vector<bool>::iterator it = std::find(mask.begin(), mask.end(), true);
     if(it!=mask.end()){
         int index = std::distance(mask.begin(), it);
         //Calculate v_tilde, which is the uLos vector expressed in global frame in negative direction. I.e vector pointing from anchor to vehicle
@@ -126,4 +126,40 @@ void projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat_<float>> q, std::
 
     }
 
+}
+/* Functions for defining roll, pitch, and yaw rotation matrices
+ * Increase speed by passing reference and edit in place?
+ */
+cv::Mat pos::positioning::getXRot(float roll){
+    float sinX = std::sin(roll);
+    float cosX = std::cos(roll);
+    cv::Mat_<float> R_x = cv::Mat_<float>::zeros(3,3);
+    R_x(0,0) = 1;
+    R_x(1,1) = cosX;
+    R_x(1,2) = -sinX;
+    R_x(2,1) = sinX;
+    R_x(2,2) = cosX;
+    return R_x;
+}
+cv::Mat pos::positioning::getYRot(float pitch){
+    float sinY = std::sin(pitch);
+    float cosY = std::cos(pitch);
+    cv::Mat_<float> R_y = cv::Mat_<float>::zeros(3,3);
+    R_y(0,0) = cosY;
+    R_y(0,2) = sinY;
+    R_y(1,1) = 1;
+    R_y(2,0) = -sinY;
+    R_y(2,2) = cosY;
+    return R_y;
+}
+cv::Mat pos::positioning::getZRot(float pitch){
+    float sinY = std::sin(pitch);
+    float cosY = std::cos(pitch);
+    cv::Mat_<float> R_y = cv::Mat_<float>::zeros(3,3);
+    R_y(0,0) = cosY;
+    R_y(0,1) = -sinY;
+    R_y(1,0) = sinY;
+    R_y(1,1) = cosY;
+    R_y(2,2) = 1;
+    return R_y;
 }
