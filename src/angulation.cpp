@@ -154,19 +154,24 @@ void ang::angulation::pix2uLOS(const std::vector<cv::Point2f>& points,std::vecto
     std::cout << "];" << std::endl;
     call++;*/
 }
-/* Takes IDs and returns vector of corresponding q vectors
+/* Takes IDs and returns vector of corresponding q vectors, if available.
+    fills the inputoutputarray mask with values showing which anchors are known and which are unknown.
 returns the amount of known anchors available
  */
-int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_<float>>& q_vectors){
+int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_<float>>& q_vectors,std::vector<bool>& mask){
     int amountOfKnown = 0;
+    mask.clear();//Clear vector to fill it with new values
     for(int i:IDs){
-        std::vector<cv::Mat_<float>>::iterator ptr = dataBase.begin();
-        std::vector<bool>::iterator active = activeAnchors.begin();
-        ptr+=i;//i is not an incremented variable. i takes the value if IDs at an incremented position
-        active+=i;
+        std::vector<cv::Mat_<float>>::iterator ptr = dataBase.begin() + i;//i is not an incremented variable. i takes the value if IDs at an incremented position
+        std::vector<bool>::iterator active = activeAnchors.begin() + i;
+        //ptr+=i;//i is not an incremented variable. i takes the value if IDs at an incremented position
+        //active+=i;
         q_vectors.push_back(*ptr);
-        *active = true;
-        amountOfKnown++;
+        mask.push_back(*active);//Fill mask with true or false
+        if(*active){//If the current ID is active, i.e known
+            amountOfKnown++;
+        }
+        //*active = true;
     }
     return amountOfKnown;
 }

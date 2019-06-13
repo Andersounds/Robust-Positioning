@@ -22,7 +22,7 @@ namespace ang{
         std::vector<std::string> parse(std::string);//Parses a csv line into vector<string>
         int readToDataBase(std::string,std::vector<int>&, std::vector<cv::Mat_<float>>&);//Reads csv file into anchor database
         void pix2uLOS(const std::vector<cv::Point2f>&,std::vector<cv::Mat_<float>>&);//Converts image pixel coordinates to uLOS vectors in uav frame
-        int dataBase2q(const std::vector<int>&,std::vector<cv::Mat_<float>>&);//Retrieves Q vectors from database given the IDs
+        int dataBase2q(const std::vector<int>&,std::vector<cv::Mat_<float>>&,std::vector<bool>&);//Retrieves Q vectors from database given the IDs
     public:
         angulation(int,std::string);
         void setKmat(cv::Mat_<float>);          //Camera matrix
