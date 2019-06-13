@@ -64,7 +64,8 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     bool success = false;
     int returnMode = pos::RETURN_MODE_AZIPE;
     if(ids.size()>=minAnchors){
-        success = ang::angulation::calculate(corners,ids,pos,yaw,roll,pitch);
+        std::vector<bool> mask;
+        success = ang::angulation::calculate(corners,ids,mask,pos,yaw,roll,pitch);
     }
     if(!success){
         //Get flow field
@@ -108,12 +109,21 @@ void pos::positioning::drawLines(cv::Mat& img,std::vector<cv::Point2f> points,cv
     cv::Mat_<float>& pos  : Inputoutputarray: Contains VO pos estimation. Will be updated with improved estimation
     std::vector<cv::Mat_<float>> q: Input array containing coordinate of known anchor.
     std::vector<cv::Mat_<float>> v; Input array containging uLOS vectors from vehicle to known anchor(s)
-    std::vector<uchar> mask       : Input array containing a mask to choose which element of q to use. (Will choose first non-zero)
+    std::vector<uchar> mask       : Input array containing a mask to choose which element of q to use. (Will choose first 1)
     float yaw, roll, pitch: Input floats :Pose info
  */
 void projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat_<float>> q, std::vector<cv::Mat_<float>> v, std::vector<uchar> mask,
                         float yaw, float roll,float pitch){
-    //Create R mat describing the pose of the vehicle
-    cv::Mat_<float> R = getXRot(roll)*getYRot(pitch)*getZRot(yaw);
+    //Create R mat describing the pose of the vehicle (Instead directly create inverted R-mat)
+    //cv::Mat_<float> R = getXRot(roll)*getYRot(pitch)*getZRot(yaw);
+    cv::Mat_<float> R_t = getZRot(-yaw)*getYRot(-pitch)*getXRot(-roll);
+    //Find first element with known anchor
+    std::vector<uchar>::iterator it = std::find(mask.begin(), mask.end(), 1);
+    if(it!=mask.end()){
+        int index = std::distance(mask.begin(), it);
+        //Calculate v_tilde, which is the uLos vector expressed in global frame in negative direction. I.e vector pointing from anchor to vehicle
+        cv::Mat_<float> v_tilde = -R_t*v[index];
+
+    }
 
 }
