@@ -34,6 +34,9 @@ namespace ang{
         int addAnchor(int,cv::Mat_<float>);     //Add an anchor to database (id and 3d coordinate)
         int calculate(std::vector<cv::Point2f>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float); //Take pixel coordinates and IDs of anchors and calculate AZIPE
         int calculate(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float);// Overloaded. takes mean of pixel group first
+        int calculateQV(std::vector<cv::Point2f>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float,std::vector<cv::Mat_<float>>,std::vector<cv::Mat_<float>>); //Take pixel coordinates and IDs of anchors and calculate AZIPE
+        int calculateQV(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float,std::vector<cv::Mat_<float>>,std::vector<cv::Mat_<float>>);// Overloaded. takes mean of pixel group first
+
     };
 }
 #endif

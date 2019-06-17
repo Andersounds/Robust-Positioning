@@ -87,6 +87,8 @@ std::vector<std::string> ang::angulation::parse(std::string line){
     }
     return parsed;
 }
+
+
 /* Performs the position and azimuth calculation
  * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
  */
@@ -103,7 +105,22 @@ int ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<
     return az::azipe(v,q,pos,yaw,roll,pitch);
 
 }
-
+/* Another version of calculate-method above. This method also returns q and v vectors trhough inputoutputarrays.
+ * These can be used by projectionFusing
+ */
+int ang::angulation::calculateQV(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float roll,float pitch,std::vector<cv::Mat_<float>> q,std::vector<cv::Mat_<float>> v){
+    //Clear q and v
+    q.clear();
+    v.clear();
+    //Get locations of visible anchors
+    int knownAnchors = dataBase2q(IDs,q,mask);
+    if(knownAnchors == 0){
+        return ang::NO_ANCHORS;
+    }
+    //Calculate uLOS-vectors v from K,T
+    pix2uLOS(locations,v);
+    return az::azipe(v,q,pos,yaw,roll,pitch);
+}
 /*Overloaded version of calculate. It takes the mean value of the provided vector<point2f> for each ID and then
  * calls standard caluclate-method
  * This is used if instead of marker location, a vector of the locations of all marker corners are given. mid point is then mean point
@@ -123,6 +140,26 @@ int ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLoca
     }
     //Do standard function call to calculate
     return calculate(anchorLocations,IDs,mask,pos,yaw,roll,pitch);
+}
+/*Overloaded version of calculateQV. It takes the mean value of the provided vector<point2f> for each ID and then
+ * calls standard caluclate-method
+ * This is used if instead of marker location, a vector of the locations of all marker corners are given. mid point is then mean point
+ */
+int ang::angulation::calculateQV(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,std::vector<bool>& mask,cv::Mat_<float>& pos,float& yaw, float roll,float pitch,std::vector<cv::Mat_<float>> q,std::vector<cv::Mat_<float>> v){
+    std::vector<cv::Point2f> anchorLocations;
+    for(int i=0;i<cornerLocations.size();i++){//Go through all anchors
+        std::vector<cv::Point2f>::iterator cornerIt = cornerLocations[i].begin();
+        cv::Point2f location(0,0);
+        while(cornerIt != cornerLocations[i].end()){
+            location += *cornerIt;
+            cornerIt++;
+        }
+        location.x /= cornerLocations[i].size();
+        location.y /= cornerLocations[i].size();
+        anchorLocations.push_back(location);
+    }
+    //Do standard function call to calculate
+    return calculate(anchorLocations,IDs,mask,pos,yaw,roll,pitch,q,v);
 }
 /*Converts a vector of camera pixel coordinates to a vector of uLOS vectors expressed as Mat_<float>
  *
