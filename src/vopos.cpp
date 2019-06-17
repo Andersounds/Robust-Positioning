@@ -65,8 +65,8 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     int returnMode = pos::RETURN_MODE_AZIPE;
     std::vector<cv::Mat_<float>> q;
     std::vector<cv::Mat_<float>> v;
+    std::vector<bool> mask;
     if(ids.size()>=minAnchors){
-        std::vector<bool> mask;
         status = ang::angulation::calculateQV(corners,ids,mask,pos,yaw,roll,pitch,q,v);
     }
     if(status != ang::AZIPE_SUCCESS){//If not successful (Can fail due to either no known anchors or some azipe error)
@@ -130,8 +130,8 @@ void pos::positioning::projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat
         int index = std::distance(mask.begin(), it);
         //Calculate v_tilde, which is the uLos vector expressed in global frame in negative direction. I.e vector pointing from anchor to vehicle
         cv::Mat_<float> v_tilde = -R_t*v[index];
-        cv::Mat_<float> qt = t-q;//Vector from q to t (Anchor to estimated vehicle position)
-        cv::Mat_<float> proj = q + qt.dot(v_tilde)/v_tilde.dot(v_tilde) * v_tilde;//Projected coordinate
+        cv::Mat_<float> qt = pos-q[index];//Vector from q to t (Anchor to estimated vehicle position)
+        cv::Mat_<float> proj = q[index] + qt.dot(v_tilde)/v_tilde.dot(v_tilde) * v_tilde;//Projected coordinate
         std::cout << "proj dim: " << proj.size() << std::endl;
 
     }

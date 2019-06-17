@@ -159,7 +159,7 @@ int ang::angulation::calculateQV(std::vector<std::vector<cv::Point2f>>& cornerLo
         anchorLocations.push_back(location);
     }
     //Do standard function call to calculate
-    return calculate(anchorLocations,IDs,mask,pos,yaw,roll,pitch,q,v);
+    return calculateQV(anchorLocations,IDs,mask,pos,yaw,roll,pitch,q,v);
 }
 /*Converts a vector of camera pixel coordinates to a vector of uLOS vectors expressed as Mat_<float>
  *

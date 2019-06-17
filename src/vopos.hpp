@@ -44,7 +44,7 @@ namespace pos{
     const int RETURN_MODE_AZIPE = 0;        //Azipe angulation was used to estimate position
     const int RETURN_MODE_VO    = 1;        //Visual odometry was used to estimate position (from last)
     const int RETURN_MODE_INERTIA=2;        //Visual odometry failed, assumed rotational speed kept
-    const int RETURN_MODE_PROJ=2;           //Visual odometry successful and estimation is projected onto v_tilde
+    const int RETURN_MODE_PROJ=3;           //Visual odometry successful and estimation is projected onto v_tilde
 
     class positioning: public ang::angulation, of::opticalFlow, vo::planarHomographyVO{
         cv::Ptr<cv::aruco::Dictionary> dictionary;//Pointer to Aruco dictionary
