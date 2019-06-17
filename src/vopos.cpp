@@ -68,6 +68,13 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     std::vector<bool> mask;
     if(ids.size()>=minAnchors){
         status = ang::angulation::calculateQV(corners,ids,mask,pos,yaw,roll,pitch,q,v);
+    } else if(, ){
+        std::cout << "TODO: " << std::endl;
+        std::cout << "1: Can not compare with ids.size(). Have to compare with amount of KNOWN anchors.  " << std::endl;
+        std::cout << "      Do that separately first with dataBase2q. it returns number of known anchors. " << std::endl;
+        std::cout << "2: Make a wrapper to drawdetectedMarkers that draws known and unknown markers with different colors." << std::endl;
+        std::cout << "3: As dataBase2q will be separate. See of calculateQV can be removed or improved" << std::endl;
+        std::cout << "2: make smarter processAndIllustrate. But prio is to test functionality of projectionFusing" << std::endl;
     }
     if(status != ang::AZIPE_SUCCESS){//If not successful (Can fail due to either no known anchors or some azipe error)
         //Get flow field
@@ -133,8 +140,8 @@ void pos::positioning::projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat
         cv::Mat_<float> qt = pos-q[index];//Vector from q to t (Anchor to estimated vehicle position)
         cv::Mat_<float> proj = q[index] + qt.dot(v_tilde)/v_tilde.dot(v_tilde) * v_tilde;//Projected coordinate
         std::cout << "proj dim: " << proj.size() << std::endl;
-
     }
+    std::cout << "ProjectionFusing: no known anchor" << std::endl;
 
 }
 /* Functions for defining roll, pitch, and yaw rotation matrices
