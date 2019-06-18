@@ -154,7 +154,7 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
                 cv::Mat_<float> E_pos = e.t()*M*e + 2*m.t()*e;
 //                e(1,0) = std::sin(-azimuth);
 //                cv::Mat_<float> E_neg = e.t()*M*e + 2*m.t()*e;
-//std::cout << "cost+: " << E_pos(0,0) << ",\t"<< "cost-: "<< E_neg(0,0)<<std::endl;//", angle: "<< azimuth <<std::endl;
+//std::cout << "cost+: " << E_pos(0,0) << "        "<< "cost-: "<< E_neg(0,0)<<std::endl;//", angle: "<< azimuth <<std::endl;
                 //Check if current solution is best
                 if(E_pos(0,0) < lowestCost){
                     lowestCost = E_pos(0,0);
@@ -167,7 +167,7 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
         */
         float x = (float) solutions[solutionID].real();
         float azimuth_pos = std::acos(x);
-        float azimuth_neg = azimuth_pos+PI;//-std::acos(-x);//Other possible angle. IS THIS ALWAYS SHIFTED BY PI?
+        float azimuth_neg = azimuth_pos+PI;//-std::acos(-x);//Other possible angle corresponding to conjugate solution with same lowest cost
         //Choose the correct angle
         cv::Mat_<float> e_pos = cv::Mat_<float>::zeros(2,1);
         e_pos(0,0) = x;
@@ -186,38 +186,41 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
         R_pos(2,0) = u*e_pos(0,0) + v_factor*e_pos(1,0);R_pos(2,1) = -v_factor*e_pos(0,0)+u*e_pos(1,0); R_pos(2,2) = c;
         //R for neg angle candidate
         cv::Mat_<float> R_neg = cv::Mat_<float>::zeros(3,3);
-        R_neg(0,0) = h*e_neg(0,0);              R_neg(0,1) = h*e_neg(1,0);              R_neg(0,2) = -a;
-        R_neg(1,0) = k*e_neg(0,0) - l*e_neg(1,0);   R_neg(1,1) = l*e_neg(0,0) + k*e_neg(1,0);   R_neg(1,2) = b;
+        R_neg(0,0) = h*e_neg(0,0);                      R_neg(0,1) = h*e_neg(1,0);                      R_neg(0,2) = -a;
+        R_neg(1,0) = k*e_neg(0,0) - l*e_neg(1,0);       R_neg(1,1) = l*e_neg(0,0) + k*e_neg(1,0);       R_neg(1,2) = b;
         R_neg(2,0) = u*e_neg(0,0) + v_factor*e_neg(1,0);R_neg(2,1) = -v_factor*e_neg(0,0)+u*e_neg(1,0); R_neg(2,2) = c;
         //Calculate new vehicle position (Equation 25. Without mean shift offset)
         cv::Mat_<float> P_vehicle_pos = -R_pos.t()*t_opt_pos;
         cv::Mat_<float> P_vehicle_neg = -R_neg.t()*t_opt_neg;
         //Choose the correct angle based on z-coordinate
-        float delta_pos = std::abs((P_vehicle_pos(2,0)-position(2,0)));
-        float delta_neg = std::abs((P_vehicle_neg(2,0)-position(2,0)));
+        //float delta_pos = std::abs((P_vehicle_pos(2,0)-position(2,0)));
+        //float delta_neg = std::abs((P_vehicle_neg(2,0)-position(2,0)));
+
+        float delta_pos = std::abs((P_vehicle_pos(0,0)-position(0,0))) + std::abs((P_vehicle_pos(1,0)-position(1,0))) + std::abs((P_vehicle_pos(2,0)-position(2,0)));
+        float delta_neg = std::abs((P_vehicle_neg(0,0)-position(0,0))) + std::abs((P_vehicle_neg(1,0)-position(1,0))) + std::abs((P_vehicle_neg(2,0)-position(2,0)));
+
 
         if(!isnan(delta_pos)){
             if(!isnan(delta_neg)){
                 if(delta_pos < delta_neg){
                     P_vehicle_pos.copyTo(position);
-                    yaw = azimuth_pos;
+                    yaw = limitYawRange(azimuth_pos);
                     return az::AZIPE_SUCCESS;
                 }else{
                     P_vehicle_neg.copyTo(position);
-                    yaw = azimuth_neg;
+                    yaw = limitYawRange(azimuth_neg);
                     return az::AZIPE_SUCCESS;
                 }
             }else{
                 P_vehicle_pos.copyTo(position);
-                yaw = azimuth_pos;
+                yaw = limitYawRange(azimuth_pos);
                 return az::AZIPE_SUCCESS;
             }
         }else if(!isnan(delta_neg)){
             P_vehicle_neg.copyTo(position);
-            yaw = azimuth_neg;
+            yaw = limitYawRange(azimuth_neg);
             return az::AZIPE_SUCCESS;
         }
-
 /*
         if(delta_pos < delta_neg && !isnan(delta_pos)){//Choose the angle that corresponds with smallest difference in z-coordinate since last calculation
             if(v.size()>=2){//Demand a minimum of 2 active anchors
@@ -237,3 +240,9 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
         return az::AZIPE_FAIL; //Should never reach this
 
     }
+
+float az::limitYawRange(float yawCandidate){
+    float div = yawCandidate/az::PI;
+    float yawLim = (div - floor(div))*az::PI;
+    return yawLim;
+}

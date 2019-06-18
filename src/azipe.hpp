@@ -15,6 +15,7 @@ Weapons Systems Division, 2009.
 namespace az{
     const int AZIPE_FAIL = 2;
     const int AZIPE_SUCCESS = 3;
+    const float PI = 3.1416;
 
 
     int azipe(const std::vector<cv::Mat_<float>>&,
@@ -22,6 +23,7 @@ namespace az{
                 cv::Mat_<float>&, float&,
                 float,float);
 
+    float limitYawRange(float);
 
 
 }
