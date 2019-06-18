@@ -114,8 +114,8 @@ int main(void){
 
         float roll = rollPath[i];
         float pitch = pitchPath[i];
-        float dist = -zPath[i];//THIS SHOULD BE "SIMULATED" FROM DATA not exactly height
-        int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t);
+        float height = -zPath[i];//THIS SHOULD BE "SIMULATED" FROM DATA not exactly height
+        int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
 
         //Write to file
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw,(float)mode};
