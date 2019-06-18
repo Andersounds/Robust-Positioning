@@ -53,28 +53,66 @@ Process the given data and update position and yaw. Also illustrate by drawing o
 dist - Distance from camera to the flow field plane.
 */
 int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float dist,float roll, float pitch,float& yaw, cv::Mat_<float>& pos){
-    static cv::Mat subPrevFrame; //Static init of prev subframe for optical flow field
-    //Aruco detect and draw
+    static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
+    //Aruco detect
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
     cv::aruco::detectMarkers(frame, dictionary, corners, ids);
-    //Draw markers
-    cv::aruco::drawDetectedMarkers(outputFrame, corners, ids, CV_RGB(0,250,0));
+
     //Only do angulation if at least two known anchors are visible
     int status = 0;
     int returnMode = pos::RETURN_MODE_AZIPE;
     //Convert IDs to q-coordinates and count number of known anchors from database
     std::vector<cv::Mat_<float>> q;
     std::vector<bool> mask;
-    //int knownAnchors = ang::angulation::dataBase2q(ids,q,mask);
     int knownAnchors = dataBase2q(ids,q,mask);
-    //Convert anchor pixel coordinates to uLOS-vectors v
-    std::vector<cv::Mat_<float>> v;
-    pix2uLOS(corners,v);
+    // Draw detected markers and identify known markers
+    drawMarkers(outputFrame,corners,ids,mask);
+    switch (knownAnchors) {
+        case 0:{
+            returnMode = pos::RETURN_MODE_VO;
+            //Get flow field
+            std::vector<cv::Point2f> features;
+            std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
+            of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
+            //Draw flow field arrows
+            float scale = 10;
+            cv::Point2f focusOffset(roi.x,roi.y);
+            drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset);
+            cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);
+            bool success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+            if(!success){
+                returnMode = pos::RETURN_MODE_INERTIA;
+            }
+            break;
+        }
+        case 1:{
+            returnMode = pos::RETURN_MODE_PROJ;
+            //Get flow field
+            std::vector<cv::Point2f> features;
+            std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
+            of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
+            vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+            std::vector<cv::Mat_<float>> v;
+            pix2uLOS(corners,v);
+            //projectionFusing(pos,q,v,mask,yaw,roll,pitch);
+            break;
+        }
+        default:{
+            returnMode = pos::RETURN_MODE_AZIPE;
+            std::vector<cv::Mat_<float>> v;
+            pix2uLOS(corners,v);
+            status = ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+            if(status == ang::AZIPE_FAIL){
+                std::cout << "AZIPE FAIL" << std::endl;
+            }
+            break;
+        }
+    }
+/*
 
     if(knownAnchors>=minAnchors){
-//        status = ang::angulation::calculate(corners,ids,mask,pos,yaw,roll,pitch,q,v);
-        status = ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+
     } else{
         std::cout << "TODO: " << std::endl;
         std::cout << "1: Can not compare with ids.size(). Have to compare with amount of KNOWN anchors.  " << std::endl;
@@ -101,7 +139,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
         }
         else if(success){returnMode = pos::RETURN_MODE_VO;}
         else{returnMode = pos::RETURN_MODE_INERTIA;}
-    }
+    }*/
 
 
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
@@ -118,7 +156,26 @@ void pos::positioning::drawLines(cv::Mat& img,std::vector<cv::Point2f> points,cv
     }
     cv::line(img,offset+points[i],offset+points[0],CV_RGB(255,0,0),2,cv::LINE_8,0);//close loop
 }
+/* Wrapper method for drawing anchors. Draws all found anchors, known in green and unknown in red
+ */
 
+ void pos::positioning::drawMarkers(cv::Mat& outputFrame, std::vector<std::vector<cv::Point2f> > corners,std::vector<int> ids,std::vector<bool> mask){
+     std::vector<std::vector<cv::Point2f> > knownCorners;
+     std::vector<int> knownIds;
+     std::vector<std::vector<cv::Point2f> > unKnownCorners;
+     std::vector<int> unKnownIds;
+     for(int i=0;i<mask.size();i++){
+         if(mask[i]){ //If anchor is known
+             knownCorners.push_back(corners[i]);
+             knownIds.push_back(ids[i]);
+         }else{
+             unKnownCorners.push_back(corners[i]);
+             unKnownIds.push_back(ids[i]);
+         }
+     }
+     cv::aruco::drawDetectedMarkers(outputFrame, knownCorners, knownIds, CV_RGB(0,250,0));
+     cv::aruco::drawDetectedMarkers(outputFrame, unKnownCorners, unKnownIds, CV_RGB(250,0,0));
+ }
 /* Fuses the VO position estimation with incomplete angulation measurement (Angular measurement to single anchor)
  * This is done by obtaining an expression for a possible 3D line where the vehicle can be positioned, assuming known pose, anchor position and angular measurement to anchor
  * (Pose obtained from IMU (Roll, Pitch), VO-algorithm (Yaw))
@@ -146,9 +203,9 @@ void pos::positioning::projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat
         cv::Mat_<float> v_tilde = -R_t*v[index];
         cv::Mat_<float> qt = pos-q[index];//Vector from q to t (Anchor to estimated vehicle position)
         cv::Mat_<float> proj = q[index] + qt.dot(v_tilde)/v_tilde.dot(v_tilde) * v_tilde;//Projected coordinate
-        std::cout << "proj dim: " << proj.size() << std::endl;
+    //    std::cout << "proj dim: " << proj.size() << std::endl;
     }
-    std::cout << "ProjectionFusing: no known anchor" << std::endl;
+    //std::cout << "ProjectionFusing: no known anchor" << std::endl;
 
 }
 /* Functions for defining roll, pitch, and yaw rotation matrices
