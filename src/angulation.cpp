@@ -92,40 +92,15 @@ std::vector<std::string> ang::angulation::parse(std::string line){
 /* Performs the position and azimuth calculation
  * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
  */
-int ang::angulation::calculate(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
-    //Get locations of visible anchors
-    std::vector<cv::Mat_<float>> q;
-    int knownAnchors = dataBase2q(IDs,q,mask);
-    if(knownAnchors == 0){
-        return ang::NO_ANCHORS;
-    }
-    //Calculate uLOS-vectors v from K,T
-    std::vector<cv::Mat_<float>> v;
-    pix2uLOS(locations,v);
+int ang::angulation::calculate(std::vector<cv::Mat_<float>>& q, std::vector<cv::Mat_<float>>& v,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
     return az::azipe(v,q,pos,yaw,roll,pitch);
+}
 
-}
-/* Another version of calculate-method above. This method also returns q and v vectors trhough inputoutputarrays.
- * These can be used by projectionFusing
- */
-int ang::angulation::calculateQV(std::vector<cv::Point2f>& locations, std::vector<int>& IDs,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float roll,float pitch,std::vector<cv::Mat_<float>> q,std::vector<cv::Mat_<float>> v){
-    //Clear q and v
-    q.clear();
-    v.clear();
-    //Get locations of visible anchors
-    int knownAnchors = dataBase2q(IDs,q,mask);
-    if(knownAnchors == 0){
-        return ang::NO_ANCHORS;
-    }
-    //Calculate uLOS-vectors v from K,T
-    pix2uLOS(locations,v);
-    return az::azipe(v,q,pos,yaw,roll,pitch);
-}
 /*Overloaded version of calculate. It takes the mean value of the provided vector<point2f> for each ID and then
  * calls standard caluclate-method
  * This is used if instead of marker location, a vector of the locations of all marker corners are given. mid point is then mean point
  */
-int ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,std::vector<bool>& mask,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
+/*int ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,std::vector<bool>& mask,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
     std::vector<cv::Point2f> anchorLocations;
     for(int i=0;i<cornerLocations.size();i++){//Go through all anchors
         std::vector<cv::Point2f>::iterator cornerIt = cornerLocations[i].begin();
@@ -140,27 +115,7 @@ int ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLoca
     }
     //Do standard function call to calculate
     return calculate(anchorLocations,IDs,mask,pos,yaw,roll,pitch);
-}
-/*Overloaded version of calculateQV. It takes the mean value of the provided vector<point2f> for each ID and then
- * calls standard caluclate-method
- * This is used if instead of marker location, a vector of the locations of all marker corners are given. mid point is then mean point
- */
-int ang::angulation::calculateQV(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,std::vector<bool>& mask,cv::Mat_<float>& pos,float& yaw, float roll,float pitch,std::vector<cv::Mat_<float>> q,std::vector<cv::Mat_<float>> v){
-    std::vector<cv::Point2f> anchorLocations;
-    for(int i=0;i<cornerLocations.size();i++){//Go through all anchors
-        std::vector<cv::Point2f>::iterator cornerIt = cornerLocations[i].begin();
-        cv::Point2f location(0,0);
-        while(cornerIt != cornerLocations[i].end()){
-            location += *cornerIt;
-            cornerIt++;
-        }
-        location.x /= cornerLocations[i].size();
-        location.y /= cornerLocations[i].size();
-        anchorLocations.push_back(location);
-    }
-    //Do standard function call to calculate
-    return calculateQV(anchorLocations,IDs,mask,pos,yaw,roll,pitch,q,v);
-}
+}*/
 /*Converts a vector of camera pixel coordinates to a vector of uLOS vectors expressed as Mat_<float>
  *
  */
@@ -187,12 +142,25 @@ void ang::angulation::pix2uLOS(const std::vector<cv::Point2f>& points,std::vecto
         //Iterate
         it++;
     }
-    /*std::cout << "directions_" << call << "= [" << std::endl;
-    for(int i=0;i<uLOS.size();i++){
-        std::cout << uLOS[i](0,0) << ", " << uLOS[i](1,0) << ", " << uLOS[i](2,0) << ";" << std::endl;
+}
+/*Overloaded version of pix2uLOS. If corner locations of anchors are given instead of points directly, the mean of each vector<point2f> is considered
+ *  as the anchors location. This is calculated and then the original pix2uLOS is called
+ */
+void ang::angulation::pix2uLOS(const std::vector<std::vector<cv::Point2f>>& cornerLocations,std::vector<cv::Mat_<float>>& uLOS){
+    std::vector<cv::Point2f> anchorLocations;
+    for(int i=0;i<cornerLocations.size();i++){//Go through all anchors
+        std::vector<cv::Point2f>::const_iterator cornerIt = cornerLocations[i].begin();
+        cv::Point2f location(0,0);
+        while(cornerIt != cornerLocations[i].end()){
+            location += *cornerIt;
+            cornerIt++;
+        }
+        location.x /= cornerLocations[i].size();
+        location.y /= cornerLocations[i].size();
+        anchorLocations.push_back(location);
     }
-    std::cout << "];" << std::endl;
-    call++;*/
+    //Do standard function call to calculate
+    return pix2uLOS(anchorLocations,uLOS);
 }
 /* Takes IDs and returns vector of corresponding q vectors, if available.
     fills the inputoutputarray mask with values showing which anchors are known and which are unknown.

@@ -63,12 +63,19 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     //Only do angulation if at least two known anchors are visible
     int status = 0;
     int returnMode = pos::RETURN_MODE_AZIPE;
+    //Convert IDs to q-coordinates and count number of known anchors from database
     std::vector<cv::Mat_<float>> q;
-    std::vector<cv::Mat_<float>> v;
     std::vector<bool> mask;
-    if(ids.size()>=minAnchors){
-        status = ang::angulation::calculateQV(corners,ids,mask,pos,yaw,roll,pitch,q,v);
-    } else if(, ){
+    //int knownAnchors = ang::angulation::dataBase2q(ids,q,mask);
+    int knownAnchors = dataBase2q(ids,q,mask);
+    //Convert anchor pixel coordinates to uLOS-vectors v
+    std::vector<cv::Mat_<float>> v;
+    pix2uLOS(corners,v);
+
+    if(knownAnchors>=minAnchors){
+//        status = ang::angulation::calculate(corners,ids,mask,pos,yaw,roll,pitch,q,v);
+        status = ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+    } else{
         std::cout << "TODO: " << std::endl;
         std::cout << "1: Can not compare with ids.size(). Have to compare with amount of KNOWN anchors.  " << std::endl;
         std::cout << "      Do that separately first with dataBase2q. it returns number of known anchors. " << std::endl;
