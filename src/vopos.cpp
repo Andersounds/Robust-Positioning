@@ -68,9 +68,17 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     int knownAnchors = dataBase2q(ids,q,mask);
     // Draw detected markers and identify known markers
     drawMarkers(outputFrame,corners,ids,mask);
-    switch (knownAnchors) {
-        case 0:{
-            returnMode = pos::RETURN_MODE_VO;
+    if(knownAnchors == 0){
+        returnMode = pos::RETURN_MODE_VO;
+    }else if(knownAnchors < minAnchors){
+        returnMode = pos::RETURN_MODE_PROJ;
+    } else{
+        returnMode = pos::RETURN_MODE_AZIPE;
+    }
+
+
+    switch (returnMode) {
+        case pos::RETURN_MODE_VO:{
             //Get flow field
             std::vector<cv::Point2f> features;
             std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
@@ -86,7 +94,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             }
             break;
         }
-        case 1:{
+        case pos::RETURN_MODE_PROJ:{
             returnMode = pos::RETURN_MODE_PROJ;
             //Get flow field
             std::vector<cv::Point2f> features;
@@ -98,7 +106,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             //projectionFusing(pos,q,v,mask,yaw,roll,pitch);
             break;
         }
-        default:{
+        default:{ //Or case pos::RETURN_MODE_AZIPE:
             returnMode = pos::RETURN_MODE_AZIPE;
             std::vector<cv::Mat_<float>> v;
             pix2uLOS(corners,v);
