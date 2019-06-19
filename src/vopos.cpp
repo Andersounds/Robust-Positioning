@@ -76,7 +76,8 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     } else{
         returnMode = pos::RETURN_MODE_AZIPE;
     }
-
+    //Always tru AZIPE
+    returnMode = pos::RETURN_MODE_AZIPE;
     switch (returnMode) {
         case pos::RETURN_MODE_VO:{
             //Get flow field
@@ -95,7 +96,6 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             break;
         }
         case pos::RETURN_MODE_PROJ:{
-            returnMode = pos::RETURN_MODE_PROJ;
             //Get flow field
             std::vector<cv::Point2f> features;
             std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
@@ -107,9 +107,19 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             break;
         }
         case pos::RETURN_MODE_AZIPE:{
-            returnMode = pos::RETURN_MODE_AZIPE;
             std::vector<cv::Mat_<float>> v;
             pix2uLOS(corners,v);
+            //Limit used anchors to only two
+            int nmbr=0;
+            for(int j=0;j<mask.size();j++){
+                if(mask[j]){
+                    nmbr++;
+//                    if(nmbr>2){
+//                        mask[j] = false;
+//                    }
+                }
+            }
+
             status = ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
             if(status == ang::AZIPE_FAIL){
                 std::cout << "AZIPE FAIL" << std::endl;
