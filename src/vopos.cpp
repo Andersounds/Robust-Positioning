@@ -76,7 +76,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     } else{
         returnMode = pos::RETURN_MODE_AZIPE;
     }
-
+    returnMode = pos::RETURN_MODE_AZIPE;
     switch (returnMode) {
         case pos::RETURN_MODE_VO:{
             //Get flow field
