@@ -207,7 +207,6 @@ void pos::positioning::projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat
         cv::Mat_<float> v_tilde = -R_t*v[index];
         cv::Mat_<float> qt = pos-q[index];//Vector from q to t (Anchor to estimated vehicle position)
         cv::Mat_<float> proj = q[index] + qt.dot(v_tilde)/v_tilde.dot(v_tilde) * v_tilde;//Projected coordinate
-    //    std::cout << "proj dim: " << proj.size() << std::endl;
         proj.copyTo(pos);
     }
     //std::cout << "ProjectionFusing: no known anchor" << std::endl;
