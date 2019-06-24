@@ -66,18 +66,17 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     std::vector<cv::Mat_<float>> q;
     std::vector<bool> mask;
     int knownAnchors = dataBase2q(ids,q,mask);
-    std::cout << knownAnchors <<  ";" <<std::endl;
+    //std::cout << knownAnchors <<  ";" <<std::endl;
     // Draw detected markers and identify known markers
     drawMarkers(outputFrame,corners,ids,mask);
     if(knownAnchors == 0){
         returnMode = pos::RETURN_MODE_VO;
-    }else if(knownAnchors < (minAnchors)){
+    }else if(knownAnchors < minAnchors){
         returnMode = pos::RETURN_MODE_PROJ;
     } else{
         returnMode = pos::RETURN_MODE_AZIPE;
     }
     //Always tru AZIPE
-    returnMode = pos::RETURN_MODE_AZIPE;
     switch (returnMode) {
         case pos::RETURN_MODE_VO:{
             //Get flow field
@@ -109,21 +108,8 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
         case pos::RETURN_MODE_AZIPE:{
             std::vector<cv::Mat_<float>> v;
             pix2uLOS(corners,v);
-            //Limit used anchors to only two
-            int nmbr=0;
-            for(int j=0;j<mask.size();j++){
-                if(mask[j]){
-                    nmbr++;
-                    if(nmbr>2){
-                        mask[j] = false;
-                    }
-                }
-            }
-            if(knownAnchors>=2){
-                status = ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
-            }else{
-                std::cout << "No azipe est" << std::endl;
-            }
+            ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+            //calculate(q,v,mask,pos,yaw,roll,pitch);
             break;
         }
     }

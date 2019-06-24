@@ -90,10 +90,26 @@ std::vector<std::string> ang::angulation::parse(std::string line){
 
 
 /* Performs the position and azimuth calculation
+ * Discards all elements that are masked away and then calls azipe
  * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
  */
 int ang::angulation::calculate(std::vector<cv::Mat_<float>>& q, std::vector<cv::Mat_<float>>& v,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
-    return az::azipe(v,q,pos,yaw,roll,pitch);
+    //Use the mask to feed through
+    std::vector<cv::Mat_<float>> v_m;
+    std::vector<cv::Mat_<float>> q_m;
+    std::vector<cv::Mat_<float>>::iterator it_v = v.begin();
+    std::vector<cv::Mat_<float>>::iterator it_q = q.begin();
+    std::vector<bool>::iterator it_mask = mask.begin();
+    while(it_mask != mask.end()){
+        if(*it_mask){
+            v_m.push_back(*it_v);
+            q_m.push_back(*it_q);
+        }
+        it_v++;
+        it_q++;
+        it_mask++;
+    }
+    return az::azipe(v_m,q_m,pos,yaw,roll,pitch);
 }
 
 /*Overloaded version of calculate. It takes the mean value of the provided vector<point2f> for each ID and then
