@@ -114,15 +114,15 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             for(int j=0;j<mask.size();j++){
                 if(mask[j]){
                     nmbr++;
-//                    if(nmbr>2){
-//                        mask[j] = false;
-//                    }
+                    if(nmbr>2){
+                        mask[j] = false;
+                    }
                 }
             }
-
-            status = ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
-            if(status == ang::AZIPE_FAIL){
-                std::cout << "AZIPE FAIL" << std::endl;
+            if(knownAnchors>=2){
+                status = ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+            }else{
+                std::cout << "No azipe est" << std::endl;
             }
             break;
         }
