@@ -115,7 +115,12 @@ int main(void){
         float roll = rollPath[i];
         float pitch = pitchPath[i];
         float height = -zPath[i];//THIS SHOULD BE "SIMULATED" FROM DATA not exactly height
+        //t(0,0) = xPath[i];
+        //t(1,0) = yPath[i];
+        //t(2,0) = zPath[i];
+        //float yaw = yawPath[i];
         int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
+        std::cout << "Mode: " << mode << std::endl;
 
         //Write to file
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw,(float)mode};
@@ -123,7 +128,11 @@ int main(void){
         build_row(estimation,file_estimated);
         file_estimated.close();
 
+
+        std::string str = std::to_string(i);
+        cv::putText(rawFrame,str,cv::Point(10,rawFrame.rows/2),cv::FONT_HERSHEY_DUPLEX,1.0,CV_RGB(118, 185, 0),2);
         cv::imshow("showit",rawFrame);
+        //cv::waitKey(0);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
     }

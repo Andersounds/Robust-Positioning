@@ -193,11 +193,11 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
         cv::Mat_<float> P_vehicle_pos = -R_pos.t()*t_opt_pos;
         cv::Mat_<float> P_vehicle_neg = -R_neg.t()*t_opt_neg;
         //Choose the correct angle based on z-coordinate
-        //float delta_pos = std::abs((P_vehicle_pos(2,0)-position(2,0)));
-        //float delta_neg = std::abs((P_vehicle_neg(2,0)-position(2,0)));
+        float delta_pos = std::abs((P_vehicle_pos(2,0)-position(2,0)));
+        float delta_neg = std::abs((P_vehicle_neg(2,0)-position(2,0)));
 
-        float delta_pos = std::abs((P_vehicle_pos(0,0)-position(0,0))) + std::abs((P_vehicle_pos(1,0)-position(1,0))) + std::abs((P_vehicle_pos(2,0)-position(2,0)));
-        float delta_neg = std::abs((P_vehicle_neg(0,0)-position(0,0))) + std::abs((P_vehicle_neg(1,0)-position(1,0))) + std::abs((P_vehicle_neg(2,0)-position(2,0)));
+        //float delta_pos = std::abs((P_vehicle_pos(0,0)-position(0,0))) + std::abs((P_vehicle_pos(1,0)-position(1,0))) + std::abs((P_vehicle_pos(2,0)-position(2,0)));
+        //float delta_neg = std::abs((P_vehicle_neg(0,0)-position(0,0))) + std::abs((P_vehicle_neg(1,0)-position(1,0))) + std::abs((P_vehicle_neg(2,0)-position(2,0)));
 
 
         if(!isnan(delta_pos)){

@@ -66,17 +66,17 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     std::vector<cv::Mat_<float>> q;
     std::vector<bool> mask;
     int knownAnchors = dataBase2q(ids,q,mask);
-    std::cout << knownAnchors <<  ";" <<std::endl;
+    //std::cout << knownAnchors <<  ";" <<std::endl;
     // Draw detected markers and identify known markers
     drawMarkers(outputFrame,corners,ids,mask);
     if(knownAnchors == 0){
         returnMode = pos::RETURN_MODE_VO;
-    }else if(knownAnchors < (minAnchors)){
+    }else if(knownAnchors < minAnchors){
         returnMode = pos::RETURN_MODE_PROJ;
     } else{
         returnMode = pos::RETURN_MODE_AZIPE;
     }
-    returnMode = pos::RETURN_MODE_AZIPE;
+    //Always tru AZIPE
     switch (returnMode) {
         case pos::RETURN_MODE_VO:{
             //Get flow field
@@ -95,7 +95,6 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             break;
         }
         case pos::RETURN_MODE_PROJ:{
-            returnMode = pos::RETURN_MODE_PROJ;
             //Get flow field
             std::vector<cv::Point2f> features;
             std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
@@ -107,13 +106,10 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             break;
         }
         case pos::RETURN_MODE_AZIPE:{
-            returnMode = pos::RETURN_MODE_AZIPE;
             std::vector<cv::Mat_<float>> v;
             pix2uLOS(corners,v);
-            status = ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
-            if(status == ang::AZIPE_FAIL){
-                std::cout << "AZIPE FAIL" << std::endl;
-            }
+            ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+            //calculate(q,v,mask,pos,yaw,roll,pitch);
             break;
         }
     }
@@ -211,7 +207,6 @@ void pos::positioning::projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat
         cv::Mat_<float> v_tilde = -R_t*v[index];
         cv::Mat_<float> qt = pos-q[index];//Vector from q to t (Anchor to estimated vehicle position)
         cv::Mat_<float> proj = q[index] + qt.dot(v_tilde)/v_tilde.dot(v_tilde) * v_tilde;//Projected coordinate
-    //    std::cout << "proj dim: " << proj.size() << std::endl;
         proj.copyTo(pos);
     }
     //std::cout << "ProjectionFusing: no known anchor" << std::endl;

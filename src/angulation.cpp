@@ -90,10 +90,26 @@ std::vector<std::string> ang::angulation::parse(std::string line){
 
 
 /* Performs the position and azimuth calculation
+ * Discards all elements that are masked away and then calls azipe
  * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
  */
 int ang::angulation::calculate(std::vector<cv::Mat_<float>>& q, std::vector<cv::Mat_<float>>& v,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
-    return az::azipe(v,q,pos,yaw,roll,pitch);
+    //Use the mask to feed through
+    std::vector<cv::Mat_<float>> v_m;
+    std::vector<cv::Mat_<float>> q_m;
+    std::vector<cv::Mat_<float>>::iterator it_v = v.begin();
+    std::vector<cv::Mat_<float>>::iterator it_q = q.begin();
+    std::vector<bool>::iterator it_mask = mask.begin();
+    while(it_mask != mask.end()){
+        if(*it_mask){
+            v_m.push_back(*it_v);
+            q_m.push_back(*it_q);
+        }
+        it_v++;
+        it_q++;
+        it_mask++;
+    }
+    return az::azipe(v_m,q_m,pos,yaw,roll,pitch);
 }
 
 /*Overloaded version of calculate. It takes the mean value of the provided vector<point2f> for each ID and then
@@ -170,16 +186,27 @@ int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_
     int amountOfKnown = 0;
     mask.clear();//Clear vector to fill it with new values
     for(int i:IDs){
-        std::vector<cv::Mat_<float>>::iterator ptr = dataBase.begin() + i;//i is not an incremented variable. i takes the value if IDs at an incremented position
-        std::vector<bool>::iterator active = activeAnchors.begin() + i;
-        //ptr+=i;//i is not an incremented variable. i takes the value if IDs at an incremented position
-        //active+=i;
+        q_vectors.push_back(dataBase[i]);
+        bool active = activeAnchors[i];
+        mask.push_back(active);
+        if(active){
+            amountOfKnown++;
+        }
+
+
+/*
+
+        std::vector<cv::Mat_<float>>::iterator ptr = dataBase.begin();// + i;//i is not an incremented variable. i takes the value if IDs at an incremented position
+        std::vector<bool>::iterator active = activeAnchors.begin();// + i;
+        ptr+=i;//i is not an incremented variable. i takes the value if IDs at an incremented position
+        active+=i;
         q_vectors.push_back(*ptr);
         mask.push_back(*active);//Fill mask with true or false
         if(*active){//If the current ID is active, i.e known
             amountOfKnown++;
         }
-        //*active = true;
+*/
+
     }
     return amountOfKnown;
 }
