@@ -39,7 +39,7 @@ int main(void){
     std::ofstream file_estimated;
 // Init simulation environment
     simulatePose warper;
-    cv::Mat floor = cv::imread("/Users/Fredrik/Datasets/FloorTextures/test2.png",cv::IMREAD_REDUCED_COLOR_4);
+    cv::Mat floor = cv::imread("spike/test2.png",cv::IMREAD_REDUCED_COLOR_4);
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
@@ -115,10 +115,6 @@ int main(void){
         float roll = rollPath[i];
         float pitch = pitchPath[i];
         float height = -zPath[i];//THIS SHOULD BE "SIMULATED" FROM DATA not exactly height
-        //t(0,0) = xPath[i];
-        //t(1,0) = yPath[i];
-        //t(2,0) = zPath[i];
-        //float yaw = yawPath[i];
         int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
         std::cout << "Mode: " << mode << std::endl;
 
