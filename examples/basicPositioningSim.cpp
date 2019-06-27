@@ -5,6 +5,7 @@
 #include "../src/vopos.hpp"
 #include "../src/simulatePose.hpp"
 #include "../src/save2file.cpp"
+#include "../src/settingsParser.cpp"
 
 #define PI 3.1416
 
@@ -28,7 +29,9 @@ std::vector<float> sinVector(std::vector<float> t,float scale){
 }
 
 
-int main(void){
+int main(int argc, char** argv){
+    //Initialize settings
+    set::settings S(argc,argv);
     //Initialize simulation
     // Define sim chessboard parameters
     int boxWidth = 11;

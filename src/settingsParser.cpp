@@ -24,7 +24,8 @@ namespace set{
             std::map<std::string, float> settingsF;
             std::map<std::string, std::string> settingsS;
 
-            settings(void);//Constructor that sets all default  setting values
+            settings(int, char**);//Constructor that sets all default  setting values
+            int setAllDefault(void);
             int setDefault(std::string,int,         std::string); //Method for setting a setting
             int setDefault(std::string,float,       std::string);
             int setDefault(std::string,std::string, std::string);
@@ -36,7 +37,33 @@ namespace set{
     };
 }
 /*Constructor. Initializes the setting-maps*/
-set::settings::settings(void){
+set::settings::settings(int argc, char** argv){
+    /*DEFAULT SETTINGS*/
+    setAllDefault();
+    /*Check input*/
+    if(argc>2){
+        std::cerr << "Invalid arguments to settingsParser. " << std::endl;
+        std::cout << "Give 0 arguments to create default settings.txt file and use these settings." << std::endl;
+        std::cout << "Give single argument <path/to/settingsFile.txt> to use those settings to override default." << std::endl;
+    }else if(argc==2){
+        std::cout << "Reading settings file from \"" << argv[1] << "\"... ";
+        if(!readSettingsFile(argv[1])){
+            std::cout << "\n Could not open provided settings-file: \"" << argv[1] << "\". Please give valid path or no path." << std::endl;
+        }else{
+            std::cout << "Done." << std::endl;
+        }
+    }else{
+        std::cout << "No path to settings-file provided.";
+        std::cout << "Exporting complete file with default values to /settings.txt ...";
+        if(writeDefaultSettingsFile()){
+            std::cout << "Done.";
+        }
+        std::cout << std::endl;
+    }
+}
+
+int set::settings::setAllDefault(void){
+    /*DEFAULT SETTINGS*/
     //Obtain data
     setDefault("USE_CAM_NMBR",(int) 0,"-1: rpi cam, >=0: webcam nmbr");
     //Modes
@@ -76,6 +103,7 @@ set::settings::settings(void){
     setDefault("TILT_FILT_B", (float) 0," ");
     setDefault("TILT_FILT_C", (float) 0," ");
     setDefault("TILT_FILT_D", (float) 0," ");
+    return 1;
 }
 int set::settings::setDefault(std::string key, int          value, std::string description){
     settingsTYPE[key] = TYPE_INT;
@@ -169,7 +197,6 @@ int set::settings::writeDefaultSettingsFile(void){
     return 1;
 }
 
-
 int set::settings::readSettingsFile(std::string path){
     std::string line;
     std::string delim = ",";
@@ -211,43 +238,3 @@ std::vector<std::string> set::settings::parseRow(std::string line){
         }
         return parsed;
     }
-
-
-/* If an invalid (or no) path to a settings file is given upon program start, the parser
- * accesses the list of default settings in the settings-class, creates a default settings file,
- * saves it locally, and then uses all default settings.
- */
- /*
-int settingsParser(int argc, char** argv){
-    std::map<std::string, float> settingsFloat;            //Define std::map that keeps settings
-    std::map<std::string, int> settingsInt;
-    std::map<std::string, std::string> settingsS;
-
-    //Default Integer settings
-
-
-    //Simulation settings
-    settingsS[SIM_USE_]
-
-
-    if(argc!=1){std::cout << "Please give -1- argument. Usage: <path to settings-file>" << std::endl; return 0;}
-
-  arguments.streamMode = std::stoi(argv[1]);
-
-
-    std::cerr << "Press enter..." << std::endl;
-    std::cin.get();
-    return 0;
-}
-*/
-
-int main(int argc, char** argv){
-
-    set::settings S;
-    S.writeDefaultSettingsFile();
-    S.set("T_MAT_1_1", "0.2");
-    S.set("T_MAT_1_1__", "0.2");
-    S.set("PATH_TO_ARUCO_DATABASE", "ff");
-    S.set("ARUCO_DICT_TYPE", "gd");
-    return 0;
-}
