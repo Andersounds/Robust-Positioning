@@ -126,8 +126,9 @@ int main(void){
 
 
         std::string str = std::to_string(i);
-        cv::putText(rawFrame,str,cv::Point(10,rawFrame.rows/2),cv::FONT_HERSHEY_DUPLEX,1.0,CV_RGB(118, 185, 0),2);
-        cv::imshow("showit",rawFrame);
+        std::cout << std << std::endl;
+        //cv::putText(rawFrame,str,cv::Point(10,rawFrame.rows/2),cv::FONT_HERSHEY_DUPLEX,1.0,CV_RGB(118, 185, 0),2);
+        //cv::imshow("showit",rawFrame);
         //cv::waitKey(0);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
