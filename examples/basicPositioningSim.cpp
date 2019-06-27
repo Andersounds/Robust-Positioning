@@ -126,7 +126,7 @@ int main(void){
 
 
         std::string str = std::to_string(i);
-        std::cout << std << std::endl;
+        std::cout << str << std::endl;
         //cv::putText(rawFrame,str,cv::Point(10,rawFrame.rows/2),cv::FONT_HERSHEY_DUPLEX,1.0,CV_RGB(118, 185, 0),2);
         //cv::imshow("showit",rawFrame);
         //cv::waitKey(0);
