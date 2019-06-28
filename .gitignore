@@ -6,3 +6,6 @@
 settings.txt
 estPath.txt
 truePath.txt
+
+# Build files
+/include/raspicam-0.1.6/build/*
