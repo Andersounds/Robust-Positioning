@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#Add usr/local/lib to search path of ld linker
+export LD_LIBRARY_PATH="/usr/local/lib"
+
+#Compile
+g++ -I/opt/vc/include -L/opt/vc/lib \
+-lopencv_core \
+-lopencv_imgcodecs \
+-lraspicam \
+-lraspicam_cv \
+-lmmal \
+-lmmal_core \
+-lmmal_util \
+raspicam-0.1.6/utils/raspicam_cv_test.cpp -o simpletest_cv_raspicam
