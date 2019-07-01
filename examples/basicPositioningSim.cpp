@@ -32,6 +32,7 @@ std::vector<float> sinVector(std::vector<float> t,float scale){
 int main(int argc, char** argv){
     //Initialize settings
     set::settings S(argc,argv);
+    if(!S.success){return 0;}
     //Initialize simulation
     // Define sim chessboard parameters
     int boxWidth = 11;
@@ -43,6 +44,7 @@ int main(int argc, char** argv){
 // Init simulation environment
     simulatePose warper;
     cv::Mat floor = cv::imread("spike/test2.png",cv::IMREAD_REDUCED_COLOR_4);
+    if(floor.empty()){std::cout << "Could not read base image" << std::endl; return 0;}
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
@@ -119,7 +121,7 @@ int main(int argc, char** argv){
         float pitch = pitchPath[i];
         float height = -zPath[i];//THIS SHOULD BE "SIMULATED" FROM DATA not exactly height
         int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
-        std::cout << "Mode: " << mode << std::endl;
+        //std::cout << "Mode: " << mode << std::endl;
 
         //Write to file
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw,(float)mode};
@@ -128,8 +130,8 @@ int main(int argc, char** argv){
         file_estimated.close();
 
 
-        std::string str = std::to_string(i);
-        std::cout << str << std::endl;
+        //std::string str = std::to_string(i);
+        //std::cout << str << std::endl;
         //cv::putText(rawFrame,str,cv::Point(10,rawFrame.rows/2),cv::FONT_HERSHEY_DUPLEX,1.0,CV_RGB(118, 185, 0),2);
         //cv::imshow("showit",rawFrame);
         //cv::waitKey(0);
