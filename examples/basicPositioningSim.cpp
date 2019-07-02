@@ -7,6 +7,8 @@
 #include "../src/save2file.cpp"
 #include "../src/settingsParser.cpp"
 
+#include "../src/logger.hpp"
+
 #define PI 3.1416
 
 /*Returns a linspace sequence starting from start with length no of steps of size step
@@ -30,6 +32,20 @@ std::vector<float> sinVector(std::vector<float> t,float scale){
 
 
 int main(int argc, char** argv){
+///////
+log::dataLogger databin_EST, databin_TRUE, databin_LOG;
+if(!databin_EST.init("estPath.csv",std::vector<std::string>{"x","y","z","yaw","mode"})) return 0;
+if(!databin_TRUE.init("truePath.csv",std::vector<std::string>{"x","y","z","yaw"})) return 0;
+
+
+
+float timeStamp = 0;
+
+
+
+
+///////
+
     //Initialize settings
     set::settings S(argc,argv);
     if(!S.success){return 0;}
@@ -79,11 +95,11 @@ int main(int argc, char** argv){
             yIt++;
             yawIt++;
     }
-    file_true.open("truePath.txt", std::ios::out | std::ios::app);
+    /*file_true.open("truePath.txt", std::ios::out | std::ios::app);
     std::vector<std::vector <float>> input{xPath,yPath,zPath,yawPath};
     build_path(input,file_true);
     file_true.close();
-
+*/
 
     //Initialize positioning object
     int maxIdAruco = 50;
@@ -124,10 +140,10 @@ int main(int argc, char** argv){
         //std::cout << "Mode: " << mode << std::endl;
 
         //Write to file
+        std::vector<float> truePath{xPath[i],yPath[i],zPath[i],yawPath[i]};
+        databin_TRUE.dump(truePath);
         std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw,(float)mode};
-        file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
-        build_row(estimation,file_estimated);
-        file_estimated.close();
+        databin_EST.dump(estimation);
 
 
         //std::string str = std::to_string(i);
