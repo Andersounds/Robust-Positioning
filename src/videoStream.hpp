@@ -51,6 +51,7 @@ class datasetStreamer : public Streamer{
   bool useTimeStampFile;
   std::string pathToDataset;
   std::vector<std::string> timeStamps_s;
+  std::vector<float> timeStamps_f;
   std::vector<std::string> imgNames;
   public:
     datasetStreamer(std::string,bool);

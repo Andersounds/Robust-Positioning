@@ -164,12 +164,19 @@ int robustPositioning::datasetStreamer::readTimeStampData(void){
                 count++;
                 std::vector<std::string> parsed = parseRow(line);
                 if(parsed.size()==2){//Disregard any lines that are not 2 elements long
-                    timestamps_s.push_back(parsed[0]);
+                    timeStamps_s.push_back(parsed[0]);
                     imgNames.push_back(parsed[1]);
                 }
              }
         }else{return 0;}
         file.close();
+        //Convert timestamps from strings to floats
+        for(int j=0;j<timeStamps_s.size();j++){
+            //try
+            float stamp = std::stof(timeStamps_s[j]);
+            //catch
+            timeStamps_f.push_back(stamp)
+        }
         return 1;
 }
 int robustPositioning::datasetStreamer::setSettings(int test){
