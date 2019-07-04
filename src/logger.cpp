@@ -11,17 +11,6 @@ log::dataLogger::dataLogger(void){
     bufferLength = 30;
     overwrite = true;
     sep = ',';
-    //Info regarding overflow
-    /*
-    float maxint = std::numeric_limits<float>::max();
-    float hours = maxint/1000/3600;
-    std::cout << "Time until overflow of timestamp: " << hours << " hours"<< std::endl;
-    float days = hours/24;
-    std::cout << "                                  " << days  << " days"<< std::endl;
-    float years = days/365.25;
-    std::cout << "                                  " << years  << " years"<< std::endl;
-    std::cout << "Consider using double-logger if overflow will occur too fast" << std::endl;
-    */
 }
 log::dataLogger::~dataLogger(void){
     file.open(fullPath, std::ofstream::out| std::fstream::ate);
@@ -172,7 +161,7 @@ int log::imageLogger::init(std::string dumpDir){
      std::string basePathRename = path_rename + name_rename;
      std::cout << "Base string of files is: \"" << basePathRename << "\"." << std::endl;
      fileNameSort sorter(basePathRename);
-     //Sort the whole list numerically
+     //Sort the whole list numerically (And throw away any names that do not match)
      sorter.numericSort(results_std);
      //Extract the timestamps
      std::vector<std::string> timeStamps = sorter.extractTimeStamps(results_std);
@@ -194,6 +183,8 @@ int log::imageLogger::init(std::string dumpDir){
          std::string newName = name_rename + padding + std::to_string(i) + sorter.imgEndName;
          std::vector<std::string> data{stamp,newName};
          fileWriter.dump(data);
+         std::string newFullName = pattern + newName;
+         std::rename(results_std[i].c_str(),newFullName.c_str());
      }
 
 
