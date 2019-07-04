@@ -64,9 +64,14 @@ int main(int argc, char** argv){
 timestamp::timeStamp_ms stamp;
 double timeStamp;
 stamp.get(timeStamp);
-std::cout << "First call: " << timeStamp << std::endl;
 
 
+std::cout << "This file will be edited to be used to create simulation dataset" << std::endl;
+std::cout << "1. Read a predefined true path with roll, pitch, yaw" << std::endl;
+std::cout << "2. Simulation background. chessboard? backgroundimage?" << std::endl;
+std::cout << "3. What are the physical dimensions of scene?" << std::endl;
+std::cout << "4. Camera parameters? what are they?" << std::endl;
+std::cout << "5. When saving the data, a complete settings file shall also be created (for k mat etc)" << std::endl;
 
 
 
