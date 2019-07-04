@@ -10,13 +10,27 @@
 
 #include <regex>
 
+#include <opencv2/opencv.hpp>
+
+
 namespace set{
         const int TYPE_INT = 0;
         const int TYPE_FLOAT = 1;
         const int TYPE_STRING = 2;
 
+/*
+    Use a struct like this to access all settings later?
+*/
+struct data{
+    cv::Mat_<float> K;
+    cv::Mat_<float> T;
+    float x0;
+    float y0;
+    float z0;
+};
 /* This is a class containing all necessary settings and their default values.
 */
+
     class settings{
         public:
             //std::vector<std::string> settingKeys;                         //Vector of all available setting keys
