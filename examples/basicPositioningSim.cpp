@@ -2,13 +2,14 @@
 //#include <fstream> //Input stream from file
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
+//#include <chrono> //For timestamps
 #include "../src/vopos.hpp"
 #include "../src/simulatePose.hpp"
 #include "../src/save2file.cpp"
 #include "../src/settingsParser.cpp"
 
 #include "../src/logger.hpp"
-
+#include "../src/timeStamp.cpp"
 #define PI 3.1416
 
 /*Returns a linspace sequence starting from start with length no of steps of size step
@@ -31,18 +32,89 @@ std::vector<float> sinVector(std::vector<float> t,float scale){
 }
 
 
+//Gör till en klass som på instansiering sätter t_init och också räknar ut när det blir overflow.
+//Då behöver man inte utvärdera varje gång huruvida det är första funktionsanropet eller inte
+//Man kan dessutom ha flera olika funktioner beroende på om man vill ha double, eller float
+// https://en.cppreference.com/w/cpp/chrono/duration
+/*double millisTimeStamp(void){
+    static std::chrono::steady_clock::time_point t_init = std::chrono::steady_clock::now();
+    static int init = 0;
+    if(!init){
+        init = 1;
+        std::chrono::duration<double,std::milli> init_dur = t_init - t_init;
+
+
+        float seconds = init_dur.count(); //Count gives in seconds
+        std::cout << "T_init is " << seconds << " seconds." << std::endl;
+        double maxmilli =  std::chrono::duration<double,std::milli>::max().count();
+        double ovrflow_time = maxmilli/1000/3600/24;
+        std::cout << "T_max is " << ovrflow_time << " days." << std::endl;
+    }
+
+
+
+
+    std::chrono::steady_clock::time_point ts = std::chrono::steady_clock::now();
+    std::chrono::duration<double,std::milli> dur = ts - t_init;
+    return dur.count();
+}
+*/
+
 int main(int argc, char** argv){
+timestamp::timeStamp_ms stamp;
+double timeStamp;
+stamp.get(timeStamp);
+std::cout << "First call: " << timeStamp << std::endl;
+
+
+
+
+
+
+
+
+
+//std::chrono::steady_clock::time_point t_start = std::chrono::steady_clock::now();
+//std::cout << "First call: " << millisTimeStamp() << " ms"<<std::endl;
+//std::chrono::steady_clock::time_point t1_high = std::chrono::high_resolution_clock::now();
 ///////
 log::dataLogger databin_EST, databin_TRUE, databin_LOG;
-if(!databin_EST.init("estPath.csv",std::vector<std::string>{"x","y","z","yaw","mode"})) return 0;
+if(!databin_EST.init("estPath.csv",std::vector<std::string>{"Timestamp [ms]","x[m]","y[m]","z[m]","yaw[rad]","mode"})) return 0;
 if(!databin_TRUE.init("truePath.csv",std::vector<std::string>{"x","y","z","yaw"})) return 0;
+log::imageLogger imagebin;
+imagebin.init("");
 
 
 
-float timeStamp = 0;
 
 
 
+
+
+imagebin.rename(cv::String("images/"),cv::String("img_"));
+//return 0;
+//std::cout << "Second call: " << millisTimeStamp() << " ms"<<std::endl;
+
+stamp.get(timeStamp);
+std::cout << "Second call: " << timeStamp << std::endl;
+//return 0;
+//std::chrono::steady_clock::time_point ts = std::chrono::steady_clock::now();
+//std::cout << "Init took " <<std::chrono::duration_cast<std::chrono::milliseconds>(t_start-ts).count() << " milliseconds." << std::endl;
+//std::chrono::duration dur =
+//std::chrono::duration<double,std::milli> dur = ts - t_start;
+
+//std::cout << "Init took " << dur.count() << " ms" << std::endl;
+
+
+//std::chrono::steady_clock::time_point t2_high = std::chrono::high_resolution_clock::now();
+ //std::chrono::duration<float, std::milli> fp_ms = t2_high - t1_high;
+ //std::cout << "duration test: " << fp_ms << std::endl;
+
+
+
+//std::cout << "Second call: ";
+//millisTimeStamp();
+//std::cout << " ms"<<std::endl;
 
 ///////
 
@@ -55,8 +127,8 @@ float timeStamp = 0;
     int rowsOfBoxes = 30;
     int colsOfBoxes = 60;
 // Define file objects to output data into
-    std::ofstream file_true;
-    std::ofstream file_estimated;
+//    std::ofstream file_true;
+//    std::ofstream file_estimated;
 // Init simulation environment
     simulatePose warper;
     cv::Mat floor = cv::imread("spike/test2.png",cv::IMREAD_REDUCED_COLOR_4);
@@ -101,6 +173,9 @@ float timeStamp = 0;
     file_true.close();
 */
 
+
+
+
     //Initialize positioning object
     int maxIdAruco = 50;
     std::string anchorPath = "anchors.txt";
@@ -142,10 +217,11 @@ float timeStamp = 0;
         //Write to file
         std::vector<float> truePath{xPath[i],yPath[i],zPath[i],yawPath[i]};
         databin_TRUE.dump(truePath);
-        std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw,(float)mode};
+        stamp.get(timeStamp);
+        std::vector<float> estimation{(float)timeStamp,t(0,0),t(1,0),t(2,0),yaw,(float)mode};
         databin_EST.dump(estimation);
-
-
+        imagebin.dump(timeStamp,frame);
+//if(i>100) return 0;
         //std::string str = std::to_string(i);
         //std::cout << str << std::endl;
         //cv::putText(rawFrame,str,cv::Point(10,rawFrame.rows/2),cv::FONT_HERSHEY_DUPLEX,1.0,CV_RGB(118, 185, 0),2);
