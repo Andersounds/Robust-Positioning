@@ -191,7 +191,7 @@ int log::imageLogger::init(std::string dumpDir){
          std::to_string(i).size();
          int padLength = num_of_digits - std::to_string(i).size();
          std::string padding(padLength, '0');
-         std::string newName = sorter.imgBaseName + padding + std::to_string(i) + sorter.imgEndName;
+         std::string newName = name_rename + padding + std::to_string(i) + sorter.imgEndName;
          std::vector<std::string> data{stamp,newName};
          fileWriter.dump(data);
      }
