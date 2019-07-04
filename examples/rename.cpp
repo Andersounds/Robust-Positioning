@@ -3,7 +3,6 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
 //#include <chrono> //For timestamps
-#include "../src/save2file.cpp"
 #include "../src/logger.hpp"
 #include "../src/timeStamp.cpp"
 
