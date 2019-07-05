@@ -10,8 +10,8 @@
 int main(int argc, char** argv){
 
     log::imageLogger imagebin;
-    imagebin.init("");
-    imagebin.rename(cv::String("images/"),cv::String("img_"));
+    imagebin.init("","");
+    imagebin.rename(cv::String("5_jul/"),cv::String("img_"));
 
 
     return 1;
