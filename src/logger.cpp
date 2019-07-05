@@ -118,7 +118,7 @@ int log::imageLogger::init(std::string dumpDir,std::string newDir){
         dirPath = dumpDir + "/" + dumpDirName;
     }
     //Create directory. mkdir takes a const char object in first argument and not std::string. So it has to be called by .c_str()
-    if(mkdir(dirPath.c_str(), 0777) == -1){//Mode 0777 is a directory that is open for everyone for everything
+    if(mkdir(dirPath.c_str(), 0777) == 0){//Mode 0777 is a directory that is open for everyone for everything
         std::cout << "Created directory for dumping images." << std::endl;
     } else{
         std::cout << "Could not create directory with path \"" << dirPath << "\". " << std::endl;
