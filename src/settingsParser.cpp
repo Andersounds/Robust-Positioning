@@ -350,24 +350,24 @@ int set::settings::readSettingsFile(std::string path){
 }
 //This function takes a line and parses it into a vector<string> using "," as deliminator and disregarding LEADING whitespaces
 std::vector<std::string> set::settings::parseRow(std::string line){
-        char delim = ',';
-        std::vector<std::string> parsed;
-        std::string::iterator it = line.begin();
+    char delim = ',';
+    std::vector<std::string> parsed;
+    std::string::iterator it = line.begin();
+    while(it!=line.end()){
+        std::string word;
         while(it!=line.end()){
-            std::string word;
-            while(it!=line.end()){
-                if(isspace(*it)){it++;}//Remove leading whitespaces
-                else{break;}
-            }
-            while(it!=line.end()){
-                if(*it != delim){
-                    word+=*it;//Append the char to the temporary string
-                    it++;
-                }//Go through until deliminator
-                else{it++;
-                    break;}
-            }
-            parsed.push_back(word);//Push back the parsed word onto the return vector
+            if(isspace(*it)){it++;}//Remove leading whitespaces
+            else{break;}
         }
-        return parsed;
+        while(it!=line.end()){
+            if(*it != delim){
+                word+=*it;//Append the char to the temporary string
+                it++;
+            }//Go through until deliminator
+            else{it++;
+                break;}
+        }
+        parsed.push_back(word);//Push back the parsed word onto the return vector
     }
+    return parsed;
+}
