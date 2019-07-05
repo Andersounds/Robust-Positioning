@@ -25,10 +25,16 @@ robustPositioning::dataStreamer::dataStreamer(std::string path,int skipLines_,in
     initialize(path);
 }
 //This is the method that is used to get the next datarow
-std::vector<float> robustPositioning::dataStreamer::get(void){
+bool robustPositioning::dataStreamer::get(std::vector<float>& nextData){
+    nextData.clear(); //make sure that it is empty
     static int sequence = -1;//start at -1 so that it is 0 on first return
     sequence++;
-    return data_s[sequence];
+    if(sequence<data_f.size()){
+        nextData = data_f[sequence];
+        return true;
+    }else{
+        return false;
+    }
 }
 
 void robustPositioning::dataStreamer::initialize(std::string path){
@@ -37,7 +43,7 @@ void robustPositioning::dataStreamer::initialize(std::string path){
         return;
     }
     //convert string data to float data. If valie can not be converted to float then it is replaced by the value replace to keep ordering
-    int row_nmbr = skiplines;
+    int row_nmbr = skipLines;
     for(std::vector<std::string> row:data_s){
         row_nmbr++;
         std::vector<float> row_float;
@@ -47,7 +53,7 @@ void robustPositioning::dataStreamer::initialize(std::string path){
                 row_float.push_back(value_f);
             } catch(const std::invalid_argument& e){
                 float replace = -1000000;
-                std::cout << "Could not convert \"" << value_s << "\" on row " << row_nmbr << " to float. Setting it to " << replace " instead." << std::endl;
+                std::cout << "Could not convert \"" << value_s << "\" on row " << row_nmbr << " to float. Setting it to " << replace <<" instead." << std::endl;
                 row_float.push_back(replace);
             }
         }
@@ -70,7 +76,7 @@ int robustPositioning::dataStreamer::readDataFile(std::string path){
             std::vector<std::string> parsed = parseRow(line);
             if(parsed.size()==dataFields || dataFields==0){//Disregard any lines that are not dataFields long, if dataFields has been set
                 data_s.push_back(parsed);//save the string data
-            } else{std::cout << "Skipped data row: \""<< line << "\"."}
+            } else{std::cout << "Skipped data row: \""<< line << "\".";}
          }
     }else{return 0;}
     file.close();
