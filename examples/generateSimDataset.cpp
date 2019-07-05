@@ -1,64 +1,12 @@
 #include <iostream>
 //#include <fstream> //Input stream from file
 #include <opencv2/opencv.hpp>
-#include <opencv2/aruco.hpp>
-//#include <chrono> //For timestamps
-#include "../src/vopos.hpp"
 #include "../src/simulatePose.hpp"
-#include "../src/save2file.cpp"
-#include "../src/settingsParser.cpp"
-
 #include "../src/logger.hpp"
 #include "../src/timeStamp.cpp"
+#include "../src/dataStream.hpp"
 #define PI 3.1416
 
-/*Returns a linspace sequence starting from start with length no of steps of size step
- *
- */
-std::vector<float> linSpace(float start,float stop,float length){
-    std::vector<float> path;
-    float step = (stop-start)/length;
-    for(float i=0;i<length;i++){
-        path.push_back(step*i+start);
-    }
-    return path;
-}
-std::vector<float> sinVector(std::vector<float> t,float scale){
-    std::vector<float> sin_;
-    for(float i:t){
-        sin_.push_back(std::sin(i)*scale);
-    }
-    return sin_;
-}
-
-
-//Gör till en klass som på instansiering sätter t_init och också räknar ut när det blir overflow.
-//Då behöver man inte utvärdera varje gång huruvida det är första funktionsanropet eller inte
-//Man kan dessutom ha flera olika funktioner beroende på om man vill ha double, eller float
-// https://en.cppreference.com/w/cpp/chrono/duration
-/*double millisTimeStamp(void){
-    static std::chrono::steady_clock::time_point t_init = std::chrono::steady_clock::now();
-    static int init = 0;
-    if(!init){
-        init = 1;
-        std::chrono::duration<double,std::milli> init_dur = t_init - t_init;
-
-
-        float seconds = init_dur.count(); //Count gives in seconds
-        std::cout << "T_init is " << seconds << " seconds." << std::endl;
-        double maxmilli =  std::chrono::duration<double,std::milli>::max().count();
-        double ovrflow_time = maxmilli/1000/3600/24;
-        std::cout << "T_max is " << ovrflow_time << " days." << std::endl;
-    }
-
-
-
-
-    std::chrono::steady_clock::time_point ts = std::chrono::steady_clock::now();
-    std::chrono::duration<double,std::milli> dur = ts - t_init;
-    return dur.count();
-}
-*/
 
 int main(int argc, char** argv){
 timestamp::timeStamp_ms stamp;
@@ -76,56 +24,17 @@ std::cout << "5. When saving the data, a complete settings file shall also be cr
 
 
 
-
-
-
-//std::chrono::steady_clock::time_point t_start = std::chrono::steady_clock::now();
-//std::cout << "First call: " << millisTimeStamp() << " ms"<<std::endl;
-//std::chrono::steady_clock::time_point t1_high = std::chrono::high_resolution_clock::now();
-///////
-log::dataLogger databin_EST, databin_TRUE, databin_LOG;
-if(!databin_EST.init("estPath.csv",std::vector<std::string>{"Timestamp [ms]","x[m]","y[m]","z[m]","yaw[rad]","mode"})) return 0;
-if(!databin_TRUE.init("truePath.csv",std::vector<std::string>{"x","y","z","yaw"})) return 0;
 log::imageLogger imagebin;
-imagebin.init("");
+std::string pathToDir = "Generated-dataSets/";
+std::string newDir = "5-jul-2";
+imagebin.init(pathToDir,newDir);
 
+robustPositioning::dataStreamer getData("Generated-dataSets/5_jul/truePath.csv");
 
-
-
-
-
-
-
-imagebin.rename(cv::String("images/"),cv::String("img_"));
-//return 0;
-//std::cout << "Second call: " << millisTimeStamp() << " ms"<<std::endl;
-
-stamp.get(timeStamp);
-std::cout << "Second call: " << timeStamp << std::endl;
-//return 0;
-//std::chrono::steady_clock::time_point ts = std::chrono::steady_clock::now();
-//std::cout << "Init took " <<std::chrono::duration_cast<std::chrono::milliseconds>(t_start-ts).count() << " milliseconds." << std::endl;
-//std::chrono::duration dur =
-//std::chrono::duration<double,std::milli> dur = ts - t_start;
-
-//std::cout << "Init took " << dur.count() << " ms" << std::endl;
-
-
-//std::chrono::steady_clock::time_point t2_high = std::chrono::high_resolution_clock::now();
- //std::chrono::duration<float, std::milli> fp_ms = t2_high - t1_high;
- //std::cout << "duration test: " << fp_ms << std::endl;
-
-
-
-//std::cout << "Second call: ";
-//millisTimeStamp();
-//std::cout << " ms"<<std::endl;
-
-///////
 
     //Initialize settings
-    set::settings S(argc,argv);
-    if(!S.success){return 0;}
+    //set::settings S(argc,argv);
+    //if(!S.success){return 0;}
     //Initialize simulation
     // Define sim chessboard parameters
     int boxWidth = 11;
@@ -148,92 +57,28 @@ std::cout << "Second call: " << timeStamp << std::endl;
     float y_ = ((float)floor.rows)*2/((float)floor.cols);//Calculate y coordinate in base pose [m]
     warper.setParam("y",y_);
     warper.init(0);//Initialize with configuration 0
-    //Create path of camera and save to output file
-    #include "../spike/testPath.cpp"
-    //std::vector<float> xPath = linSpace(2,2,300);
-    //std::vector<float> yPath = linSpace(1,1,300);
-    float length = xPath.size();
-    std::vector<float> t0 = linSpace(0,6*PI,length);
-    std::vector<float> yawPath =sinVector(t0,1.1);
-    std::vector<float> t1 = linSpace(0,5*PI,length);
-    std::vector<float> rollPath = sinVector(t1,0.08);
-    std::vector<float> t2 = linSpace(0,8*PI,length);
-    std::vector<float> pitchPath = sinVector(t2,0.12);
-    std::vector<float> zPath = linSpace(-0.9,-0.9,length);
-    float pathScale = 1.8;
-    std::vector<float>::iterator xIt = xPath.begin();
-    std::vector<float>::iterator yIt = yPath.begin();
-    std::vector<float>::iterator yawIt = yawPath.begin();
-    while(xIt != xPath.end()){
-            *xIt*=pathScale;
-            *yIt*=pathScale;
-            *yawIt += 1.15;
-            xIt++;
-            yIt++;
-            yawIt++;
-    }
-    /*file_true.open("truePath.txt", std::ios::out | std::ios::app);
-    std::vector<std::vector <float>> input{xPath,yPath,zPath,yawPath};
-    build_path(input,file_true);
-    file_true.close();
-*/
-
-
-
-
-    //Initialize positioning object
-    int maxIdAruco = 50;
-    std::string anchorPath = "anchors.txt";
-    int flowGrid = 4;
-    cv::Rect2f roiSize(245,125,150,150);
-    cv::Mat_<float> K;
-    warper.K.copyTo(K);//Can not assign with = as they then refer to same object. edit one edits the other
-    cv::Mat_<float> T = warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
-    pos::positioning P(pos::OF_MODE_KLT,
-                        pos::VO_MODE_AFFINE,
-                        cv::aruco::DICT_4X4_50,
-                        maxIdAruco,anchorPath,flowGrid,roiSize,K,T);
-    //Init values of position and yaw
-    cv::Mat_<float> t = cv::Mat_<float>::zeros(3,1);
-    t(0,0) = xPath[0];
-    t(1,0) = yPath[0];
-    t(2,0) = zPath[0];
-    float yaw = yawPath[0];
-
 
 
 
 
 //Go through whole path
-    for(int i=0;i<(int)length;i++){
-//Get new image
-        std::vector<float> trueCoordinate{xPath[i],yPath[i],zPath[i]};
-        std::vector<float> angles{yawPath[i],pitchPath[i],rollPath[i]};
+std::vector<float> data;
+    while(getData.get(data)){
+        //Get data
+        std::vector<float> trueCoordinate{data[1],data[2],data[3]};
+        std::vector<float> angles{data[4],data[5],data[6]};
+    //Get new image
         cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
+        cv::imshow("showit",rawFrame);
 
-        float roll = rollPath[i];
-        float pitch = pitchPath[i];
-        float height = -zPath[i];//THIS SHOULD BE "SIMULATED" FROM DATA not exactly height
-        int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
-        //std::cout << "Mode: " << mode << std::endl;
-
-        //Write to file
-        std::vector<float> truePath{xPath[i],yPath[i],zPath[i],yawPath[i]};
-        databin_TRUE.dump(truePath);
+        //Dump image
         stamp.get(timeStamp);
-        std::vector<float> estimation{(float)timeStamp,t(0,0),t(1,0),t(2,0),yaw,(float)mode};
-        databin_EST.dump(estimation);
         imagebin.dump(timeStamp,frame);
-//if(i>100) return 0;
-        //std::string str = std::to_string(i);
-        //std::cout << str << std::endl;
-        //cv::putText(rawFrame,str,cv::Point(10,rawFrame.rows/2),cv::FONT_HERSHEY_DUPLEX,1.0,CV_RGB(118, 185, 0),2);
-        //cv::imshow("showit",rawFrame);
         //cv::waitKey(0);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
-
     }
+    imagebin.rename(cv::String(pathToDir+newDir+"/"),cv::String("img_"));
     return 1;
 }

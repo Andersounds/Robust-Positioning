@@ -103,7 +103,13 @@ if [ ”$1” = ”basicPositioningSim” ];then
 	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicPositioningSim.cpp src/vopos.cpp src/angulation.cpp src/azipe.cpp src/opticalFlow.cpp src/homographyVO.cpp include/Quartic-master/quartic.cpp src/simulatePose.cpp src/logger.cpp -o bin/basicPositioningSim.out
 	echo Run with command ./bin/basicPositioningSim.out
 fi
-
+################# MASTER GENERATE SIM EXXAMPLE (SIMULATION)
+if [ ”$1” = ”generateSimDataset” ];then
+	#
+	echo Compiling generateSimDataset
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/generateSimDataset.cpp src/simulatePose.cpp src/logger.cpp src/dataStream.cpp -o bin/generateSim.out
+	echo Run with command ./bin/generateSim.out
+fi
 
 ################# MASTER RENAME EXAMPLE
 if [ ”$1” = ”rename” ];then
