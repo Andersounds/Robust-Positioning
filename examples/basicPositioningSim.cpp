@@ -5,7 +5,7 @@
 //#include <chrono> //For timestamps
 #include "../src/vopos.hpp"
 #include "../src/simulatePose.hpp"
-#include "../src/save2file.cpp"
+//#include "../src/save2file.cpp"
 #include "../src/settingsParser.cpp"
 
 #include "../src/logger.hpp"
@@ -64,59 +64,18 @@ int main(int argc, char** argv){
 timestamp::timeStamp_ms stamp;
 double timeStamp;
 stamp.get(timeStamp);
-std::cout << "First call: " << timeStamp << std::endl;
 
-
-
-
-
-
-
-
-
-//std::chrono::steady_clock::time_point t_start = std::chrono::steady_clock::now();
-//std::cout << "First call: " << millisTimeStamp() << " ms"<<std::endl;
-//std::chrono::steady_clock::time_point t1_high = std::chrono::high_resolution_clock::now();
-///////
-log::dataLogger databin_EST, databin_TRUE, databin_LOG;
-if(!databin_EST.init("estPath.csv",std::vector<std::string>{"Timestamp [ms]","x[m]","y[m]","z[m]","yaw[rad]","mode"})) return 0;
-if(!databin_TRUE.init("truePath.csv",std::vector<std::string>{"x","y","z","yaw"})) return 0;
+/*
+//Initialize imagebin. It automatically creates a directory 'images' in the given path
 log::imageLogger imagebin;
-imagebin.init("");
+imagebin.init("","5_jul");
+
+log::dataLogger databin_LOG;
+//if(!databin_EST.init("estPath.csv",std::vector<std::string>{"Timestamp [ms]","x[m]","y[m]","z[m]","yaw[rad]","mode"})) return 0;
+if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [ms]","x [m]","y [m]","z [m]","yaw [rad]","pitch [rad]","roll [rad]"})) return 0;
 
 
-
-
-
-
-
-
-imagebin.rename(cv::String("images/"),cv::String("img_"));
-//return 0;
-//std::cout << "Second call: " << millisTimeStamp() << " ms"<<std::endl;
-
-stamp.get(timeStamp);
-std::cout << "Second call: " << timeStamp << std::endl;
-//return 0;
-//std::chrono::steady_clock::time_point ts = std::chrono::steady_clock::now();
-//std::cout << "Init took " <<std::chrono::duration_cast<std::chrono::milliseconds>(t_start-ts).count() << " milliseconds." << std::endl;
-//std::chrono::duration dur =
-//std::chrono::duration<double,std::milli> dur = ts - t_start;
-
-//std::cout << "Init took " << dur.count() << " ms" << std::endl;
-
-
-//std::chrono::steady_clock::time_point t2_high = std::chrono::high_resolution_clock::now();
- //std::chrono::duration<float, std::milli> fp_ms = t2_high - t1_high;
- //std::cout << "duration test: " << fp_ms << std::endl;
-
-
-
-//std::cout << "Second call: ";
-//millisTimeStamp();
-//std::cout << " ms"<<std::endl;
-
-///////
+*/
 
     //Initialize settings
     set::settings S(argc,argv);
@@ -196,7 +155,11 @@ std::cout << "Second call: " << timeStamp << std::endl;
     float yaw = yawPath[0];
 
 
+std::cout << "K mat: " << K << std::endl;
 
+std::cout << "T mat: " << T << std::endl;
+
+std::cout << "Aruco dict: cv::aruco::DICT_4X4_50" <<std::endl;
 
 
 //Go through whole path
@@ -214,13 +177,16 @@ std::cout << "Second call: " << timeStamp << std::endl;
         int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
         //std::cout << "Mode: " << mode << std::endl;
 
-        //Write to file
-        std::vector<float> truePath{xPath[i],yPath[i],zPath[i],yawPath[i]};
-        databin_TRUE.dump(truePath);
+    /*    //Write to file
         stamp.get(timeStamp);
-        std::vector<float> estimation{(float)timeStamp,t(0,0),t(1,0),t(2,0),yaw,(float)mode};
-        databin_EST.dump(estimation);
+        std::vector<float> truePath{(float)timeStamp, xPath[i],yPath[i],zPath[i],yawPath[i],pitchPath[i],rollPath[i]};
+        databin_LOG.dump(truePath);
         imagebin.dump(timeStamp,frame);
+
+*/
+    //    std::vector<float> estimation{(float)timeStamp,t(0,0),t(1,0),t(2,0),yaw,(float)mode};
+    //    databin_EST.dump(estimation);
+
 //if(i>100) return 0;
         //std::string str = std::to_string(i);
         //std::cout << str << std::endl;
