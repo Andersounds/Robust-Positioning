@@ -35,8 +35,8 @@ private:
 class imageLogger{
 public:
     imageLogger(void);//Constructor. sets default settings
-    int init(std::string);
-    int init(std::string,std::string);//init function that gives path to dir and image format
+    int init(std::string,std::string);      //init funtion that gives path to dir, and name of newdir at that path
+    int init(std::string,std::string, std::string);//init function that gives path to dir, name of newdir, and image format
     std::string dumpDirectory;
     std::string imgBaseStr;     //used for initial dump of images
     std::string dirPath;

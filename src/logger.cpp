@@ -107,7 +107,8 @@ int log::dataLogger::dump(std::vector<std::string>& data){
  }
 
  // https://techoverflow.net/2013/04/05/how-to-use-mkdir-from-sysstat-h/
-int log::imageLogger::init(std::string dumpDir){
+int log::imageLogger::init(std::string dumpDir,std::string newDir){
+    dumpDirName = newDir;
      //Try our best to interpret the user given path and add one more directory to it with name dumpDirName
     if(dumpDir==""){
         dirPath = dumpDirName;
@@ -125,9 +126,9 @@ int log::imageLogger::init(std::string dumpDir){
     }
     return 1;
 }
- int log::imageLogger::init(std::string dumpDir, std::string format){
+ int log::imageLogger::init(std::string dumpDir,std::string newDir, std::string format){
      imgFormatStr = format;
-     return init(dumpDir);
+     return init(dumpDir,newDir);
  }
  int log::imageLogger::dump(const double& timeStamp, cv::Mat& image){
      int no_decimals = static_cast<int>(timeStamp);
