@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <sstream>
 #include <sys/timeb.h>
-#include "raspicam.h"
+#include "../src/raspicam.h"
 using namespace std;
 bool doTestSpeedOnly=false;
 size_t nFramesCaptured=100;

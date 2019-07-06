@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
-#include "raspicam_cv.h"
+#include "../src/raspicam_cv.h"
 
 using namespace std;
 bool doTestSpeedOnly=false;
