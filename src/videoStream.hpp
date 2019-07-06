@@ -61,7 +61,7 @@ Raspberry pi camera module stream
 */
 class piCamStreamer{// : public Streamer{
   int mode;
-  std::string pathToDataset;
+  //std::string pathToDataset;
   public:
     piCamStreamer(void);
     float getImage(cv::Mat&);
