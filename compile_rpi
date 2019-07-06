@@ -1,8 +1,14 @@
 #!/bin/bash
-
 #Add usr/local/lib to search path of ld linker
-export LD_LIBRARY_PATH="/usr/local/lib"
+#export LD_LIBRARY_PATH="/usr/local/lib"
 
+
+
+
+################# SIMPLETEST_cv
+if [ ”$1” = ”simpletest_cv” ];then
+        #
+        echo Compiling simpletest_cv
 #Compile
 g++ -I/opt/vc/include -L/opt/vc/lib \
 -lopencv_core \
@@ -12,4 +18,47 @@ g++ -I/opt/vc/include -L/opt/vc/lib \
 -lmmal \
 -lmmal_core \
 -lmmal_util \
-raspicam-0.1.6/utils/raspicam_cv_test.cpp -o simpletest_cv_raspicam
+include/raspicam-0.1.6/utils/raspicam_cv_test.cpp -o bin/simpletest_cv_raspicam
+
+echo run with command ./bin/simpletest_cv_raspicam
+#Add usr/local/lib to search path of ld linker
+export LD_LIBRARY_PATH="/usr/local/lib"
+fi
+
+################# SIMPLETEST_cv2
+if [ ”$1” = ”simpletest_cv2” ];then
+        #
+        echo Compiling simpletest_cv2
+#Compile
+g++ `pkg-config --cflags --libs opencv` \
+-I/opt/vc/include -L/opt/vc/lib \
+-lraspicam \
+-lraspicam_cv \
+-lmmal \
+-lmmal_core \
+-lmmal_util \
+include/raspicam-0.1.6/utils/raspicam_cv_test.cpp -o bin/simpletest_cv_raspicam
+
+echo run with command ./bin/simpletest_cv_raspicam
+#Add usr/local/lib to search path of ld linker
+export LD_LIBRARY_PATH="/usr/local/lib"
+fi
+
+
+
+################# MASTER POSITIONING EXAMPLE (general) RPI
+if [ ”$1” = ”positioning” ];then
+	#
+	echo Compiling general positioning program
+#	g++ -std=c++11	\
+`pkg-config --cflags --libs opencv`\
+examples/positioning.cpp src/vopos.cpp src/angulation.cpp src/azipe.cpp src/opticalFlow.cpp src/homographyVO.cpp include/Quartic-master/quartic.cpp src/videoStream.cpp src/dataStream.cpp src/logger.cpp -o bin/positioning.out
+
+
+
+echo NOT DONE YET
+#Add usr/local/lib to search path of ld linker
+export LD_LIBRARY_PATH="/usr/local/lib"
+
+#	echo Run with command ./bin/positioning.out [option]
+fi
