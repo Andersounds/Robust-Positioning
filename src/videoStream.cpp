@@ -3,76 +3,274 @@
 #include "videoStream.hpp"
 
 
-/*Factory method for abstract streamer class with default settings*/
-Streamer *Streamer::make_streamer(int choice, std::string path, int cam)
-{
-  if      (choice == 1)
-  {
-    if(cam==0){return new usbCamStreamer(0);}//Default cam
-    else {return new usbCamStreamer(cam);}//
-  }
-  else if (choice == 3)
-  {
-    if(path==""){return new datasetStreamer("/Users/Fredrik/Datasets/Euroc/V101/cam0/data/cam0_%04d.png");}//Default path
-    else {return new datasetStreamer(path);}
-  }
-  else
-  {
-    std::cout << "No valid mode given. Defaulting to internal cam 0" << std::endl;
-    return new usbCamStreamer(cam);
-  }
+//Master getImage wrapper
+
+float robustPositioning::Streamer::getImage(cv::Mat& frame){
+    switch (chosenMode) {
+        case robustPositioning::MODE_USB_CAM:{
+            return usbcamSTR.getImage(frame);
+        }
+        case robustPositioning::MODE_RPI_CAM:{
+            std::cout << "RPI cam mode not available" << std::endl;
+            return -1;
+        }
+        case robustPositioning::MODE_IMG_STREAM:{
+            return datasetSTR.getImage(frame);
+        }
+        case robustPositioning::MODE_IMG_TIMESTAMP_STREAM:{
+            return datasetSTR.getImage(frame);
+        }
+    }
+    return -1;
+
+}
+float robustPositioning::Streamer::peek(void){
+    return datasetSTR.peek();
 }
 
+//When giving just the single int argument, only rpi videostream or default internal cam stream is possible
+robustPositioning::Streamer::Streamer(int choice){
+    chosenMode = choice;
+    if(choice == robustPositioning::MODE_USB_CAM){
+        usbcamSTR = usbCamStreamer(0);
+    }else if(choice == robustPositioning::MODE_RPI_CAM){
+        chosenMode = robustPositioning::MODE_USB_CAM;
+        std::cout << "RPI cam stream chosen. not available in this implementation." << std::endl;
+        std::cout << "Defaulting to internal camera 0" << std::endl;
+    }
+    usbcamSTR = usbCamStreamer(0);
+}
+//When two int arguments are given, it must be internal cam and the camera choice
+robustPositioning::Streamer::Streamer(int choice,int cam){
+    chosenMode = choice;
+    if(choice == robustPositioning::MODE_USB_CAM){
+        usbcamSTR = usbCamStreamer(cam);
+    }else{
+        chosenMode = robustPositioning::MODE_USB_CAM;
+        std::cout << "Camera number choice is not possible if not MODE_USB_CAM is chosen" << std::endl;
+        std::cout << "Defaulting to internal camera 0" << std::endl;
+        usbcamSTR = usbCamStreamer(0);
+    }
+}
+//For choosing dataset. Just reading images with cv cap. i.e. someDir/images/img_%04.png
+robustPositioning::Streamer::Streamer(std::string datasetPath){
+    chosenMode = robustPositioning::MODE_IMG_STREAM;
+    std::cout << "Dataset image streamer chosen with path \"" << datasetPath << "\"." << std::endl;
+    datasetSTR = datasetStreamer(datasetPath,"",false);
+}
+//Same as above but with explicitly stated choice
+robustPositioning::Streamer::Streamer(int choice, std::string datasetPath){
+    bool useTimeStampFile;
+    if(choice == robustPositioning::MODE_IMG_STREAM){
+        chosenMode = robustPositioning::MODE_IMG_STREAM;
+        std::cout << "Dataset image streamer chosen with path \"" << datasetPath << "\"." << std::endl;
+        useTimeStampFile = false;
+        datasetSTR = datasetStreamer(datasetPath,"",false);
+    }else if(choice == robustPositioning::MODE_IMG_TIMESTAMP_STREAM){
+        chosenMode = robustPositioning::MODE_USB_CAM;
+        std::cout << "Dataset image with timestamp streamer chosen. but no path to datafile given\"" << std::endl;
+        useTimeStampFile = false;
+        usbcamSTR = usbCamStreamer(0);
+    } else{
+        std::cout << "No valid choice given. To stream dataset choose either " << robustPositioning::MODE_IMG_STREAM << " or " << robustPositioning::MODE_IMG_TIMESTAMP_STREAM << std::endl;
+        std::cout << "Defaulting to internal camera 0" << std::endl;
+        chosenMode = robustPositioning::MODE_USB_CAM;
+        usbcamSTR = usbCamStreamer(0);
+    }
+}
+
+//For reading a datafile from a csv file that specifies timestamps and filenames
+robustPositioning::Streamer::Streamer(std::string basePath, std::string dataFile){
+    chosenMode = robustPositioning::MODE_IMG_TIMESTAMP_STREAM;
+//    std::cout << "Initializing dataset video streamer with timestamps..." << std::endl;
+    datasetSTR = datasetStreamer(basePath, dataFile, true);
+
+}
+//overloaded. choice is not considered
+robustPositioning::Streamer::Streamer(int choice, std::string basePath, std::string dataFile){
+    chosenMode = robustPositioning::MODE_IMG_TIMESTAMP_STREAM;
+//    std::cout << "Initializing dataset video streamer with timestamps..." << std::endl;
+    datasetSTR = datasetStreamer(basePath, dataFile, true);
+}
+
+
+//Default constructor. does not do anything. onl called when Streamer does NOT use usb cam
+robustPositioning::usbCamStreamer::usbCamStreamer(void){
+
+}
 /*
  *Constructor that saves camera number
  */
-usbCamStreamer::usbCamStreamer(int nmbr){
+robustPositioning::usbCamStreamer::usbCamStreamer(int nmbr){
     cameraNmbr = nmbr;
     initialized = 0;
-    std::cout << "Mode 1. USB camera streamer object created." << std::endl;
+    std::cout << "Mode " << robustPositioning::MODE_USB_CAM <<". USB camera streamer object created." << std::endl;
 }
 /*
  *Get next image interface. Initializes streamer object upon first call
  */
-int usbCamStreamer::getImage(cv::Mat& frame){
+float robustPositioning::usbCamStreamer::getImage(cv::Mat& frame){
   static cv::VideoCapture cap;
   if(!initialized){
-    if(!cap.open(cameraNmbr)){std::cerr << "Internal camera number not valid:" << cameraNmbr <<std::endl;return 0;}
+    if(!cap.open(cameraNmbr)){std::cerr << "Internal camera number not valid: " << cameraNmbr <<std::endl;return 0;}
     initialized=1;
   }
   cap.read(frame);
   if( frame.empty() ){std::cout << "Stream done." << std::endl; return 0;}//If stream is done return 0
   return 1;
 }
-int usbCamStreamer::setSettings(int test){
+int robustPositioning::usbCamStreamer::setSettings(int test){
   return 1;
 }
-
-
-
-
 /*
- *Constructor that saves path to dataset
+ *
+ *
+ *
+ *      =======   DATASET STREAMER ========
+ *
+ *
+ *
+*/
+//Default constructor. does not do anything. only called from Streamer Constructor if dataset streamer is NOT used
+robustPositioning::datasetStreamer::datasetStreamer(void){
+
+}
+/*
+ *Constructor that saves path to dataset using just cv::cap
  */
-datasetStreamer::datasetStreamer(std::string path){
-    pathToDataset = path;
+robustPositioning::datasetStreamer::datasetStreamer(std::string basePath,std::string dataFile_, bool useTimeStampFile_){
+std::cout << "Initializing image dataset streamer..." << std::endl;
+    pathToDataset = basePath;
+    dataFile = dataFile_;
     initialized = 0;
-    std::cout << "Mode 3. Datastreamer object created." << std::endl;
+    sequence = 0;
+    useTimeStampFile = useTimeStampFile_;
+    if(useTimeStampFile){
+        std::cout <<"\tReading filenames from \"" << pathToDataset+dataFile << "\"..." << std::endl;
+        if(readTimeStampData()){
+            initialized = 1;
+            std::cout << "\tRead " << timeStamps_f.size() << " timestamps and image file names" << std::endl;
+            std::cout << "Done." << std::endl;
+        }else{
+            std::cout << "Failed." << std::endl;
+            pathToDataset = basePath;//This is now the whole path i.e. somedir/images/img_%01.png
+            //std::cout << "Could not read time stamp data from file \"" << path << "\"." << std::endl;
+        }
+    }
+    datasetSize = timeStamps_f.size();
 }
 /*
  *Get next image interface. Initializes streamer object upon first call
  */
-int datasetStreamer::getImage(cv::Mat& frame){
-  static cv::VideoCapture cap;
-  if(!initialized){
-    if(!cap.open(pathToDataset)){std::cerr << "Path to dataset not valid:" << pathToDataset <<std::endl;return 0;}
-    initialized=1;
-  }
-  cap.read(frame);
-  if( frame.empty() ){std::cout << "Stream done." << std::endl; return 0;}//If stream is done return 0
+float robustPositioning::datasetStreamer::getImage(cv::Mat& frame){
+    if(useTimeStampFile){
+        return getImageViaTimestampList(frame);
+    }else{
+        return getImageViaCapStream(frame);
+    }
+}
+
+float robustPositioning::datasetStreamer::getImageViaCapStream(cv::Mat& frame){
+    static cv::VideoCapture cap;
+    if(!initialized){
+      if(!cap.open(pathToDataset)){std::cerr << "Path to dataset not valid:" << pathToDataset <<std::endl;return 0;}
+      initialized=1;
+    }
+    cap.read(frame);
+    if( frame.empty() ){std::cout << "Video stream done." << std::endl; return 0;}//If stream is done return 0
+    return 1;
+
+}
+
+float robustPositioning::datasetStreamer::getImageViaTimestampList(cv::Mat& frame){
+    if(sequence == datasetSize){//If stream is done
+        cv::Mat emptyMat;
+        emptyMat.copyTo(frame);
+        std::cout << "xxx" << std::endl;
+        return -1;
+    }
+    float timeStamp = timeStamps_f[sequence];
+    frame = cv::imread(pathToDataset + imgNames[sequence],CV_LOAD_IMAGE_GRAYSCALE);
+    sequence++;
+    return timeStamp;
+}
+//This method is used to peek at the next timestamp to see if it is time (in simulation time) to read next frame
+float robustPositioning::datasetStreamer::peek(void){
+    if(sequence+1 < datasetSize){
+        return timeStamps_f[sequence+1];
+    }else{
+        return -1;
+    }
+}
+
+int robustPositioning::datasetStreamer::readTimeStampData(void){
+        std::string line;
+        std::string delim = ",";
+        std::ifstream file;
+        file.open(pathToDataset+ dataFile);
+        int skiplines = 1;// skip header
+        int count = -1; //start at -1 so it is 0 in first lap as while starts with incrementing count
+        if(file.is_open()){
+            std::cout << "\topened " <<pathToDataset<< dataFile << "\"..."<< std::endl;
+            //std::cout << "Opened file \"" << pathToDataset+ dataFile <<"\" ." <<std::endl;
+             while(getline(file,line)){
+                count++;
+                if(count<skiplines){continue;}
+                std::vector<std::string> parsed = parseRow(line);
+                if(parsed.size()==2){//Disregard any lines that are not 2 elements long
+                    timeStamps_s.push_back(parsed[0]);
+                    imgNames.push_back(parsed[1]);
+                }
+             }
+        }else{
+
+            std::cout << "datasetStreamer::readTimeStampData: Could not open file \"" << pathToDataset+ dataFile <<"\" ." <<std::endl;
+            return 0;
+        }
+        file.close();
+        //Convert timestamps from strings to floats
+        for(int j=0;j<timeStamps_s.size();j++){
+            //try
+            float stamp = std::stof(timeStamps_s[j]);
+            //catch
+            timeStamps_f.push_back(stamp);
+        }
+        return 1;
+}
+
+//This method parses a string line into chunks separated by a ',' and ignoring LEADING whitespaces
+//This function takes a line and parses it into a vector<string> using "," as deliminator and disregarding LEADING whitespaces
+std::vector<std::string> robustPositioning::datasetStreamer::parseRow(std::string line){
+    char delim = ',';
+    std::vector<std::string> parsed;
+    std::string::iterator it = line.begin();
+    while(it!=line.end()){
+        std::string word;
+        while(it!=line.end()){
+            if(isspace(*it)){it++;}//Remove leading whitespaces
+            else{break;}
+        }
+        while(it!=line.end()){
+            if(*it != delim){
+                word+=*it;//Append the char to the temporary string
+                it++;
+            }//Go through until deliminator
+            else{it++;
+                break;}
+        }
+        parsed.push_back(word);//Push back the parsed word onto the return vector
+    }
+    return parsed;
+}
+
+
+int robustPositioning::datasetStreamer::setSettings(int test){
   return 1;
 }
 
-int datasetStreamer::setSettings(int test){
-  return 1;
+
+
+//Default constructor. does not do anything. onl called when Streamer does NOT use picam
+robustPositioning::piCamStreamer::piCamStreamer(void){
+
 }

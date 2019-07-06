@@ -2,11 +2,14 @@
 //#include <fstream> //Input stream from file
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
+//#include <chrono> //For timestamps
 #include "../src/vopos.hpp"
 #include "../src/simulatePose.hpp"
-#include "../src/save2file.cpp"
+//#include "../src/save2file.cpp"
 #include "../src/settingsParser.cpp"
 
+#include "../src/logger.hpp"
+#include "../src/timeStamp.cpp"
 #define PI 3.1416
 
 /*Returns a linspace sequence starting from start with length no of steps of size step
@@ -29,20 +32,39 @@ std::vector<float> sinVector(std::vector<float> t,float scale){
 }
 
 
+
 int main(int argc, char** argv){
+timestamp::timeStamp_ms stamp;
+double timeStamp;
+stamp.get(timeStamp);
+
+/*
+//Initialize imagebin. It automatically creates a directory 'images' in the given path
+log::imageLogger imagebin;
+imagebin.init("","5_jul");
+
+log::dataLogger databin_LOG;
+//if(!databin_EST.init("estPath.csv",std::vector<std::string>{"Timestamp [ms]","x[m]","y[m]","z[m]","yaw[rad]","mode"})) return 0;
+if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [ms]","x [m]","y [m]","z [m]","yaw [rad]","pitch [rad]","roll [rad]"})) return 0;
+
+
+*/
+
     //Initialize settings
     set::settings S(argc,argv);
+    if(!S.success){return 0;}
     //Initialize simulation
     // Define sim chessboard parameters
     int boxWidth = 11;
     int rowsOfBoxes = 30;
     int colsOfBoxes = 60;
 // Define file objects to output data into
-    std::ofstream file_true;
-    std::ofstream file_estimated;
+//    std::ofstream file_true;
+//    std::ofstream file_estimated;
 // Init simulation environment
     simulatePose warper;
     cv::Mat floor = cv::imread("spike/test2.png",cv::IMREAD_REDUCED_COLOR_4);
+    if(floor.empty()){std::cout << "Could not read base image" << std::endl; return 0;}
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
@@ -77,10 +99,13 @@ int main(int argc, char** argv){
             yIt++;
             yawIt++;
     }
-    file_true.open("truePath.txt", std::ios::out | std::ios::app);
+    /*file_true.open("truePath.txt", std::ios::out | std::ios::app);
     std::vector<std::vector <float>> input{xPath,yPath,zPath,yawPath};
     build_path(input,file_true);
     file_true.close();
+*/
+
+
 
 
     //Initialize positioning object
@@ -103,7 +128,11 @@ int main(int argc, char** argv){
     float yaw = yawPath[0];
 
 
+std::cout << "K mat: " << K << std::endl;
 
+std::cout << "T mat: " << T << std::endl;
+
+std::cout << "Aruco dict: cv::aruco::DICT_4X4_50" <<std::endl;
 
 
 //Go through whole path
@@ -119,17 +148,21 @@ int main(int argc, char** argv){
         float pitch = pitchPath[i];
         float height = -zPath[i];//THIS SHOULD BE "SIMULATED" FROM DATA not exactly height
         int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,rawFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
-        std::cout << "Mode: " << mode << std::endl;
+        //std::cout << "Mode: " << mode << std::endl;
 
-        //Write to file
-        std::vector<float> estimation{t(0,0),t(1,0),t(2,0),yaw,(float)mode};
-        file_estimated.open("estPath.txt", std::ios::out | std::ios::app);
-        build_row(estimation,file_estimated);
-        file_estimated.close();
+    /*    //Write to file
+        stamp.get(timeStamp);
+        std::vector<float> truePath{(float)timeStamp, xPath[i],yPath[i],zPath[i],yawPath[i],pitchPath[i],rollPath[i]};
+        databin_LOG.dump(truePath);
+        imagebin.dump(timeStamp,frame);
 
+*/
+    //    std::vector<float> estimation{(float)timeStamp,t(0,0),t(1,0),t(2,0),yaw,(float)mode};
+    //    databin_EST.dump(estimation);
 
-        std::string str = std::to_string(i);
-        std::cout << str << std::endl;
+//if(i>100) return 0;
+        //std::string str = std::to_string(i);
+        //std::cout << str << std::endl;
         //cv::putText(rawFrame,str,cv::Point(10,rawFrame.rows/2),cv::FONT_HERSHEY_DUPLEX,1.0,CV_RGB(118, 185, 0),2);
         //cv::imshow("showit",rawFrame);
         //cv::waitKey(0);

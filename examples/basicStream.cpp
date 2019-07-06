@@ -11,25 +11,19 @@ using namespace cv;
 
 int main(int argc, char** argv){
   // check if inputs are correctly given
-  streamArguments arguments;
-  if(!argumentParser(argc,argv,arguments)){return 0;}
-
-  Streamer* C;
-  C = Streamer::make_streamer(arguments.streamMode,arguments.datasetPath,arguments.cam);
-
-
-  cv::Mat latestFrame;
-  while(1){
-  C->getImage(latestFrame);
-/*
-Do something
-*/
-
-
-
-  imshow("Showit",latestFrame);
-  if( waitKey(1) == 27 ) break;                         // stop capturing by pressing ESC
-  }
-
-
+    streamArguments arguments;
+    if(!argumentParser(argc,argv,arguments)){return 0;}
+  //robustPositioning::Streamer C("images/","data.csv");
+    robustPositioning::Streamer C("images/img_%03d.png");
+    cv::Mat latestFrame;
+    while(1){
+        float ts = C.getImage(latestFrame);
+        if(latestFrame.empty()){
+            std::cout << "Stream done. "<< std::endl;
+            return 0;
+        }
+        imshow("Showit",latestFrame);
+        if( waitKey(1) == 27 ) break;                         // stop capturing by pressing ESC
+    }
+    return 1;
 }
