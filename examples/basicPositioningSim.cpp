@@ -32,33 +32,6 @@ std::vector<float> sinVector(std::vector<float> t,float scale){
 }
 
 
-//Gör till en klass som på instansiering sätter t_init och också räknar ut när det blir overflow.
-//Då behöver man inte utvärdera varje gång huruvida det är första funktionsanropet eller inte
-//Man kan dessutom ha flera olika funktioner beroende på om man vill ha double, eller float
-// https://en.cppreference.com/w/cpp/chrono/duration
-/*double millisTimeStamp(void){
-    static std::chrono::steady_clock::time_point t_init = std::chrono::steady_clock::now();
-    static int init = 0;
-    if(!init){
-        init = 1;
-        std::chrono::duration<double,std::milli> init_dur = t_init - t_init;
-
-
-        float seconds = init_dur.count(); //Count gives in seconds
-        std::cout << "T_init is " << seconds << " seconds." << std::endl;
-        double maxmilli =  std::chrono::duration<double,std::milli>::max().count();
-        double ovrflow_time = maxmilli/1000/3600/24;
-        std::cout << "T_max is " << ovrflow_time << " days." << std::endl;
-    }
-
-
-
-
-    std::chrono::steady_clock::time_point ts = std::chrono::steady_clock::now();
-    std::chrono::duration<double,std::milli> dur = ts - t_init;
-    return dur.count();
-}
-*/
 
 int main(int argc, char** argv){
 timestamp::timeStamp_ms stamp;
