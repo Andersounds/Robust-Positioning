@@ -24,7 +24,7 @@ std::cout << "5. When saving the data, a complete settings file shall also be cr
 
 
 
-log::imageLogger imagebin;
+robustPositioning::imageLogger imagebin;
 std::string pathToDir = "Generated-dataSets/";
 std::string newDir = "5-jul-2";
 imagebin.init(pathToDir,newDir);
