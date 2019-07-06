@@ -7,17 +7,17 @@
 #include <opencv2/opencv.hpp>
 #include "logger.hpp"
 
-log::dataLogger::dataLogger(void){
+robustPositioning::dataLogger::dataLogger(void){
     bufferLength = 30;
     overwrite = true;
     sep = ',';
 }
-log::dataLogger::~dataLogger(void){
+robustPositioning::dataLogger::~dataLogger(void){
     file.open(fullPath, std::ofstream::out| std::fstream::ate);
     file.flush();
     file.close();
 }
-int log::dataLogger::init(std::string path, std::vector<std::string> dataFields){
+int robustPositioning::dataLogger::init(std::string path, std::vector<std::string> dataFields){
     fullPath = path;
     //Test open data file and if applicable, write the names of the datafields
     if(overwrite){
@@ -37,13 +37,13 @@ int log::dataLogger::init(std::string path, std::vector<std::string> dataFields)
     return 1;
 }
 
-int log::dataLogger::init(std::string path, std::vector<std::string> dataFields, int bufSize, bool ovrwrite){
+int robustPositioning::dataLogger::init(std::string path, std::vector<std::string> dataFields, int bufSize, bool ovrwrite){
     bufferLength = bufSize;
     overwrite = ovrwrite;
     return init(path, dataFields);
 }
 /* Writes the info line in an already open file. First element is always timestamp*/
-int log::dataLogger::writeInfoLine(std::ofstream& theFile, std::vector<std::string> dataInfo){
+int robustPositioning::dataLogger::writeInfoLine(std::ofstream& theFile, std::vector<std::string> dataInfo){
     theFile << dataInfo[0];
     for(int i=1;i<dataInfo.size();i++){
         theFile << sep << dataInfo[i];
@@ -52,7 +52,7 @@ int log::dataLogger::writeInfoLine(std::ofstream& theFile, std::vector<std::stri
     return 1;
 }
 /*Method for writing to the buffer, which when it is full is dumped to the file*/
-int log::dataLogger::dump(std::vector<float>& data){
+int robustPositioning::dataLogger::dump(std::vector<float>& data){
     static int counter = 0;
     std::vector<float>::iterator it = data.begin();
     //file.open(fullPath, std::ofstream::out | std::fstream::app);
@@ -71,7 +71,7 @@ int log::dataLogger::dump(std::vector<float>& data){
     //file.close();
     return 1;
 }
-int log::dataLogger::dump(std::vector<std::string>& data){
+int robustPositioning::dataLogger::dump(std::vector<std::string>& data){
     static int counter = 0;
     std::vector<std::string>::iterator it = data.begin();
     //file.open(fullPath, std::ofstream::out | std::fstream::app);
@@ -98,7 +98,7 @@ int log::dataLogger::dump(std::vector<std::string>& data){
  *
  */
 
- log::imageLogger::imageLogger(void){
+ robustPositioning::imageLogger::imageLogger(void){
      imgBaseStr = "img_";       //After renaming the images will by default have the format img_XXXX.png
      dumpDirName = "images";        //By default images arw written to a new directory called images in the given directory
      imgFormatStr = ".png";
@@ -107,7 +107,7 @@ int log::dataLogger::dump(std::vector<std::string>& data){
  }
 
  // https://techoverflow.net/2013/04/05/how-to-use-mkdir-from-sysstat-h/
-int log::imageLogger::init(std::string dumpDir,std::string newDir){
+int robustPositioning::imageLogger::init(std::string dumpDir,std::string newDir){
     dumpDirName = newDir;
      //Try our best to interpret the user given path and add one more directory to it with name dumpDirName
     if(dumpDir==""){
@@ -126,11 +126,11 @@ int log::imageLogger::init(std::string dumpDir,std::string newDir){
     }
     return 1;
 }
- int log::imageLogger::init(std::string dumpDir,std::string newDir, std::string format){
+ int robustPositioning::imageLogger::init(std::string dumpDir,std::string newDir, std::string format){
      imgFormatStr = format;
      return init(dumpDir,newDir);
  }
- int log::imageLogger::dump(const double& timeStamp, cv::Mat& image){
+ int robustPositioning::imageLogger::dump(const double& timeStamp, cv::Mat& image){
      int no_decimals = static_cast<int>(timeStamp);
      std::string ts = std::to_string(no_decimals);
      std::string file = dirPath + "/" + imgBaseStr + ts + imgFormatStr;
@@ -141,7 +141,7 @@ int log::imageLogger::init(std::string dumpDir,std::string newDir){
      return 1;
  }
 
- int log::imageLogger::rename(cv::String path,cv::String baseName){
+ int robustPositioning::imageLogger::rename(cv::String path,cv::String baseName){
      //Get all filenames at the specified path
      std::cout << "Searching for files in \"" << path << "\"...";
      std::vector<cv::String> results; // We have to use cv::String and not std::string here

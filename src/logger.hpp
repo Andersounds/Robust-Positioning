@@ -12,7 +12,7 @@
 #include <regex>
 
 
-namespace log{
+namespace robustPositioning{
 class dataLogger{
 public:
     std::ofstream file;

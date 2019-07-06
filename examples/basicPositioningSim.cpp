@@ -40,10 +40,10 @@ stamp.get(timeStamp);
 
 /*
 //Initialize imagebin. It automatically creates a directory 'images' in the given path
-log::imageLogger imagebin;
+robustPositioning::imageLogger imagebin;
 imagebin.init("","5_jul");
 
-log::dataLogger databin_LOG;
+robustPositioning::dataLogger databin_LOG;
 //if(!databin_EST.init("estPath.csv",std::vector<std::string>{"Timestamp [ms]","x[m]","y[m]","z[m]","yaw[rad]","mode"})) return 0;
 if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [ms]","x [m]","y [m]","z [m]","yaw [rad]","pitch [rad]","roll [rad]"})) return 0;
 
