@@ -75,6 +75,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
 //Read data until done
 float timeStamp_data;
 float timeStamp_image;
+int counter = 0;
     while(getData.get(data)){
         timeStamp_data = data[0];
         float height = -data[3];//This is used as a subst as actual height is not in dataset
@@ -87,10 +88,13 @@ float timeStamp_image;
             if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
             int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,colorFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
-            cv::imshow("showit",colorFrame);
+//            cv::imshow("showit",colorFrame);
             //cv::waitKey(0);
-            if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
-        }
+//            if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
+
+std::cout << "Lap " << counter << std::endl;
+      }
+counter++;
 
         //Maybe convert to color for illustartion?
         //cv::cvtColor(colorFrame, frame, cv::COLOR_BGR2GRAY);
