@@ -53,17 +53,20 @@ timestamp::timeStamp_ms::timeStamp_ms(void){
 }
 void timestamp::timeStamp_ms::timeUntilOverFlow(void){
     //Get duration <double,std::milli> between init timepoint and clock epoch
-    std::cout << "########Time stamp object initialized####" << std::endl;
+    std::cout << "Initializing time stamp object" << std::endl;
     std::cout << "\tClock: std::chrono::steady_clock  " << std::endl;
     std::chrono::duration<double,std::milli> init_dur_ms = t_init.time_since_epoch();
-    std::cout << "\tTime since epoch of steady_clock: " << init_dur_ms.count()/1000      << " seconds." << std::endl;
-    std::cout << "\t                                  " << init_dur_ms.count()/1000/3600 << " hours." << std::endl;
+    std::cout << "\tTime since epoch of steady_clock: " << init_dur_ms.count()/1000/3600 << " hours." << std::endl;
+    //std::cout << "\tTime since epoch of steady_clock: " << init_dur_ms.count()/1000      << " seconds." << std::endl;
+    //std::cout << "\t                                  " << init_dur_ms.count()/1000/3600 << " hours." << std::endl;
     //Get duration <double,std::milli> until overflow
     std::chrono::duration<double,std::milli> dur_until_ovflw_ms = std::chrono::time_point<std::chrono::steady_clock>::max() - t_init;
-    std::cout << "\tTime until overflow:              " << dur_until_ovflw_ms.count()/1000         << " seconds." << std::endl;
-    std::cout << "\t                                  " << dur_until_ovflw_ms.count()/1000/3600    << " hours." << std::endl;
-    std::cout << "\t                                  " << dur_until_ovflw_ms.count()/1000/3600/24 << " days." << std::endl;
-    std::cout << "###################END###################" << std::endl;
+    //std::cout << "\tTime until overflow:              " << dur_until_ovflw_ms.count()/1000         << " seconds." << std::endl;
+    //std::cout << "\t                                  " << dur_until_ovflw_ms.count()/1000/3600    << " hours." << std::endl;
+    //std::cout << "\t                                  " << dur_until_ovflw_ms.count()/1000/3600/24 << " days." << std::endl;
+    //std::cout << "###################END###################" << std::endl;
+    std::cout << "\tTime until overflow:              " << dur_until_ovflw_ms.count()/1000/3600    << " hours." << std::endl;
+    std::cout << "Done." << std::endl;
 }
 
 void timestamp::timeStamp_ms::get(double& stamp){

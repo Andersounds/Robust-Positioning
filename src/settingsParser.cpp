@@ -21,19 +21,26 @@ namespace set{
 /*
     Use a struct like this to access all settings later?
 */
-struct data{
+struct dataStruct{
     cv::Mat_<float> K;
     cv::Mat_<float> T;
+    std::string anchorPath;
     float x0;
     float y0;
     float z0;
+    float yaw0;
+
 };
 /* This is a class containing all necessary settings and their default values.
 */
 
     class settings{
         public:
+            settings(int, char**);//Constructor that sets all default  setting values
             //std::vector<std::string> settingKeys;                         //Vector of all available setting keys
+            dataStruct data;
+            bool success(void);
+        private:
             std::map<std::string, int> settingsTYPE;            //Map stating the type of each key (0:int,1:float,2:string)
             std::map<std::string, std::string> settingsDescription;
             std::map<std::string, int> settingsI;
@@ -41,7 +48,7 @@ struct data{
             std::map<std::string, std::string> settingsS;
             std::map<std::string, std::string> flags;
 
-            settings(int, char**);//Constructor that sets all default  setting values
+
             int setAllDefault(void);
             int readArguments(int, char**);
             int initFlags(void);
@@ -52,8 +59,7 @@ struct data{
             int writeDefaultSettingsFile(std::string);
             int readSettingsFile(std::string);//If it can not be read then write default and say where it has been written
             std::vector<std::string> parseRow(std::string);
-            bool success;//Check if settings are read correctly.
-        private:
+            bool success_;//Check if settings are read correctly.
             bool useDefaultSettings;// = true;
             std::string pathToSettings;
             int streamMode;
@@ -62,12 +68,16 @@ struct data{
             std::string pathTologDirectory;
             std::string pathToOutputFile;
             bool settingsPathGiven;
+            bool constructSettingsStruct(void);
     };
 
 }
+bool set::settings::success(void){
+    return success_;
+}
 /*Constructor. Initializes the setting-maps*/
 set::settings::settings(int argc, char** argv){
-    success = true;
+    success_ = true;
     /*DEFAULT SETTINGS*/
     setAllDefault();
     initFlags();
@@ -75,15 +85,17 @@ set::settings::settings(int argc, char** argv){
     readArguments(argc,argv);
     if(useDefaultSettings == false){
         if(settingsPathGiven == true){
-            std::cout << "Reading settings file from \"" << pathToSettings << "\"... ";
-            if(!readSettingsFile(argv[1])){
-                std::cout << "\n Could not open provided settings-file: \"" << pathToSettings << "\". Please give valid path." << std::endl;
+            std::cout << "Reading settings file from \"" << pathToSettings << "\"... " << std::endl;
+            //if(!readSettingsFile(argv[1])){
+            if(!readSettingsFile(pathToSettings)){
+                success_=false;
+                std::cout << "Failed. \n\tCould not open provided settings-file: \"" << pathToSettings << "\". Please give valid path." << std::endl;
             }else{
                 std::cout << "Done." << std::endl;
             }
         } else{
             std::cout << "Can not set settings. use flag -d to use default settings." << std::endl;;
-            success=false;
+            success_=false;
         }
     } else if(settingsPathGiven == true){
         std::cout << "Writing default settings file to \"" << pathToSettings <<"\" ...";
@@ -91,7 +103,7 @@ set::settings::settings(int argc, char** argv){
             std::cout << "Done.";
         }else{
             std::cout << "Failed.";
-            success=false;
+            success_=false;
         }
         std::cout << std::endl;
     } else{
@@ -100,9 +112,15 @@ set::settings::settings(int argc, char** argv){
             std::cout << "Done.";
         }else{
             std::cout << "Failed.";
-            success=false;
+            success_=false;
         }
         std::cout << std::endl;
+    }
+
+
+    //Set all the settings to the struct where they are accessible. If we are successful up until now
+    if(success_){
+        success_ = constructSettingsStruct();
     }
 }
 int set::settings::readArguments(int argc, char** argv){
@@ -121,17 +139,17 @@ int set::settings::readArguments(int argc, char** argv){
         for(int i=1;i<argc;i++){
             std::string flag = argv[i];
             std::string arg;
-            if((i+1)<argc){ arg = arg;}
+            if((i+1)<argc){ arg = argv[i+1];}
             if(flag == "-d"){
                 useDefaultSettings = true;
             } else if(flag == "-p"){
-
                 if((i+1)<argc && !std::regex_match(arg,std::regex("(-)(.*)")) && std::regex_match(arg,std::regex("(.*)(.txt)"))) { //if there is another argument, that does not begin with "-" and that ends with .txt
                     pathToSettings =  arg;
                     settingsPathGiven = true;
                     i++;
                 } else{
                     std::cout << "No valid path for flag -p is given" << std::endl;
+                    std::cout << "Given path: \"" << arg << "\""<<std::endl;
                 }
             } else if(flag == "-rpi"){
                 streamMode = 2;
@@ -272,7 +290,7 @@ int set::settings::set(std::string key, std::string value){
                 try{
                     int value_int = std::stoi(value);
                     settingsI[key] = value_int;
-                    std::cout << "Set setting \"" << key << "\" to " << value_int << std::endl;
+                    //std::cout << "Set setting  << key << " to " << value_int << std::endl;
                 }catch(const std::invalid_argument& e){
                     std::cout << "Could not convert \"" << value <<"\" to int for key \"" << key << "\"" << std::endl;
                     return 0;
@@ -283,7 +301,7 @@ int set::settings::set(std::string key, std::string value){
                 try{
                     float value_float = std::stof(value);
                     settingsF[key] = value_float;
-                    std::cout << "Set setting \"" << key << "\" to " << value_float << std::endl;
+                    //std::cout << "Set setting  << key << " to " << value_float << std::endl;
                 }catch(const std::invalid_argument& e){
                     std::cout << "Could not convert \"" << value <<"\" to float for key \"" << key << "\"" << std::endl;
                     return 0;
@@ -292,7 +310,7 @@ int set::settings::set(std::string key, std::string value){
             }
             case TYPE_STRING:{
                 settingsS[key] = value;
-                std::cout << "Set setting \"" << key << "\" to " << value << std::endl;
+                //std::cout << "Set setting  << key << " to " << value << std::endl;
                 break;
             }
         }
@@ -340,7 +358,7 @@ int set::settings::readSettingsFile(std::string path){
     if(file.is_open()){
          while(getline(file,line)){
             std::vector<std::string> parsed = parseRow(line);
-            if(parsed.size()==3 || parsed.size()==2){//Disregard any lines that are not 2 or 3 elements long
+            if((parsed.size()==3 || parsed.size()==2) && line.at(0)!='#'){//Disregard any lines that are not 2 or 3 elements long, or start with #
                 set(parsed[0],parsed[1]);//Set the setting (or try at least)
             }
          }
@@ -370,4 +388,24 @@ std::vector<std::string> set::settings::parseRow(std::string line){
         parsed.push_back(word);//Push back the parsed word onto the return vector
     }
     return parsed;
+}
+
+//This method reads all the internal values and constructs a struct where the properly
+//  formatted settings are available from another scope
+bool set::settings::constructSettingsStruct(void){
+    data.K = cv::Mat_<float>::ones(3,3);
+        data.K(0,0) = settingsF["K_MAT_fx"];
+        data.K(1,1) = settingsF["K_MAT_fy"];
+        data.K(0,2) = settingsF["K_MAT_cx"];
+        data.K(1,2) = settingsF["K_MAT_cy"];
+    data.T = cv::Mat_<float>::zeros(3,3);
+        data.T(0,0) = settingsF["T_MAT_1_1"];   data.T(0,1) = settingsF["T_MAT_1_2"];   data.T(0,2) = settingsF["T_MAT_1_3"];
+        data.T(1,0) = settingsF["T_MAT_2_1"];   data.T(1,1) = settingsF["T_MAT_2_2"];   data.T(1,2) = settingsF["T_MAT_2_3"];
+        data.T(2,0) = settingsF["T_MAT_3_1"];   data.T(2,1) = settingsF["T_MAT_3_2"];   data.T(2,2) = settingsF["T_MAT_3_3"];
+    data.x0 = settingsF["INITIAL_X"];
+    data.y0 = settingsF["INITIAL_Y"];
+    data.z0 = settingsF["INITIAL_Z"];
+    data.yaw0 = settingsF["INITIAL_YAW"];
+    data.anchorPath = settingsS["PATH_TO_ARUCO_DATABASE"];
+    return true;
 }

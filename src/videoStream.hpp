@@ -36,6 +36,8 @@ class usbCamStreamer{// : public Streamer{
  */
 class datasetStreamer{// : public Streamer{
   int initialized;
+  int sequence;
+  int datasetSize;
   bool useTimeStampFile;
   std::string pathToDataset;//Path to directory where image files are located. Including "/"
   std::string dataFile;
@@ -50,6 +52,7 @@ class datasetStreamer{// : public Streamer{
     float getImageViaCapStream(cv::Mat&);
     float getImageViaTimestampList(cv::Mat&);
     float getImage(cv::Mat&); //This method returns the image via inputoutput and timestamp via return if timestamp mode is chosen
+    float peek(void);
     int setSettings(int);
     int readTimeStampData(void);
 };
@@ -87,7 +90,7 @@ class Streamer{
     Streamer(std::string basePath, std::string dataFile);//For choosing dataset stream with data file and timestamps
     Streamer(int choice, std::string basePath, std::string dataFile);//same as above but with explicit choice
     float getImage(cv::Mat&); //Equals zero to declare it and create vtable
-
+    float peek(void);
 private:
     int chosenMode;
     usbCamStreamer usbcamSTR;

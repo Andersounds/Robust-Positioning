@@ -38,12 +38,18 @@ bool robustPositioning::dataStreamer::get(std::vector<float>& nextData){
 }
 
 void robustPositioning::dataStreamer::initialize(std::string path){
+    std::cout << "Initializing csv data streamer..." << std::endl;
+    std::cout << "\tReading data file..." << std::endl;
     if(!readDataFile(path)){
-        std::cout << "Could not open specified data file: \"" << path << "\". Is it really correct?" <<std::endl;
+        std::cout << "\tCould not open specified data file: \"" << path << "\". Is it really correct?" <<std::endl;
+        std::cout << "Failed." << std::endl;
         return;
     }
     //convert string data to float data. If valie can not be converted to float then it is replaced by the value replace to keep ordering
+    float replace = -1000000;
     int row_nmbr = skipLines;
+    std::vector<std::string> failed_to_convert;
+    std::vector<int> failed_to_convert_row_nmbr;
     for(std::vector<std::string> row:data_s){
         row_nmbr++;
         std::vector<float> row_float;
@@ -52,14 +58,22 @@ void robustPositioning::dataStreamer::initialize(std::string path){
                 float value_f = std::stof(value_s);
                 row_float.push_back(value_f);
             } catch(const std::invalid_argument& e){
-                float replace = -1000000;
-                std::cout << "Could not convert \"" << value_s << "\" on row " << row_nmbr << " to float. Setting it to " << replace <<" instead." << std::endl;
+
                 row_float.push_back(replace);
+                failed_to_convert.push_back(value_s);
+                failed_to_convert_row_nmbr.push_back(row_nmbr);
             }
         }
         data_f.push_back(row_float);//Save the float-row to the data_f
     }
-    std::cout << "Read " << data_f.size() << " rows from " << path << std::endl;
+    std::cout << "\tRead " << data_f.size() << " rows from " << path << std::endl;
+    if(failed_to_convert.size()>0){
+        std::cout << "\tFailed to convert the following variables to float. Replaced values with " << replace << "." << std::endl;
+        for(int e=0;e<failed_to_convert.size();e++){
+            std::cout << "\t\t- " << failed_to_convert[e] << "\" on row " << failed_to_convert_row_nmbr[e] << std::endl;
+        }
+    }
+    std::cout << "Done." << std::endl;
 }
 
 
@@ -76,7 +90,7 @@ int robustPositioning::dataStreamer::readDataFile(std::string path){
             std::vector<std::string> parsed = parseRow(line);
             if(parsed.size()==dataFields || dataFields==0){//Disregard any lines that are not dataFields long, if dataFields has been set
                 data_s.push_back(parsed);//save the string data
-            } else{std::cout << "Skipped data row: \""<< line << "\".";}
+            } else{std::cout << "\t\tSkipped data row: \""<< line << "\".";}
          }
     }else{return 0;}
     file.close();

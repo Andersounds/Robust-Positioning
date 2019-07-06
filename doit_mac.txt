@@ -103,6 +103,13 @@ if [ ”$1” = ”basicPositioningSim” ];then
 	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/basicPositioningSim.cpp src/vopos.cpp src/angulation.cpp src/azipe.cpp src/opticalFlow.cpp src/homographyVO.cpp include/Quartic-master/quartic.cpp src/simulatePose.cpp src/logger.cpp -o bin/basicPositioningSim.out
 	echo Run with command ./bin/basicPositioningSim.out
 fi
+################# MASTER POSITIONING EXAMPLE (general)
+if [ ”$1” = ”positioning” ];then
+	#
+	echo Compiling general positioning program
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/positioning.cpp src/vopos.cpp src/angulation.cpp src/azipe.cpp src/opticalFlow.cpp src/homographyVO.cpp include/Quartic-master/quartic.cpp src/videoStream.cpp src/dataStream.cpp src/logger.cpp -o bin/positioning.out
+	echo Run with command ./bin/positioning.out [option]
+fi
 ################# MASTER GENERATE SIM EXXAMPLE (SIMULATION)
 if [ ”$1” = ”generateSimDataset” ];then
 	#

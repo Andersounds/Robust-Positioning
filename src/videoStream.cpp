@@ -24,7 +24,9 @@ float robustPositioning::Streamer::getImage(cv::Mat& frame){
     return -1;
 
 }
-
+float robustPositioning::Streamer::peek(void){
+    return datasetSTR.peek();
+}
 
 //When giving just the single int argument, only rpi videostream or default internal cam stream is possible
 robustPositioning::Streamer::Streamer(int choice){
@@ -80,14 +82,15 @@ robustPositioning::Streamer::Streamer(int choice, std::string datasetPath){
 //For reading a datafile from a csv file that specifies timestamps and filenames
 robustPositioning::Streamer::Streamer(std::string basePath, std::string dataFile){
     chosenMode = robustPositioning::MODE_IMG_TIMESTAMP_STREAM;
+//    std::cout << "Initializing dataset video streamer with timestamps..." << std::endl;
     datasetSTR = datasetStreamer(basePath, dataFile, true);
-    std::cout << "Created dataset streamer with timestamps" << std::endl;
+
 }
 //overloaded. choice is not considered
 robustPositioning::Streamer::Streamer(int choice, std::string basePath, std::string dataFile){
     chosenMode = robustPositioning::MODE_IMG_TIMESTAMP_STREAM;
+//    std::cout << "Initializing dataset video streamer with timestamps..." << std::endl;
     datasetSTR = datasetStreamer(basePath, dataFile, true);
-    std::cout << "Explicitly created dataset streamer with timestamps" << std::endl;
 }
 
 
@@ -136,20 +139,25 @@ robustPositioning::datasetStreamer::datasetStreamer(void){
  *Constructor that saves path to dataset using just cv::cap
  */
 robustPositioning::datasetStreamer::datasetStreamer(std::string basePath,std::string dataFile_, bool useTimeStampFile_){
+std::cout << "Initializing image dataset streamer..." << std::endl;
     pathToDataset = basePath;
     dataFile = dataFile_;
     initialized = 0;
+    sequence = 0;
     useTimeStampFile = useTimeStampFile_;
     if(useTimeStampFile){
+        std::cout <<"\tReading filenames from \"" << pathToDataset+dataFile << "\"..." << std::endl;
         if(readTimeStampData()){
             initialized = 1;
-            std::cout << "Read " << timeStamps_f.size() << " timestamps." << std::endl;
-            std::cout << "Read " << imgNames.size() << " image file names." << std::endl;
+            std::cout << "\tRead " << timeStamps_f.size() << " timestamps and image file names" << std::endl;
+            std::cout << "Done." << std::endl;
         }else{
+            std::cout << "Failed." << std::endl;
             pathToDataset = basePath;//This is now the whole path i.e. somedir/images/img_%01.png
             //std::cout << "Could not read time stamp data from file \"" << path << "\"." << std::endl;
         }
     }
+    datasetSize = timeStamps_f.size();
 }
 /*
  *Get next image interface. Initializes streamer object upon first call
@@ -169,19 +177,32 @@ float robustPositioning::datasetStreamer::getImageViaCapStream(cv::Mat& frame){
       initialized=1;
     }
     cap.read(frame);
-    if( frame.empty() ){std::cout << "Stream done." << std::endl; return 0;}//If stream is done return 0
+    if( frame.empty() ){std::cout << "Video stream done." << std::endl; return 0;}//If stream is done return 0
     return 1;
 
 }
 
 float robustPositioning::datasetStreamer::getImageViaTimestampList(cv::Mat& frame){
-    static int sequence = 0;
-    //std::cout
+    if(sequence == datasetSize){//If stream is done
+        cv::Mat emptyMat;
+        emptyMat.copyTo(frame);
+        std::cout << "xxx" << std::endl;
+        return -1;
+    }
     float timeStamp = timeStamps_f[sequence];
-    frame = cv::imread(pathToDataset + imgNames[sequence]);
+    frame = cv::imread(pathToDataset + imgNames[sequence],CV_LOAD_IMAGE_GRAYSCALE);
     sequence++;
     return timeStamp;
 }
+//This method is used to peek at the next timestamp to see if it is time (in simulation time) to read next frame
+float robustPositioning::datasetStreamer::peek(void){
+    if(sequence+1 < datasetSize){
+        return timeStamps_f[sequence+1];
+    }else{
+        return -1;
+    }
+}
+
 int robustPositioning::datasetStreamer::readTimeStampData(void){
         std::string line;
         std::string delim = ",";
@@ -190,7 +211,8 @@ int robustPositioning::datasetStreamer::readTimeStampData(void){
         int skiplines = 1;// skip header
         int count = -1; //start at -1 so it is 0 in first lap as while starts with incrementing count
         if(file.is_open()){
-            std::cout << "Opened file \"" << pathToDataset+ dataFile <<"\" ." <<std::endl;
+            std::cout << "\topened " <<pathToDataset<< dataFile << "\"..."<< std::endl;
+            //std::cout << "Opened file \"" << pathToDataset+ dataFile <<"\" ." <<std::endl;
              while(getline(file,line)){
                 count++;
                 if(count<skiplines){continue;}
@@ -201,7 +223,8 @@ int robustPositioning::datasetStreamer::readTimeStampData(void){
                 }
              }
         }else{
-            std::cout << "Could not open file \"" << pathToDataset+ dataFile <<"\" ." <<std::endl;
+
+            std::cout << "datasetStreamer::readTimeStampData: Could not open file \"" << pathToDataset+ dataFile <<"\" ." <<std::endl;
             return 0;
         }
         file.close();
