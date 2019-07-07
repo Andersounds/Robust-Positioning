@@ -88,9 +88,9 @@ int counter = 0;
             if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
             int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,colorFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
-//            cv::imshow("showit",colorFrame);
+            cv::imshow("showit",colorFrame);
             //cv::waitKey(0);
-//            if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
+            if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
 std::cout << "Lap " << counter << std::endl;
       }

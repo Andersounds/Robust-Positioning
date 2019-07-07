@@ -52,7 +52,16 @@ if [ ”$1” = ”positioning” ];then
 	echo Compiling general positioning program
 #	g++ -std=c++11	\
 `pkg-config --cflags --libs opencv`\
-examples/positioning.cpp src/vopos.cpp src/angulation.cpp src/azipe.cpp src/opticalFlow.cpp src/homographyVO.cpp include/Quartic-master/quartic.cpp src/videoStream.cpp src/dataStream.cpp src/logger.cpp -o bin/positioning.out
+examples/positioning_rpi.cpp \
+src/vopos.cpp \
+src/angulation.cpp \
+src/azipe.cpp \
+src/opticalFlow.cpp \
+src/homographyVO.cpp \
+include/Quartic-master/quartic.cpp \
+src/videoStream_RPI.cpp \
+src/dataStream.cpp \
+src/logger.cpp -o bin/positioning.out
 
 
 
