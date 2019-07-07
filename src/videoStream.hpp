@@ -64,6 +64,7 @@ class piCamStreamer{// : public Streamer{
   //std::string pathToDataset;
   public:
     piCamStreamer(void);
+    piCamStreamer(double);
     float getImage(cv::Mat&);
     int setSettings(int);
 };

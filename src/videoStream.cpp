@@ -4,14 +4,13 @@
 
 
 //Master getImage wrapper
-
 float robustPositioning::Streamer::getImage(cv::Mat& frame){
     switch (chosenMode) {
         case robustPositioning::MODE_USB_CAM:{
             return usbcamSTR.getImage(frame);
         }
         case robustPositioning::MODE_RPI_CAM:{
-            std::cout << "RPI cam mode not available" << std::endl;
+            std::cout << "RPI cam mode chosen but not available" << std::endl;
             return -1;
         }
         case robustPositioning::MODE_IMG_STREAM:{
@@ -34,11 +33,9 @@ robustPositioning::Streamer::Streamer(int choice){
     if(choice == robustPositioning::MODE_USB_CAM){
         usbcamSTR = usbCamStreamer(0);
     }else if(choice == robustPositioning::MODE_RPI_CAM){
-        chosenMode = robustPositioning::MODE_USB_CAM;
-        std::cout << "RPI cam stream chosen. not available in this implementation." << std::endl;
-        std::cout << "Defaulting to internal camera 0" << std::endl;
+        chosenMode = robustPositioning::MODE_RPI_CAM;
     }
-    usbcamSTR = usbCamStreamer(0);
+    //usbcamSTR = usbCamStreamer(0);
 }
 //When two int arguments are given, it must be internal cam and the camera choice
 robustPositioning::Streamer::Streamer(int choice,int cam){
@@ -104,7 +101,9 @@ robustPositioning::usbCamStreamer::usbCamStreamer(void){
 robustPositioning::usbCamStreamer::usbCamStreamer(int nmbr){
     cameraNmbr = nmbr;
     initialized = 0;
-    std::cout << "Mode " << robustPositioning::MODE_USB_CAM <<". USB camera streamer object created." << std::endl;
+    std::cout << "Creating internal camera streaming object ...";
+    cv::Mat emptyFrame;
+    getImage(emptyFrame);//Initialization
 }
 /*
  *Get next image interface. Initializes streamer object upon first call
@@ -112,8 +111,10 @@ robustPositioning::usbCamStreamer::usbCamStreamer(int nmbr){
 float robustPositioning::usbCamStreamer::getImage(cv::Mat& frame){
   static cv::VideoCapture cap;
   if(!initialized){
-    if(!cap.open(cameraNmbr)){std::cerr << "Internal camera number not valid: " << cameraNmbr <<std::endl;return 0;}
+    if(!cap.open(cameraNmbr)){std::cout << "Failed.\n\t" << "Internal camera number not valid: " << cameraNmbr <<std::endl;return 0;}
     initialized=1;
+    std::cout << "Done." <<std::endl;
+    return 1;
   }
   cap.read(frame);
   if( frame.empty() ){std::cout << "Stream done." << std::endl; return 0;}//If stream is done return 0
