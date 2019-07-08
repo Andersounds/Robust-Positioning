@@ -45,7 +45,8 @@ robustPositioning::Streamer::Streamer(int choice){
         usbcamSTR = usbCamStreamer(0);
     }else if(choice == robustPositioning::MODE_RPI_CAM){
         chosenMode = robustPositioning::MODE_RPI_CAM;
-        picamSTR = piCamStreamer(double 0);
+        double temp = 0;
+	picamSTR = piCamStreamer(temp);
     }
     //usbcamSTR = usbCamStreamer(0);
 }
