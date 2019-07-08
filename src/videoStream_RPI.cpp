@@ -304,6 +304,9 @@ float robustPositioning::piCamStreamer::getImage(cv::Mat& frame){
     static bool initialized = false;
     static raspicam::RaspiCam_Cv RPICamera;
     if(!initialized){
+	RPICamera.set(CV_CAP_PROP_FORMAT,0); //Set image to BW
+//	RPICamera.set(CV_CAP_PROP_FRAME_WIDTH,640);
+//	RPICamera.set(CV_CAP_PROP_FRAME_HEIGHT,480);
         RPICamera.open();
         if(!RPICamera.isOpened()){
             std::cerr<<"Failed. \n\tError opening camera"<<std::endl;
