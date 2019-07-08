@@ -314,7 +314,6 @@ float robustPositioning::piCamStreamer::getImage(cv::Mat& frame, bool continueCa
             std::cout<<"Done.\n\tConnected to camera ="<<RPICamera.getId() <<std::endl;
             std::cout << "Format: "<<RPICamera.getId(raspicam::CV_CAP_PROP_FORMAT) << std::endl;
             std::cout << "Width="<<RPICamera.getId(raspicam::CV_CAP_PROP_FRAME_WIDTH)<< ", height="<<RPICamera.getId(raspicam::CV_CAP_PROP_FRAME_HEIGHT)<< std::endl;
-            std::cout << "Image effect: " << RPICamera.getImageEffect() << std::endl;
             initialized = true;
             return -1;
         }
