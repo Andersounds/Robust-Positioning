@@ -77,3 +77,27 @@ export LD_LIBRARY_PATH="/usr/local/lib"
 
 #	echo Run with command ./bin/positioning.out [option]
 fi
+
+
+################# Speedtest (own) RPI
+if [ ”$1” = ”speedtest” ];then
+        #
+        echo Compiling speedtest
+#       g++ -std=c++11  \
+g++ `pkg-config --cflags --libs opencv` \
+-I/opt/vc/include -L/opt/vc/lib \
+-lraspicam \
+-lraspicam_cv \
+-lmmal \
+-lmmal_core \
+-lmmal_util \
+examples/speedtest_rpi.cpp \
+src/videoStream_RPI.cpp \
+src/logger.cpp \
+-o bin/speedtest.out
+
+
+#Add usr/local/lib to search path of ld linker
+export LD_LIBRARY_PATH="/usr/local/lib"
+       echo Run with command ./bin/speedtest.out
+fi
