@@ -57,7 +57,6 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     int flowGrid = 4;
     cv::Rect2f roiSize(245,125,150,150);
     cv::Mat_<float> K = S.data.K;
-
     cv::Mat_<float> T = S.data.T;//warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
     pos::positioning P(pos::OF_MODE_KLT,
                         pos::VO_MODE_AFFINE,
