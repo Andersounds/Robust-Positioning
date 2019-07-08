@@ -1,7 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include "videoStream.hpp"
-#include "videoStream.cpp"
 #include "../include/raspicam-0.1.6/src/raspicam_cv.h"
 
 
@@ -46,6 +45,7 @@ robustPositioning::Streamer::Streamer(int choice){
         usbcamSTR = usbCamStreamer(0);
     }else if(choice == robustPositioning::MODE_RPI_CAM){
         chosenMode = robustPositioning::MODE_RPI_CAM;
+        picamSTR = piCamStreamer(double 0);
     }
     //usbcamSTR = usbCamStreamer(0);
 }
@@ -291,7 +291,8 @@ robustPositioning::piCamStreamer::piCamStreamer(void){
 
 robustPositioning::piCamStreamer::piCamStreamer(double prop){
     std::cout << "Initializing rpi camera module...";
-    getImage(cv::Mat temp);
+    cv::Mat temp;
+    getImage(temp);
 }
 
 float robustPositioning::piCamStreamer::getImage(cv::Mat& frame){
@@ -305,7 +306,7 @@ float robustPositioning::piCamStreamer::getImage(cv::Mat& frame){
             emptyFrame.copyTo(frame);
             return -1;
         }else{
-            cout<<"Done.\n\tConnected to camera ="<<RPICamera.getId() <<endl;
+            std::cout<<"Done.\n\tConnected to camera ="<<RPICamera.getId() <<std::endl;
             initialized = true;
             return -1;
         }
