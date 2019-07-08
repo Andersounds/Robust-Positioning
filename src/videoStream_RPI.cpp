@@ -287,7 +287,7 @@ int robustPositioning::datasetStreamer::setSettings(int test){
 robustPositioning::piCamStreamer::piCamStreamer(void){
 
 }
-robustPositioning::piCamStreamer::~piCamStreamer(){
+robustPositioning::piCamStreamer::~piCamStreamer(void){
     std::cout << "Releasing rpi camera module...";
     cv::Mat temp;
     getImage(temp,false);
@@ -297,7 +297,7 @@ robustPositioning::piCamStreamer::~piCamStreamer(){
 robustPositioning::piCamStreamer::piCamStreamer(double prop){
     std::cout << "Initializing rpi camera module...";
     cv::Mat temp;
-    getImage(temp);
+    getImage(temp,true);
 }
 
 float robustPositioning::piCamStreamer::getImage(cv::Mat& frame, bool continueCapturing){
