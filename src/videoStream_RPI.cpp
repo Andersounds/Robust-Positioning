@@ -21,8 +21,7 @@ float robustPositioning::Streamer::getImage(cv::Mat& frame){
             return usbcamSTR.getImage(frame);
         }
         case robustPositioning::MODE_RPI_CAM:{
-            std::cout << "RPI cam mode chosen but not available" << std::endl;
-            return -1;
+            return picamSTR.getImage(frame);
         }
         case robustPositioning::MODE_IMG_STREAM:{
             return datasetSTR.getImage(frame);
