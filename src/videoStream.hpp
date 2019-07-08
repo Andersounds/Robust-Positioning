@@ -64,9 +64,9 @@ class piCamStreamer{// : public Streamer{
   //std::string pathToDataset;
   public:
     piCamStreamer(void);
-    ~piCamStreamer(void);
+    //~piCamStreamer(void);
     piCamStreamer(double);
-    float getImage(cv::Mat&,bool);//Bool is used to release the camera if onbject is destroyed
+    float getImage(cv::Mat&);//Bool is used to release the camera if onbject is destroyed
     int setSettings(int);
 };
 

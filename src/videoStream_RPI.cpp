@@ -21,7 +21,7 @@ float robustPositioning::Streamer::getImage(cv::Mat& frame){
             return usbcamSTR.getImage(frame);
         }
         case robustPositioning::MODE_RPI_CAM:{
-            return picamSTR.getImage(frame,true);
+            return picamSTR.getImage(frame);
         }
         case robustPositioning::MODE_IMG_STREAM:{
             return datasetSTR.getImage(frame);
@@ -287,20 +287,20 @@ int robustPositioning::datasetStreamer::setSettings(int test){
 robustPositioning::piCamStreamer::piCamStreamer(void){
 
 }
-robustPositioning::piCamStreamer::~piCamStreamer(void){
+/*robustPositioning::piCamStreamer::~piCamStreamer(void){
     std::cout << "Releasing rpi camera module...";
     cv::Mat temp;
     getImage(temp,false);
     std::cout << "Done." << std::endl;
-}
+}*/
 
 robustPositioning::piCamStreamer::piCamStreamer(double prop){
     std::cout << "Initializing rpi camera module...";
     cv::Mat temp;
-    getImage(temp,true);
+    getImage(temp);
 }
 
-float robustPositioning::piCamStreamer::getImage(cv::Mat& frame, bool continueCapturing){
+float robustPositioning::piCamStreamer::getImage(cv::Mat& frame){
     static bool initialized = false;
     static raspicam::RaspiCam_Cv RPICamera;
     if(!initialized){
@@ -312,20 +312,16 @@ float robustPositioning::piCamStreamer::getImage(cv::Mat& frame, bool continueCa
             return -1;
         }else{
             std::cout<<"Done.\n\tConnected to camera ="<<RPICamera.getId() <<std::endl;
-            std::cout << "Format: "<<RPICamera.get(CV_CAP_PROP_FORMAT) << std::endl;
+            double format=RPICamera.get(CV_CAP_PROP_FORMAT)
+            std::cout << "Format: CV_8UC1: "<<format==CV_8UC1 <<", CV_8UC3: "<< format==CV_8UC3 << std::endl;
             std::cout << "Width="<<RPICamera.get(CV_CAP_PROP_FRAME_WIDTH)<< ", height="<<RPICamera.get(CV_CAP_PROP_FRAME_HEIGHT)<< std::endl;
             initialized = true;
             return -1;
         }
     }
-    if(continueCapturing){
-        RPICamera.grab();
-        RPICamera.retrieve(frame);
-        return 1;
-    } else{
-        RPICamera.release();
-        return 1;
-    }
+    RPICamera.grab();
+    RPICamera.retrieve(frame);
+    return 1;
 }
 
 /*
