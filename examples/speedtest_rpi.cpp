@@ -10,8 +10,7 @@
 int main(int argc, char** argv){
 timestamp::timeStamp_ms stamp;
 //Can these two rows be written as stamp.get(double timeStamp); is timeStamp available in this scope then?
-double timeStamp;
-stamp.get(timeStamp); //initialize timestamp
+
 std::cout << "Initial timestamp: " << timeStamp << "ms" << std::endl;
 robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM);
 cv::Mat frame, colorFrame;
@@ -19,6 +18,8 @@ cv::Mat frame, colorFrame;
 //Read data until done
 int counter = 1;
 int noOfImages = 100;
+double timeStamp;
+stamp.get(timeStamp); //initialize timestamp
     while(counter<=noOfImages){
         VStreamer.getImage(frame);
         std::cout << "Read image " << counter << std::endl;
