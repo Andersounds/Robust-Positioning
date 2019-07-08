@@ -17,7 +17,6 @@ robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM);
 cv::Mat frame, colorFrame;
 
 //Read data until done
-float timeStamp;
 int counter = 1;
 int noOfImages = 100;
     while(counter<=noOfImages){
