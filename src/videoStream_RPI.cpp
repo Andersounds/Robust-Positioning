@@ -312,13 +312,8 @@ float robustPositioning::piCamStreamer::getImage(cv::Mat& frame){
             return -1;
         }else{
             std::cout<<"Done.\n\tConnected to camera ="<<RPICamera.getId() <<std::endl;
-<<<<<<< HEAD
             double format=RPICamera.get(CV_CAP_PROP_FORMAT);
-            std::cout << "Format: CV_8UC1: "<<format==CV_8UC1 <<", CV_8UC3: "<< format==CV_8UC3 << std::endl;
-=======
-            double format=RPICamera.get(CV_CAP_PROP_FORMAT)
             std::cout << "Format: "<<format<< std::endl;
->>>>>>> e4e6deb5d6f428b6760b5fac5f8db658d352303c
             std::cout << "Width="<<RPICamera.get(CV_CAP_PROP_FRAME_WIDTH)<< ", height="<<RPICamera.get(CV_CAP_PROP_FRAME_HEIGHT)<< std::endl;
             initialized = true;
             return -1;
