@@ -21,7 +21,7 @@ int noOfImages = 100;
 double timeStamp,timeStamp_init;
 stamp.get(timeStamp_init); //initialize timestamps
     while(counter<=noOfImages){
-        VStreamer.getImage(frame);
+        VStreamer.getImage(frame,true);
         std::cout << "Read image " << counter << std::endl;
         if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
         //cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
