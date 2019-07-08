@@ -287,7 +287,7 @@ int robustPositioning::datasetStreamer::setSettings(int test){
 robustPositioning::piCamStreamer::piCamStreamer(void){
 
 }
-robustPositioning::piCamStreamer::~piCamStreamer(void){
+robustPositioning::piCamStreamer:~piCamStreamer(void){
     std::cout << "Releasing rpi camera module...";
     cv::Mat temp;
     getImage(temp,false);
