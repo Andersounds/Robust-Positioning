@@ -51,7 +51,13 @@ if [ ”$1” = ”positioning” ];then
 	#
 	echo Compiling general positioning program
 #	g++ -std=c++11	\
-`pkg-config --cflags --libs opencv`\
+g++ `pkg-config --cflags --libs opencv` \
+-I/opt/vc/include -L/opt/vc/lib \
+-lraspicam \
+-lraspicam_cv \
+-lmmal \
+-lmmal_core \
+-lmmal_util \
 examples/positioning_rpi.cpp \
 src/vopos.cpp \
 src/angulation.cpp \
