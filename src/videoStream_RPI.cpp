@@ -44,21 +44,18 @@ robustPositioning::Streamer::Streamer(int choice){
         usbcamSTR = usbCamStreamer(0);
     }else if(choice == robustPositioning::MODE_RPI_CAM){
         chosenMode = robustPositioning::MODE_RPI_CAM;
-        double temp = 0;
-	picamSTR = piCamStreamer(temp);
+	picamSTR = piCamStreamer(CV_8UC1);//Default to black white images
     }
     //usbcamSTR = usbCamStreamer(0);
 }
 //When two int arguments are given, it must be internal cam and the camera choice
-robustPositioning::Streamer::Streamer(int choice,int cam){
+robustPositioning::Streamer::Streamer(int choice,int setting){
     chosenMode = choice;
     if(choice == robustPositioning::MODE_USB_CAM){
-        usbcamSTR = usbCamStreamer(cam);
-    }else{
-        chosenMode = robustPositioning::MODE_USB_CAM;
-        std::cout << "Camera number choice is not possible if not MODE_USB_CAM is chosen" << std::endl;
-        std::cout << "Defaulting to internal camera 0" << std::endl;
-        usbcamSTR = usbCamStreamer(0);
+        usbcamSTR = usbCamStreamer(setting);//choose internal camera number "setting"
+    }else if(choice == robustPositioning::MODE_RPI_CAM){
+        chosenMode = robustPositioning::MODE_RPI_CAM;
+        picamSTR = piCamStreamer(setting);
     }
 }
 //For choosing dataset. Just reading images with cv cap. i.e. someDir/images/img_%04.png
@@ -294,8 +291,21 @@ robustPositioning::piCamStreamer::piCamStreamer(void){
     std::cout << "Done." << std::endl;
 }*/
 
-robustPositioning::piCamStreamer::piCamStreamer(double prop){
+robustPositioning::piCamStreamer::piCamStreamer(int imgType_){
     std::cout << "Initializing rpi camera module...";
+    switch (imgType_) {
+        case CV_8UC1:{
+            imgType = imgType_;
+            break;
+        }
+        case CV_8UC3:{
+            imgType = imgType_;
+            break;
+        }
+        default:{
+            std::cout << "\nInvalid image type given to piCamStreamer constructor. Must be CV_8UC1 or CV_8UC3" << std::endl;
+        }
+    }
     cv::Mat temp;
     getImage(temp);
 }
@@ -304,9 +314,9 @@ float robustPositioning::piCamStreamer::getImage(cv::Mat& frame){
     static bool initialized = false;
     static raspicam::RaspiCam_Cv RPICamera;
     if(!initialized){
-	RPICamera.set(CV_CAP_PROP_FORMAT,0); //Set image to BW
-//	RPICamera.set(CV_CAP_PROP_FRAME_WIDTH,640);
-//	RPICamera.set(CV_CAP_PROP_FRAME_HEIGHT,480);
+	RPICamera.set(CV_CAP_PROP_FORMAT,imgType); //Set image to whatever is set to imgType
+ 	RPICamera.set(CV_CAP_PROP_FRAME_WIDTH,640);
+	RPICamera.set(CV_CAP_PROP_FRAME_HEIGHT,480);
         RPICamera.open();
         if(!RPICamera.isOpened()){
             std::cerr<<"Failed. \n\tError opening camera"<<std::endl;
@@ -316,8 +326,12 @@ float robustPositioning::piCamStreamer::getImage(cv::Mat& frame){
         }else{
             std::cout<<"Done.\n\tConnected to camera ="<<RPICamera.getId() <<std::endl;
             double format=RPICamera.get(CV_CAP_PROP_FORMAT);
-            std::cout << "Format: "<<format<< std::endl;
-            std::cout << "Width="<<RPICamera.get(CV_CAP_PROP_FRAME_WIDTH)<< ", height="<<RPICamera.get(CV_CAP_PROP_FRAME_HEIGHT)<< std::endl;
+            double c1 = CV_8UC1;
+            double c2 = CV_8UC3;
+            std::cout << "Format: ";
+            if(format==c1){std::cout<< "CV_8UC1, ";}
+            if(format==c2){std::cout << "CV_8UC3, ";}
+            std::cout << "Width="<<RPICamera.get(CV_CAP_PROP_FRAME_WIDTH)<< ", Height="<<RPICamera.get(CV_CAP_PROP_FRAME_HEIGHT)<< std::endl;
             initialized = true;
             return -1;
         }

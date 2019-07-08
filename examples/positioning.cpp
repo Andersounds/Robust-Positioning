@@ -15,7 +15,7 @@
 #define PI 3.1416
 
 
-
+#include <typeinfo>
 int main(int argc, char** argv){
 timestamp::timeStamp_ms stamp;
 //Can these two rows be written as stamp.get(double timeStamp); is timeStamp available in this scope then?
@@ -33,6 +33,8 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
 
 
 */
+
+
 
     //Initialize settings
     set::settings S(argc,argv);

@@ -61,11 +61,12 @@ Raspberry pi camera module stream
 */
 class piCamStreamer{// : public Streamer{
   int mode;
+  int imgType;
   //std::string pathToDataset;
   public:
     piCamStreamer(void);
     //~piCamStreamer(void);
-    piCamStreamer(double);
+    piCamStreamer(int);
     float getImage(cv::Mat&);//Bool is used to release the camera if onbject is destroyed
     int setSettings(int);
 };
