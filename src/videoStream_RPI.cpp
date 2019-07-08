@@ -21,7 +21,7 @@ float robustPositioning::Streamer::getImage(cv::Mat& frame){
             return usbcamSTR.getImage(frame);
         }
         case robustPositioning::MODE_RPI_CAM:{
-            return picamSTR.getImage(frame);
+            return picamSTR.getImage(frame,true);
         }
         case robustPositioning::MODE_IMG_STREAM:{
             return datasetSTR.getImage(frame);
@@ -287,7 +287,12 @@ int robustPositioning::datasetStreamer::setSettings(int test){
 robustPositioning::piCamStreamer::piCamStreamer(void){
 
 }
-
+robustPositioning::piCamStreamer::~piCamStreamer(void){
+    std::cout << "Releasing rpi camera module...";
+    cv::Mat temp;
+    getImage(temp,false);
+    std::cout << "Done." << std::endl;
+}
 
 robustPositioning::piCamStreamer::piCamStreamer(double prop){
     std::cout << "Initializing rpi camera module...";
@@ -295,7 +300,7 @@ robustPositioning::piCamStreamer::piCamStreamer(double prop){
     getImage(temp);
 }
 
-float robustPositioning::piCamStreamer::getImage(cv::Mat& frame){
+float robustPositioning::piCamStreamer::getImage(cv::Mat& frame, bool continueCapturing){
     static bool initialized = false;
     static raspicam::RaspiCam_Cv RPICamera;
     if(!initialized){
@@ -307,13 +312,20 @@ float robustPositioning::piCamStreamer::getImage(cv::Mat& frame){
             return -1;
         }else{
             std::cout<<"Done.\n\tConnected to camera ="<<RPICamera.getId() <<std::endl;
+            std::cout << "Format: width="<<RPICamera.getWidth()<< ", height="<<RPICamera.getHeight()<< std::endl;
+            std::cout << "Image effect: " << RPICamera.getImageEffect() << std::endl;
             initialized = true;
             return -1;
         }
     }
-    RPICamera.grab();
-    RPICamera.retrieve(frame);
-    return 1;
+    if(continueCapturing){
+        RPICamera.grab();
+        RPICamera.retrieve(frame);
+        return 1;
+    } else{
+        RPICamera.release();
+        return 1;
+    }
 }
 
 /*
