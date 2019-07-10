@@ -1,6 +1,6 @@
 #include <pigpio.h>
 #include <iostream>
-
+#include <unistd.h> //For sleep
 using namespace std;
 
 void runSlave();
@@ -36,16 +36,17 @@ void runSlave() {
             bscXfer(&xfer);
             if(xfer.rxCnt > 0) {
                 cout << "Received " << xfer.rxCnt << " bytes: ";
-                for(int i = 0; i < xfer.rxCnt; i++)
-                    cout << xfer.rxBuf[i];
-                cout << "\n";
+                for(int i = 0; i < xfer.rxCnt; i++){
+		    uint8_t byt = xfer.rxBuf[i];
+		    cout <<"Byte "<< i << ": " <<  byt << endl; 
+                    //cout <<"Byte "<< i << ": " <<  xfer.rxBuf[i] << endl;
+                }
             }
-            //if (xfer.rxCnt > 0){
-            //    cout << xfer.rxBuf;
-            //}
-    }
-    }else
-        cout << "Failed to open slave!!!\n";
+	    usleep(500000);
+	}
+     }else{
+         cout << "Failed to open slave!!!\n";
+     }
 }
 
 void closeSlave() {

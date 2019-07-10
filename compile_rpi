@@ -101,3 +101,16 @@ src/logger.cpp \
 export LD_LIBRARY_PATH="/usr/local/lib"
        echo Run with command ./bin/speedtest.out
 fi
+
+
+## i2c test functions
+if [ ”$1” = ”i2c” ];then
+        #
+        echo Compiling i2c examples
+
+g++ examples/i2cSlave.cpp -lpthread -lpigpio -o bin/slaveTest.out
+g++ examples/i2cSlave_close.cpp -lpthread -lpigpio -o bin/slaveTest_close.out
+
+       echo Run with command   sudo ./bin/slaveTest.out
+       echo Close with command sudo ./bin/slaveTest_close.out
+fi
