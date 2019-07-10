@@ -36,11 +36,18 @@ void runSlave() {
             bscXfer(&xfer);
             if(xfer.rxCnt > 0) {
                 cout << "Received " << xfer.rxCnt << " bytes: ";
-                for(int i = 0; i < xfer.rxCnt; i++){
-		    uint8_t byt = xfer.rxBuf[i];
-		    cout <<"Byte "<< i << ": " <<  byt << endl; 
-                    //cout <<"Byte "<< i << ": " <<  xfer.rxBuf[i] << endl;
-                }
+  //              for(int i = 0; i < xfer.rxCnt; i++){
+//		    uint8_t byt = xfer.rxBuf[i];
+		    //cout <<"Byte "<< i << ": " <<  byt << endl; 
+                   // cout <<"Byte "<< i << ": " <<  xfer.rxBuf[i] << endl;
+//                }
+		cout << "Buffer: " << xfer.rxBuf << endl;//show buffer
+		cout << "Buffer size: " << xfer.rxCnt <<endl; //
+//		xfer.rxBuf = 0;//Clear buffer
+		//for(int i=0;i<xfer.rxCnt;i++){
+		  //  xfer.rxBuf[i] = 0;
+		//}
+		//memset(&xfer.rxBuf[0], 0, sizeof(xfer.rxBuf));//Clear buffer
             }
 	    usleep(500000);
 	}
