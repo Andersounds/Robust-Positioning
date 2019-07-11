@@ -28,6 +28,23 @@ void runSlave() {
     xfer.control = getControlBits(slaveAddress, true);
     int status = bscXfer(&xfer); // Should now be visible in I2C-Scanners
 
+
+//Test transmit buffer
+    uint8_t i = 1;
+    while(1){
+        uint8_t data[2] = {i,i};
+        xfer.txBuf = data;
+        xfer.txCnt = 2;
+        std::cout << "Wrote 2x " << i << " in tx buffer" << std::endl;
+        int secsleep = 10;
+        for(int delay = 1;delay<secsleep;delay++){
+            std::cout << "Sleeping " << i << "/"<< secsleep << "seconds." << std::endl;
+            usleep(delay*1000000);
+        }
+
+        i++;
+    }
+
     if (status >= 0)
     {
         cout << "Opened slave\n";
@@ -38,7 +55,7 @@ void runSlave() {
                 cout << "Received " << xfer.rxCnt << " bytes: ";
   //              for(int i = 0; i < xfer.rxCnt; i++){
 //		    uint8_t byt = xfer.rxBuf[i];
-		    //cout <<"Byte "<< i << ": " <<  byt << endl; 
+		    //cout <<"Byte "<< i << ": " <<  byt << endl;
                    // cout <<"Byte "<< i << ": " <<  xfer.rxBuf[i] << endl;
 //                }
 		cout << "Buffer: " << xfer.rxBuf << endl;//show buffer
@@ -49,7 +66,7 @@ void runSlave() {
 		//}
 		//memset(&xfer.rxBuf[0], 0, sizeof(xfer.rxBuf));//Clear buffer
             }
-	    usleep(500000);
+	    usleep(5000000);
 	}
      }else{
          cout << "Failed to open slave!!!\n";
@@ -76,8 +93,8 @@ int getControlBits(int address /* max 127 */, bool open) {
     22 21 20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
     a  a  a  a  a  a  a  -  -  IT HC TF IR RE TE BK EC ES PL PH I2 SP EN
 
-    Bits 0-13 are copied unchanged to the BSC CR register. See pages 163-165 of the Broadcom 
-    peripherals document for full details. 
+    Bits 0-13 are copied unchanged to the BSC CR register. See pages 163-165 of the Broadcom
+    peripherals document for full details.
 
     aaaaaaa defines the I2C slave address (only relevant in I2C mode)
     IT  invert transmit status flags
