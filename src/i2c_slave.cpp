@@ -9,7 +9,11 @@
 /*
 http://abyz.me.uk/rpi/pigpio/pdif2.html#bsc_xfer
 http://abyz.me.uk/rpi/pigpio/pdif2.html#bsc_i2c
+https://robot-electronics.co.uk/i2c-tutorial
 
+There are two functions implemented for slave-i2c for the rpi
+    int status = bscXfer(&xfer);            //This one seems to be the core function in c
+    int status = bsc_i2c(address, &xfer);   //This one seems to be a wrapper for python?
 
 
 */
@@ -20,49 +24,70 @@ class i2cSlave{
 public:
     i2cSlave(int);      //Constructor. Give adress as argument
     ~i2cSlave(void);    //Destructor.
-    int isRecieved(void);
-    readBuffer(void);
-    writeBuffer();
+    int RxBufferContentSize(void);
+    void clearRxBuffer(void);        //Used when master is repeatedly sending new data. Clear and use next recieved
+    int readBuffer(char[]);          //Base method for reading the RX buffer
+    int writeBuffer(&);              //Base method for writing a char-array to the TX buffer. Returns number of successfully written bytes
+
+
     status ??
 private:
     bsc_xfer_t xfer;    //Struct to control data flow
     int address;        //Address of slave device
-    int getControlBits(int,bool);//Get bsc_xfer_t control bits for enable/disable i2c read +write with address
+    int ctrlBitsEnable;
+    int ctrlBitsDisable;
 };
 
+//Struct to easily convert buffer
+
+//Special class inherited from i2cSlave, with custom endoce/decode functions for robustpositioning-system
+class i2cSlave_decode:i2cSlave{
+public:
+    int readAndDecodeBuffer(float[4]);
+    int writeAndEncodeBuffer();     //Special case method for encoding info-x-y-z-yaw - values and writing them to buffer
+private:
+
+};
 }
-
 #endif
-
 robustpositioning::i2cSlave::i2cSlave(int address_){
     //Init address
     if(address<0 || address>127){std::cout << "i2cSlave:: invalid address: "<< address<<std::endl;return;}
     address=address_;
     std::cout<< "Initializing GPIO...";
     if(gpioInitialise()<0){
-        std::cout<<"\ti2cSlave:: Could not initialize gpio\nFailed."<<std::endl;
+        std::cout<<"Failed.\n\ti2cSlave:: Could not initialize gpio"<<std::endl;
+        return;
     }else{
-        std::cout<<"\ti2cSlave:: GPIO initialized\nDone."<<std::endl;
+        std::cout<<"Done.\n\ti2cSlave:: GPIO initialized"<<std::endl;
     }
-    xfer.control = getControlBits(address,false);
-    bscXfer(&xfer);//Make sure that it is closed and disabled before tring to activate it
-    xfer.control = getControlBits(slaveAddress, true);
+    ctrlBitsEnable  = (address<<16)|0x305;//Enable transmit, recieve as i2c, and enable BSC periphial
+    ctrlBitsDisable = address<<16; //Just disable
+    xfer.control = ctrlBitsDisable;//Only matter that the second argument is false, because...
+    bscXfer(&xfer);                       //... we just make sure that it is closed and disabled before tring to activate it
+    xfer.control = ctrlBitsEnable
     std::cout << "Initializing i2c slave...";
     int status = bscXfer(&xfer); //Activate again
     if(status<0){
-        std::cout<<"\ti2cSlave:: Could not initialize i2c slave.\nFailed. (Error code: " << status << ")"<<std::endl;
+        std::cout<<"Failed.\n\ti2cSlave:: Could not initialize i2c slave. (Error code: " << status << ")"<<std::endl;
     }else{
-        std::cout<<"\ti2cSlave:: i2c slave initialized with address " << address << ".\nDone."<<std::endl;
+        std::cout<<"Done.\n\ti2cSlave:: i2c slave initialized with address " << address << "."<<std::endl;
     }
 }
 robustpositioning::i2cSlave::~i2cSlave(void){
-    xfer.control = getControlBits(address,false);
+    xfer.control = ctrlBitsDisable;
     bscXfer(&xfer);
     std::cout << "i2cSlave:: Closed i2c node" << std::endl;
+    gpioTerminate();
+    cout << "Terminated GPIOs."<< std::endl;;
+}
+int robustpositioning::i2cSlave::RxBufferContentSize(void){
+    return xfer.rxCnt;
 }
 
-int robustpositioning::i2cSlave::getControlBits(int address /* max 127 */, bool open) {
-    /*
+
+    /*Control bits definition:
+
     Excerpt from http://abyz.me.uk/rpi/pigpio/cif.html#bscXfer regarding the control bits:
 
     22 21 20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
@@ -87,14 +112,3 @@ int robustpositioning::i2cSlave::getControlBits(int address /* max 127 */, bool 
     SP  enable SPI mode
     EN  enable BSC peripheral
     */
-
-    // Flags like this: 0b/*IT:*/0/*HC:*/0/*TF:*/0/*IR:*/0/*RE:*/0/*TE:*/0/*BK:*/0/*EC:*/0/*ES:*/0/*PL:*/0/*PH:*/0/*I2:*/0/*SP:*/0/*EN:*/0;
-
-    int flags;
-    if(open)
-        flags = /*RE:*/ (1 << 9) | /*TE:*/ (1 << 8) | /*I2:*/ (1 << 2) | /*EN:*/ (1 << 0);
-    else // Close/Abort
-        flags = /*BK:*/ (1 << 7) | /*I2:*/ (0 << 2) | /*EN:*/ (0 << 0);
-
-    return (address << 16 /*= to the start of significant bits*/) | flags;
-}
