@@ -21,8 +21,16 @@ int main(){
 }
 
 void runSlave() {
-    gpioInitialise();
-    cout << "Initialized GPIOs\n";
+cout << "Initializing gpio..."<< endl;
+if (gpioInitialise() < 0)
+{
+   cout << "Could not initialize gpio" << endl;
+}
+else
+{
+    cout << "Initialized GPIOs" << endl;
+}
+
     // Close old device (if any)
     xfer.control = getControlBits(slaveAddress, false); // To avoid conflicts when restarting
     bscXfer(&xfer);
@@ -34,7 +42,7 @@ void runSlave() {
 //Test transmit buffer
     uint8_t i = 1;
     while(1){
-        uint8_t data[i] = {i,i+1};
+        uint8_t data[i] = {(uint8_t)i,(uint8_t)i+1};
 	memcpy(&xfer.txBuf,&data,2);
         //xfer.txBuf = data;
         xfer.txCnt = 2;
@@ -43,8 +51,8 @@ void runSlave() {
 	std::cout << "Status: "<< std::bitset<30>(status_return) << std::endl;
 	int secsleep = 2;
         for(int delay = 1;delay<secsleep;delay++){
-            std::cout << "Sleeping " <<i << "/"<< secsleep << "seconds." << std::endl;
-            usleep(delay*1000000);
+            std::cout << "Sleeping " <<(int)i << "/"<< secsleep << "seconds." << std::endl;
+            usleep(10000);
         }
 
         i++;
