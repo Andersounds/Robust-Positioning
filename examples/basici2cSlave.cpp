@@ -19,27 +19,29 @@ void closeSlave() {
 
 
 int main(int argc, char** argv){
-// Parse arguments
+// Parse argument
     if(argc!=2){
         std::cout << "Give -one- argument"<< std::endl;
         std::cout << "1: enable gpio, i2c on BSC peripheral and run example" << std::endl;
         std::cout << "0: disable gpio and i2c on BSC peripheral" << std::endl;
         return 0;
     }else{
-        if((*argv[1] != '0') || *argv[1]!='1'){
+	std::string arg = argv[1];
+	std::cout <<"Given argument: "<< arg << std::endl;
+        if((arg != "0") && arg!="1"){
             std::cout << "Valid arguments:" << std::endl;
             std::cout << "1: enable gpio, i2c on BSC peripheral and run example" << std::endl;
             std::cout << "0: disable gpio and i2c on BSC peripheral" << std::endl;
             return 0;
         }
+    	if(arg=="0"){
+        	closeSlave();
+        	return 0;
+   	 }
     }
-    if(argv[1]==0){
-        closeSlave();
-        return 0;
-    }
-
     //initialize i2c slave object with the inherited encode/decode class
-    robustpositioning::i2cSlave_decode i2cComm(0x03);
+const int slaveAddress = 0x03;
+    robustpositioning::i2cSlave_decode i2cComm(slaveAddress);
     std::vector<float> values;
     while(1){
         if(i2cComm.readAndDecodeBuffer(values)>0){

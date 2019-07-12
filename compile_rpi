@@ -112,7 +112,7 @@ if [ ”$1” = ”i2c” ];then
 #g++ examples/i2cSlave_close.cpp -lpthread -lpigpio -o bin/slaveTest_close.out
 
 
-g++ examples/basici2cSlave.cpp -lpthread -lpigpio -o bin/slaveTest.out
+g++ -std=c++11 examples/basici2cSlave.cpp -lpthread -lpigpio -o bin/slaveTest.out
 
        echo Run with command   sudo ./bin/slaveTest.out -option-
       # echo Close with command sudo ./bin/slaveTest_close.out
