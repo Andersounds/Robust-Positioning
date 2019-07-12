@@ -8,7 +8,7 @@
 
 /*
 http://abyz.me.uk/rpi/pigpio/pdif2.html#bsc_xfer
-http://abyz.me.uk/rpi/pigpio/pdif2.html#bsc_i2c
+https://raspberrypi.stackexchange.com/questions/76109/raspberry-as-an-i2c-slave
 https://robot-electronics.co.uk/i2c-tutorial
 
 There are two functions implemented for slave-i2c for the rpi
