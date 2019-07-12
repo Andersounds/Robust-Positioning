@@ -1,5 +1,6 @@
 #include <pigpio.h>
 #include <iostream>
+#include <vector>
 #include <unistd.h> //For sleep
 
 #ifndef I2C_SLAVE_RBP
@@ -68,7 +69,7 @@ robustpositioning::i2cSlave::i2cSlave(int address_){
     ctrlBitsDisable = address<<16; //Just disable
     xfer.control = ctrlBitsDisable;//Only matter that the second argument is false, because...
     bscXfer(&xfer);                       //... we just make sure that it is closed and disabled before tring to activate it
-    xfer.control = ctrlBitsEnable
+    xfer.control = ctrlBitsEnable;
     std::cout << "Initializing i2c slave...";
     int status = bscXfer(&xfer); //Activate again
     if(status<0){
@@ -82,9 +83,9 @@ robustpositioning::i2cSlave::~i2cSlave(void){
     bscXfer(&xfer);
     std::cout << "i2cSlave:: Closed i2c node" << std::endl;
     gpioTerminate();
-    cout << "Terminated GPIOs."<< std::endl;;
+    std::cout << "Terminated GPIOs."<< std::endl;;
 }
-int robustpositioning::i2cSlave::writeBuffer(uint8_t *msg,int size){
+int robustpositioning::i2cSlave::writeBuffer(const uint8_t *msg,int size){
     memcpy(&xfer.txBuf,&msg,size);      //Copy the specified memory section to txBuf
     xfer.txCnt = size;                  //Specify to low level interface size of memory section
     status = bscXfer(&xfer);            //Hand data over to BSC periphial
@@ -97,7 +98,7 @@ int robustpositioning::i2cSlave::writeBuffer(const std::vector<uint8_t>& msg){
 int robustpositioning::i2cSlave::readBuffer(uint8_t *msg){
     status = bscXfer(&xfer);//Load data from BSC periphial
     int rxBufSize = xfer.rxCnt;//Read how much there is to be read in rx buff
-    memcpy(msg,&xfer.rxBuf,rxBufSize);
+    std::memcpy(msg,&xfer.rxBuf,rxBufSize);
     return rxBufSize;
 }
 int robustpositioning::i2cSlave::readBuffer(std::vector<uint8_t>& msg){
