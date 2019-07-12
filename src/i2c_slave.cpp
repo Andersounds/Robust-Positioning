@@ -131,11 +131,36 @@ int robustpositioning::i2cSlave::TxBufferContentSize(void){
 robustpositioning::i2cSlave_decode::i2cSlave_decode(int address_){
     scales = std::vector<float>{1,10,100,1000};//Specify the scaling constants
     encodeScale  = 2;//May give this as argument in overloaded writeAndEncode
-    i2cSlave::i2cSlave(address_);//funkar?
+    //Init address
+    if(address<0 || address>127){std::cout << "i2cSlave:: invalid address: "<< address<<std::endl;return;}
+    address=address_;
+    std::cout<< "Initializing GPIO...";
+    if(gpioInitialise()<0){
+        std::cout<<"Failed.\n\ti2cSlave:: Could not initialize gpio"<<std::endl;
+        return;
+    }else{
+        std::cout<<"Done.\n\ti2cSlave:: GPIO initialized"<<std::endl;
+    }
+    ctrlBitsEnable  = (address<<16)|0x305;//Enable transmit, recieve as i2c, and enable BSC periphial
+    ctrlBitsDisable = address<<16; //Just disable
+    xfer.control = ctrlBitsDisable;//Only matter that the second argument is false, because...
+    bscXfer(&xfer);                       //... we just make sure that it is closed and disabled before tring to activate it
+    xfer.control = ctrlBitsEnable;
+    std::cout << "Initializing i2c slave...";
+    int status = bscXfer(&xfer); //Activate again
+    if(status<0){
+        std::cout<<"Failed.\n\ti2cSlave:: Could not initialize i2c slave. (Error code: " << status << ")"<<std::endl;
+    }else{
+        std::cout<<"Done.\n\ti2cSlave:: i2c slave initialized with address " << address << "."<<std::endl;
+    }
 }
 //Destructor
 robustpositioning::i2cSlave_decode::~i2cSlave_decode(void){
-    i2cSlave::~i2cSlave(address_);//funkar?=
+    xfer.control = ctrlBitsDisable;
+    bscXfer(&xfer);
+    std::cout << "i2cSlave:: Closed i2c node" << std::endl;
+    gpioTerminate();
+    std::cout << "Terminated GPIOs."<< std::endl;;
 }
 //Additional methods for special case class
 int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& values){
@@ -165,7 +190,7 @@ int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& 
     }
     return values.size();
 }
-int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<float> values){
+int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<float>& values){
     uint8_t[16] txbuffer;
     uint8_t info = (encodeScale<<1)|1;//Info byte has LSB=1
     info|= ((uint8_t)values.size())<<3;//encode message length

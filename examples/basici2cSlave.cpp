@@ -26,7 +26,7 @@ int main(int argc, char** argv){
         std::cout << "0: disable gpio and i2c on BSC peripheral" << std::endl;
         return 0;
     }else{
-        if((*argv[1] != 0) || argv[1]!=1){
+        if((*argv[1] != 0) || *argv[1]!=1){
             std::cout << "Valid arguments:" << std::endl;
             std::cout << "1: enable gpio, i2c on BSC peripheral and run example" << std::endl;
             std::cout << "0: disable gpio and i2c on BSC peripheral" << std::endl;
