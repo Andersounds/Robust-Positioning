@@ -10,12 +10,6 @@
 http://abyz.me.uk/rpi/pigpio/pdif2.html#bsc_xfer
 https://raspberrypi.stackexchange.com/questions/76109/raspberry-as-an-i2c-slave
 https://robot-electronics.co.uk/i2c-tutorial
-
-There are two functions implemented for slave-i2c for the rpi
-    int status = bscXfer(&xfer);            //This one seems to be the core function in c
-    int status = bsc_i2c(address, &xfer);   //This one seems to be a wrapper for python?
-
-
 */
 
 namespace robustpositioning{
@@ -24,32 +18,41 @@ class i2cSlave{
 public:
     i2cSlave(int);      //Constructor. Give adress as argument
     ~i2cSlave(void);    //Destructor.
-    int RxBufferContentSize(void);
-    void clearRxBuffer(void);        //Used when master is repeatedly sending new data. Clear and use next recieved
-    int readBuffer(char[]);          //Base method for reading the RX buffer
-    int writeBuffer(&);              //Base method for writing a char-array to the TX buffer. Returns number of successfully written bytes
-
-
-    status ??
+    //Read, write, clear methods
+    int writeBuffer(const uint8_t *msg,int size);       //Base method for writing a char-array to the TX buffer. Returns status
+    int writeBuffer(const std::vector<uint8_t>& msg);   //Overloaded version that accepts a c vector instead. returns status
+    int readBuffer(uint8_t *msg);                       //Base method for reading buffer. Must be sure that msg can hold all values. Returns size
+    int readBuffer(std::vector<uint8_t>&);              //Overloaded version that reads into a vector of bytes. Returns size
+    void clearRxBuffer(void);                           //Used when master is repeatedly sending new data. Clear and use next recieved. Essentially read buffer and discard data
+    //Status readings
+    int RxBufferContentSize(void);//This and the ones below have to be called after a read or write operation is attempted
+    int TxBufferContentSize(void);//
+    int bytesWrittenToTxBuff(void);//
+    bool rxBusy(void);//
+    bool txBusy(void);//
+    int status;//http://abyz.me.uk/rpi/pigpio/cif.html#bscXfer
 private:
     bsc_xfer_t xfer;    //Struct to control data flow
     int address;        //Address of slave device
-    int ctrlBitsEnable;
-    int ctrlBitsDisable;
+    uint32_t ctrlBitsEnable;    //Bit sequence to write to BSC peripheral to enable
+    uint32_t ctrlBitsDisable;   //Bit sequence to write to BSC peripheral to disable
 };
 
-//Struct to easily convert buffer
-
 //Special class inherited from i2cSlave, with custom endoce/decode functions for robustpositioning-system
-class i2cSlave_decode:i2cSlave{
+class i2cSlave_decode: public i2cSlave{
 public:
-    int readAndDecodeBuffer(float[4]);
-    int writeAndEncodeBuffer();     //Special case method for encoding info-x-y-z-yaw - values and writing them to buffer
+    int readAndDecodeBuffer(std::vector<float>&);
+    int writeAndEncodeBuffer(std::vector<float>&);     //Special case method for encoding info-x-y-z-yaw - values and writing them to buffer
+    int encodeScale;// The scale to use when converting the floats to ints. floor(float*scale)
+    int msgSizeRX;    //Number of floats that are in each payload. Excluding the leading 8 bit info byte
+    int msgSizeTX;
 private:
-
+    std::vector<float> decodeScales;
 };
 }
 #endif
+
+// Methods for base i2c slave class
 robustpositioning::i2cSlave::i2cSlave(int address_){
     //Init address
     if(address<0 || address>127){std::cout << "i2cSlave:: invalid address: "<< address<<std::endl;return;}
@@ -81,34 +84,116 @@ robustpositioning::i2cSlave::~i2cSlave(void){
     gpioTerminate();
     cout << "Terminated GPIOs."<< std::endl;;
 }
+int robustpositioning::i2cSlave::writeBuffer(uint8_t *msg,int size){
+    memcpy(&xfer.txBuf,&msg,size);      //Copy the specified memory section to txBuf
+    xfer.txCnt = size;                  //Specify to low level interface size of memory section
+    status = bscXfer(&xfer);            //Hand data over to BSC periphial
+    return bytesWrittenToTxBuff();      //Return amount of successfully copied bytes
+}
+int robustpositioning::i2cSlave::writeBuffer(const std::vector<uint8_t>& msg){
+    int size = msg.size();
+    return writeBuffer(msg.data(),size);//Give pointer to vector first element address and size of msg
+}
+int robustpositioning::i2cSlave::readBuffer(uint8_t *msg){
+    status = bscXfer(&xfer);//Load data from BSC periphial
+    int rxBufSize = xfer.rxCnt;//Read how much there is to be read in rx buff
+    memcpy(msg,&xfer.rxBuf,rxBufSize);
+    return rxBufSize;
+}
+int robustpositioning::i2cSlave::readBuffer(std::vector<uint8_t>& msg){
+    uint8_t[16] msg_c_array;//Maximum size of buffer is 16 bytes
+    msg.clear();
+    int size = readBuffer(msg_c_array);
+    for(int i=0;i<size;i++){
+        msg.push_back(msg_c_array[i]);
+    }
+    return size;
+}
+void robustpositioning::i2cSlave::clearRxBuffer(void){
+    uint8_t[16] msg_c_array;
+    readBuffer(msg_c_array);
+}
+int robustpositioning::i2cSlave::bytesWrittenToTxBuff(void){
+    return (status>>16)&0b11111;
+}
 int robustpositioning::i2cSlave::RxBufferContentSize(void){
     return xfer.rxCnt;
 }
+int robustpositioning::i2cSlave::TxBufferContentSize(void){
+    return xfer.txCnt;
+}
 
+//Constructor If this does not work then rewrite constructor Then also bsc_xfer_t xfer needs tp be made public
+robustpositioning::i2cSlave_decode::i2cSlave_decode(int address_){
+    scales = std::vector<float>{1,10,100,1000};//Specify the scaling constants
+    encodeScale  = 2;//May give this as argument in overloaded writeAndEncode
+    i2cSlave::i2cSlave(address_);//funkar?
+}
+//Destructor
+robustpositioning::i2cSlave_decode::~i2cSlave_decode(void){
+    i2cSlave::~i2cSlave(address_);//funkar?=
+}
+//Additional methods for special case class
+int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& values){
+    uint8_t[16] rxbuffer;             //Create array able to hold whole buffer
+    int rxSize = readBuffer(rxbuffer);//Read rx buffer
+    int infoByte = -1;
+    for(int i=0;i<rxSize;i++){        //Find the first info byte
+        if(rxbuffer[i]&0x01){
+            infoByte = i;
+        }
+    }
+    if(infoByte<0){return -1;}//If no infobyte has been found, return
+    values.clear();
+    int sgnByte   = infoByte+1; //Sign-byte is the one after infobyte always
+    int startByte = infoByte+2; //First datafield
+    int readableBytes = rxSize-infoByte-2;//Number of databytes
+    int floatNmbr = 0;          //Number of the decoded float
+    int decodeScale = (infoByte>>1)&0b111;
+    for(int i=startByte;i<rxSize-1;i+=2){//go through all complete data-pairs. if there is an odd number of data fields then skip the last one
+        int value_abs_int = (int)((rxbuffer[i]<<7)|(rxbuffer[i+1]>>1));//build HB and LB to a int
+        if((rxBuffer[sgnByte]>>(floatNmbr+1))&0b1){
+            value_abs_int*=(-1);//value is negative
+        }
+        float value = (float)value_abs_int / scales[decodeScale];
+        values.push_back(value);
+        floatNmbr++;
+    }
+    return values.size();
+}
+int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<float> values){
+    uint8_t[16] txbuffer;
+    uint8_t info = (encodeScale<<1)|1;//Info byte has LSB=1
+    uint8_t sign = 0;
+    int size = values.size()*2+2;//two bytes for every value, one info byte and one sign byte
+    int i = 2;//Start set data at index 2
+    for(float value:values){
+        uint16_t unsignedScaledValue = (uint16_t) abs( (int)(value*scales[encodeScale]) );//
+        uint8_t HB = (unsignedScaledValue>>7)&0xFE; //use 7 bits and set LSB to 0
+        uint8_t LB = (unsignedScaledValue<<1)&0xFE; //Shift one bit and make sure LSB is 0
+        sign |= ( (value<0)<<(i+1) ); //Mask in the sign bit in the sign byte
+        txbuffer[i] = HB;
+        txbuffer[i+1] = LB;
+        i+=2;
+    }
+    txbuffer[1] = sign;
+    txbugger[0] = info;
+    return writeBuffer(txbuffer,size);
+}
+/*
+//Info byte
+07 06 05 04 03 02 01 00
+-  -  -  -  -  S  S  ID
+//Sign byte
+07 06 05 04 03 02 01 00
+            S3 S2 S1 ID
+//Data bytes
+07 - 01              00
+<data>               ID
+//Legend
+ID:     bit identifying the info-byte. 1: info byte, 0: data or sign byte
+S:      bits encoding the scale of floats. 00: 1, 01:10, 10:100, 11:1000
+SX:     Bit identifying the sign of float X. 1: neg, 0: pos
 
-    /*Control bits definition:
-
-    Excerpt from http://abyz.me.uk/rpi/pigpio/cif.html#bscXfer regarding the control bits:
-
-    22 21 20 19 18 17 16 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
-    a  a  a  a  a  a  a  -  -  IT HC TF IR RE TE BK EC ES PL PH I2 SP EN
-
-    Bits 0-13 are copied unchanged to the BSC CR register. See pages 163-165 of the Broadcom
-    peripherals document for full details.
-
-    aaaaaaa defines the I2C slave address (only relevant in I2C mode)
-    IT  invert transmit status flags
-    HC  enable host control
-    TF  enable test FIFO
-    IR  invert receive status flags
-    RE  enable receive
-    TE  enable transmit
-    BK  abort operation and clear FIFOs
-    EC  send control register as first I2C byte
-    ES  send status register as first I2C byte
-    PL  set SPI polarity high
-    PH  set SPI phase high
-    I2  enable I2C mode
-    SP  enable SPI mode
-    EN  enable BSC peripheral
-    */
+Each float is encoded as 7 high bits and 7 low bits in that order.
+*/
