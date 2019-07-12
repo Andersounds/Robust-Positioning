@@ -69,8 +69,8 @@ bool testRX =true;
         std::cout << "There are " << rxBufSize << " available bytes in rx buffer...";
         memcpy(&data,&xfer.rxBuf,rxBufSize);
         std::cout << "Read: ";
-        for(int j=0;j<rxBufSize){
-            std::cout << std::bitset<8>(data[j]) << ", " <<;
+        for(int j=0;j<rxBufSize;j++){
+            std::cout << std::bitset<8>(data[j]) << ", ";
         }
         std::cout << std::endl;
     }else{
