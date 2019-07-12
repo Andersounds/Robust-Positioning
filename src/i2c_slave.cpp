@@ -43,7 +43,7 @@ public:
 //Special class inherited from i2cSlave, with custom endoce/decode functions for robustpositioning-system
 class i2cSlave_decode: public i2cSlave{
 public:
-    i2cSlave_decode(int address_):i2cSlave(address_);
+    i2cSlave_decode(int address_);
     ~i2cSlave_decode(void);
     int readAndDecodeBuffer(std::vector<float>&);
     int writeAndEncodeBuffer(const std::vector<float>&);     //Special case method for encoding info-x-y-z-yaw - values and writing them to buffer
@@ -57,7 +57,7 @@ private:
 #endif
 
 // Methods for base i2c slave class
-robustpositioning::i2cSlave::i2cSlave(int address_){
+robustpositioning::i2cSlave::i2cSlave(int address_):i2cSlave(address_){
     //Init address
     if(address<0 || address>127){std::cout << "i2cSlave:: invalid address: "<< address<<std::endl;return;}
     address=address_;
