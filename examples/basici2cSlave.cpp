@@ -5,6 +5,17 @@
 
 // give  a 1 enables. give a 0 closes gpios
 // use cin to do clean exit
+void closeSlave() {
+    gpioInitialise();
+    std::cout << "Initialized GPIOs\n";
+    bsc_xfer_t xfer; // Struct to control data flow
+    xfer.control = 0;
+    bscXfer(&xfer);
+    std::cout << "Closed slave.\n";
+    gpioTerminate();
+    std::cout << "Terminated GPIOs." << std::endl;
+}
+
 
 
 int main(int argc, char** argv){
@@ -15,7 +26,7 @@ int main(int argc, char** argv){
         std::cout << "0: disable gpio and i2c on BSC peripheral" << std::endl;
         return 0;
     }else{
-        if((argv[1] != 0) || argv[1]!=1){
+        if((*argv[1] != 0) || argv[1]!=1){
             std::cout << "Valid arguments:" << std::endl;
             std::cout << "1: enable gpio, i2c on BSC peripheral and run example" << std::endl;
             std::cout << "0: disable gpio and i2c on BSC peripheral" << std::endl;
@@ -42,14 +53,4 @@ int main(int argc, char** argv){
         usleep(3000000);
     }
 
-}
-
-void closeSlave() {
-    gpioInitialise();
-    cout << "Initialized GPIOs\n";
-    xfer.control = 0;
-    bscXfer(&xfer);
-    cout << "Closed slave.\n";
-    gpioTerminate();
-    cout << "Terminated GPIOs.\n";
 }

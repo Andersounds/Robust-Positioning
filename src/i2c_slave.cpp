@@ -1,6 +1,7 @@
 #include <pigpio.h>
 #include <iostream>
 #include <vector>
+#include <cstring> //for memcpy
 #include <unistd.h> //For sleep
 
 #ifndef I2C_SLAVE_RBP
@@ -42,13 +43,15 @@ private:
 //Special class inherited from i2cSlave, with custom endoce/decode functions for robustpositioning-system
 class i2cSlave_decode: public i2cSlave{
 public:
+    i2cSlave_decode(int);
+    ~i2cSlave_decode(void);
     int readAndDecodeBuffer(std::vector<float>&);
-    int writeAndEncodeBuffer(std::vector<float>&);     //Special case method for encoding info-x-y-z-yaw - values and writing them to buffer
+    int writeAndEncodeBuffer(const std::vector<float>&);     //Special case method for encoding info-x-y-z-yaw - values and writing them to buffer
     int encodeScale;// The scale to use when converting the floats to ints. floor(float*scale)
     int msgSizeRX;    //Number of floats that are in each payload. Excluding the leading 8 bit info byte
     int msgSizeTX;
 private:
-    std::vector<float> decodeScales;
+    std::vector<float> scales;
 };
 }
 #endif
@@ -86,7 +89,7 @@ robustpositioning::i2cSlave::~i2cSlave(void){
     std::cout << "Terminated GPIOs."<< std::endl;;
 }
 int robustpositioning::i2cSlave::writeBuffer(const uint8_t *msg,int size){
-    memcpy(&xfer.txBuf,&msg,size);      //Copy the specified memory section to txBuf
+    std::memcpy(&xfer.txBuf,&msg,size);      //Copy the specified memory section to txBuf
     xfer.txCnt = size;                  //Specify to low level interface size of memory section
     status = bscXfer(&xfer);            //Hand data over to BSC periphial
     return bytesWrittenToTxBuff();      //Return amount of successfully copied bytes
@@ -102,7 +105,7 @@ int robustpositioning::i2cSlave::readBuffer(uint8_t *msg){
     return rxBufSize;
 }
 int robustpositioning::i2cSlave::readBuffer(std::vector<uint8_t>& msg){
-    uint8_t[16] msg_c_array;//Maximum size of buffer is 16 bytes
+    uint8_t msg_c_array[16];//Maximum size of buffer is 16 bytes
     msg.clear();
     int size = readBuffer(msg_c_array);
     for(int i=0;i<size;i++){
@@ -111,7 +114,7 @@ int robustpositioning::i2cSlave::readBuffer(std::vector<uint8_t>& msg){
     return size;
 }
 void robustpositioning::i2cSlave::clearRxBuffer(void){
-    uint8_t[16] msg_c_array;
+    uint8_t msg_c_array[16];
     readBuffer(msg_c_array);
 }
 int robustpositioning::i2cSlave::bytesWrittenToTxBuff(void){
@@ -136,7 +139,7 @@ robustpositioning::i2cSlave_decode::~i2cSlave_decode(void){
 }
 //Additional methods for special case class
 int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& values){
-    uint8_t[16] rxbuffer;             //Create array able to hold whole buffer
+    uint8_t rxbuffer[16];             //Create array able to hold whole buffer
     int rxSize = readBuffer(rxbuffer);//Read rx buffer
     int infoByte = -1;
     for(int i=0;i<rxSize;i++){        //Find the first info byte
