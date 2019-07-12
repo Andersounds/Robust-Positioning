@@ -182,7 +182,7 @@ int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& 
     int decodeScale = (infoByte>>1)&0b111;
     for(int i=startByte;i<rxSize-1;i+=2){//go through all complete data-pairs. if there is an odd number of data fields then skip the last one
         int value_abs_int = (int)((rxbuffer[i]<<7)|(rxbuffer[i+1]>>1));//build HB and LB to a int
-        if((rxBuffer[sgnByte]>>(floatNmbr+1))&0b1){
+        if((rxbuffer[sgnByte]>>(floatNmbr+1))&0b1){
             value_abs_int*=(-1);//value is negative
         }
         float value = (float)value_abs_int / scales[decodeScale];
@@ -192,7 +192,7 @@ int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& 
     return values.size();
 }
 int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<float>& values){
-    uint8_t[16] txbuffer;
+    uint8_t txbuffer[16];
     uint8_t info = (encodeScale<<1)|1;//Info byte has LSB=1
     info|= ((uint8_t)values.size())<<3;//encode message length
     uint8_t sign = 0;
@@ -209,7 +209,7 @@ int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<f
         i+=2;
     }
     txbuffer[1] = sign;
-    txbugger[0] = info;
+    txbuffer[0] = info;
     return writeBuffer(txbuffer,size);
 }
 /*
