@@ -33,7 +33,7 @@ public:
     bool rxBusy(void);//
     bool txBusy(void);//
     int status;//http://abyz.me.uk/rpi/pigpio/cif.html#bscXfer
-private:
+//private:
     bsc_xfer_t xfer;    //Struct to control data flow
     int address;        //Address of slave device
     uint32_t ctrlBitsEnable;    //Bit sequence to write to BSC peripheral to enable
@@ -131,6 +131,7 @@ int robustpositioning::i2cSlave::TxBufferContentSize(void){
 robustpositioning::i2cSlave_decode::i2cSlave_decode(int address_){
     scales = std::vector<float>{1,10,100,1000};//Specify the scaling constants
     encodeScale  = 2;//May give this as argument in overloaded writeAndEncode
+
     //Init address
     if(address<0 || address>127){std::cout << "i2cSlave:: invalid address: "<< address<<std::endl;return;}
     address=address_;
