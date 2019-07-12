@@ -57,7 +57,7 @@ private:
 #endif
 
 // Methods for base i2c slave class
-robustpositioning::i2cSlave::i2cSlave(int address_):i2cSlave(address_){
+robustpositioning::i2cSlave::i2cSlave(int address_){
     //Init address
     if(address<0 || address>127){std::cout << "i2cSlave:: invalid address: "<< address<<std::endl;return;}
     address=address_;
@@ -128,7 +128,7 @@ int robustpositioning::i2cSlave::TxBufferContentSize(void){
 }
 
 //Constructor If this does not work then rewrite constructor Then also bsc_xfer_t xfer needs tp be made public
-robustpositioning::i2cSlave_decode::i2cSlave_decode(int address_){
+robustpositioning::i2cSlave_decode::i2cSlave_decode(int address_):i2cSlave(address_){
     scales = std::vector<float>{1,10,100,1000};//Specify the scaling constants
     encodeScale  = 2;//May give this as argument in overloaded writeAndEncode
 
