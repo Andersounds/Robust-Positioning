@@ -63,6 +63,7 @@ bool testRX =true;
     i=1;
     uint8_t data[16]; //Make an array of 16 bytes to be sure that the buffer fits
 	//memcpy(&xfer.txBuf,&data,2);
+    int status_return = bscXfer(&xfer);//See what happened:
     int rxBufSize = xfer.rxCnt;//Read how much there is to be read in rx buff
     if(rxBufSize>0){
         std::cout << "There are " << rxBufSize << " available bytes in rx buffer...";
