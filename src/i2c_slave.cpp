@@ -164,9 +164,11 @@ int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& 
 int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<float> values){
     uint8_t[16] txbuffer;
     uint8_t info = (encodeScale<<1)|1;//Info byte has LSB=1
+    info|= ((uint8_t)values.size())<<3;//encode message length
     uint8_t sign = 0;
     int size = values.size()*2+2;//two bytes for every value, one info byte and one sign byte
     int i = 2;//Start set data at index 2
+
     for(float value:values){
         uint16_t unsignedScaledValue = (uint16_t) abs( (int)(value*scales[encodeScale]) );//
         uint8_t HB = (unsignedScaledValue>>7)&0xFE; //use 7 bits and set LSB to 0
@@ -183,7 +185,7 @@ int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<f
 /*
 //Info byte
 07 06 05 04 03 02 01 00
--  -  -  -  -  S  S  ID
+-  -  A  A  A  S  S  ID
 //Sign byte
 07 06 05 04 03 02 01 00
             S3 S2 S1 ID
@@ -193,6 +195,7 @@ int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<f
 //Legend
 ID:     bit identifying the info-byte. 1: info byte, 0: data or sign byte
 S:      bits encoding the scale of floats. 00: 1, 01:10, 10:100, 11:1000
+A:      bits encoding the message length. 1-7 bytes.
 SX:     Bit identifying the sign of float X. 1: neg, 0: pos
 
 Each float is encoded as 7 high bits and 7 low bits in that order.
