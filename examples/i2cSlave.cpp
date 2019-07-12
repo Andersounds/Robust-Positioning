@@ -60,6 +60,7 @@ bool testTX =false;
     }
 bool testRX =true;
     while(testRX){
+    i=1;
     uint8_t data[16]; //Make an array of 16 bytes to be sure that the buffer fits
 	//memcpy(&xfer.txBuf,&data,2);
     int rxBufSize = xfer.rxCnt;//Read how much there is to be read in rx buff
@@ -67,6 +68,8 @@ bool testRX =true;
         std::cout << "There are " << rxBufSize << " available bytes in rx buffer...";
         memcpy(&data,&xfer.rxBuf,rxBufSize);
         std::cout << "Read." << std::endl;
+    }else{
+        std::cout << "No available data in rx buf." << std::endl;
     }
     //int status_return = bscXfer(&xfer);
 	//std::cout << "Status: "<< std::bitset<30>(status_return) << std::endl;
