@@ -40,8 +40,9 @@ else
 
 
 //Test transmit buffer
+bool testTX =false;
     uint8_t i = 1;
-    while(1){
+    while(testTX){
         uint8_t data[i] = {(uint8_t)i,(uint8_t)i+1};
 	memcpy(&xfer.txBuf,&data,2);
         //xfer.txBuf = data;
@@ -57,6 +58,26 @@ else
 
         i++;
     }
+bool testRX =true;
+    while(testRX){
+    uint8_t data[16]; //Make an array of 16 bytes to be sure that the buffer fits
+	//memcpy(&xfer.txBuf,&data,2);
+    int rxBufSize = xfer.rxCnt;//Read how much there is to be read in rx buff
+    if(rxBufSize>0){
+        std::cout << "There are " << rxBufSize << " available bytes in rx buffer...";
+        memcpy(&data,&xfer.rxBuf,rxBufSize);
+        std::cout << "Read." << std::endl;
+    }
+    //int status_return = bscXfer(&xfer);
+	//std::cout << "Status: "<< std::bitset<30>(status_return) << std::endl;
+	int secsleep = 10;
+        for(int delay = 1;delay<secsleep;delay++){
+            std::cout << "Sleeping " <<(int)i << "/"<< secsleep << "seconds." << std::endl;
+            usleep(1000000);
+        }
+        i++;
+    }
+
 
     if (status >= 0)
     {
