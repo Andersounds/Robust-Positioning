@@ -159,7 +159,7 @@ int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& 
     int floatNmbr = 0;          //Number of the decoded float
     int decodeScale = (infoByte>>1)&0b111;
     for(int i=startByte;i<rxSize-1;i+=2){//go through all complete data-pairs. if there is an odd number of data fields then skip the last one
-        int value_abs_int = (int)((rxbuffer[i]<<7)|(rxbuffer[i+1]>>1));//build HB and LB to a int
+        int value_abs_int = (int)((rxbuffer[i]<<6)|(rxbuffer[i+1]>>1));//build HB and LB to a int
         if((rxbuffer[sgnByte]>>(floatNmbr+1))&0b1){
             value_abs_int*=(-1);//value is negative
         }
