@@ -57,7 +57,8 @@ int main(int argc, char** argv){
         int writtenBytes = i2cComm.writeAndEncodeBuffer(valuesTX);
         if(writtenBytes>0){
             std::cout << "Wrote " << writtenBytes << " bytes to tx buffer" << std::endl;
-        }else{ std::cout << "Could not write to tx buffer " << std::endl;}
+        }else{ std::cout << "Could not write to tx buffer " << std::endl;
+                std::cout << "Tx buf content size: " <<i2cComm.TxBufferContentSize() << std::endl;}
         usleep(3000000);
     }
 
