@@ -59,7 +59,7 @@ private:
 // Methods for base i2c slave class
 robustpositioning::i2cSlave::i2cSlave(int address_){
     //Init address
-    if(address<0 || address>127){std::cout << "i2cSlave:: invalid address: "<< address<<std::endl;return;}
+    if(address_<0 || address_>127){std::cout << "i2cSlave:: invalid address: "<< address_<<std::endl;return;}
     address=address_;
     std::cout<< "Initializing GPIO...";
     if(gpioInitialise()<0){
