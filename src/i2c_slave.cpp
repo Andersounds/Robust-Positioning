@@ -179,6 +179,7 @@ int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<f
 
     for(float value:values){
         uint16_t unsignedScaledValue = (uint16_t) abs( (int)(value*scales[encodeScale]) );//
+        std::cout << "unsigned scaled value: " << unsignedScaledValue << std::endl;
         uint8_t HB = (unsignedScaledValue>>7)&0xFE; //use 7 bits and set LSB to 0
         uint8_t LB = (unsignedScaledValue<<1)&0xFE; //Shift one bit and make sure LSB is 0
         sign |= ( (value<0)<<(i+1) ); //Mask in the sign bit in the sign byte
