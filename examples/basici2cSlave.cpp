@@ -40,7 +40,7 @@ int main(int argc, char** argv){
    	 }
     }
     //initialize i2c slave object with the inherited encode/decode class
-    const int slaveAddress = 0x03;
+    const int slaveAddress = 0x04;
     robustpositioning::i2cSlave_decode i2cComm(slaveAddress);
     std::vector<float> values;
     std::vector<float> valuesTX{1.3,2.5,0.8};
