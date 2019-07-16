@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstring> //for memcpy
 #include <unistd.h> //For sleep
+#include <bitset> //For cout binary
 
 #ifndef I2C_SLAVE_RBP
 #define I2C_SLAVE_RBP
@@ -89,7 +90,8 @@ robustpositioning::i2cSlave::~i2cSlave(void){
     std::cout << "Terminated GPIOs."<< std::endl;;
 }
 int robustpositioning::i2cSlave::writeBuffer(const uint8_t *msg,int size){
-    std::memcpy(&xfer.txBuf,&msg,size);      //Copy the specified memory section to txBuf
+//    std::memcpy(&xfer.txBuf,&msg,size);      //Copy the specified memory section to txBuf
+    std::memcpy(&xfer.txBuf, msg,size); //Did I pass pointer before? wrong?
     xfer.txCnt = size;                  //Specify to low level interface size of memory section
     status = bscXfer(&xfer);            //Hand data over to BSC periphial
     return bytesWrittenToTxBuff();      //Return amount of successfully copied bytes
@@ -182,8 +184,9 @@ int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<f
     for(float value:values){
         uint16_t unsignedScaledValue = (uint16_t) abs( (int)(value*scales[encodeScale]) );//
         std::cout << "unsigned scaled value: " << unsignedScaledValue << std::endl;
-        uint8_t HB = (unsignedScaledValue>>7)&0xFE; //use 7 bits and set LSB to 0
+        uint8_t HB = (unsignedScaledValue>>6)&0xFE; //use 7 bits and set LSB to 0
         uint8_t LB = (unsignedScaledValue<<1)&0xFE; //Shift one bit and make sure LSB is 0
+	std::cout << "HB: " <<(int)HB << ", LB: " << (int)LB << std::endl;
         sign |= ( (value<0)<<(i+1) ); //Mask in the sign bit in the sign byte
         txbuffer[i] = HB;
         txbuffer[i+1] = LB;
@@ -191,6 +194,12 @@ int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<f
     }
     txbuffer[1] = sign;
     txbuffer[0] = info;
+
+    for(int j=0;j<8;j++){
+        std::cout << "BIT " << j << ": " <<std::bitset<8>( txbuffer[j]) << std::endl;
+    }
+
+
     return writeBuffer(txbuffer,size);
 }
 /*
