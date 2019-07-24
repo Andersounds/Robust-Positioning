@@ -45,7 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include "../include/raspicam-0.1.6/src/raspicam_cv.h"
+//#include "../include/raspicam-0.1.6/src/raspicam_cv.h"
+#include "../include/raspicam-0.1.6/src/raspicam_still_cv.h"
 using namespace std;
 
 raspicam::RaspiCam_Still_Cv Camera;
@@ -67,12 +68,16 @@ void usage() {
 
 
 int main ( int argc, char *argv[] ) {
-    usage();
-
+//    usage();
+    if(argc!=2){
+    std::cout << "Give exactly one argument specifying file name including extension."<< std::endl;
+    }
     //int width = getParamVal ( "-w",argc,argv,2592 );//define width
     //int height =getParamVal ( "-h",argc,argv,1944 );//define height
-    int width = getParamVal ( "-w",argc,argv,640 );//define width
-    int height =getParamVal ( "-h",argc,argv,480 );//define height
+    //int width = getParamVal ( "-w",argc,argv,640 );//define width
+    //int height =getParamVal ( "-h",argc,argv,480 );//define height
+    int width =2592;// 480;
+    int height = 1944;//640;
     cout << "Initializing ..."<<width<<"x"<<height<<endl;
     Camera.set ( CV_CAP_PROP_FRAME_WIDTH, width );
     Camera.set ( CV_CAP_PROP_FRAME_HEIGHT, height );
@@ -84,8 +89,8 @@ int main ( int argc, char *argv[] ) {
         return -1;
     }
     Camera.retrieve ( image );
-    cout<<"saving picture.jpg"<<endl;
+    cout<<"saving picture: "<< argv[1] <<endl;
 
-    cv::imwrite ( "picture.jpg",image );
+    cv::imwrite ( argv[1],image );
     return 0;
 }
