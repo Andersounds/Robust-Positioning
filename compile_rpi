@@ -102,6 +102,24 @@ export LD_LIBRARY_PATH="/usr/local/lib"
        echo Run with command ./bin/speedtest.out
 fi
 
+## get images. used for calibration
+
+if [ ”$1” = ”still” ];then
+        #
+        echo Compiling example: get still images
+
+g++ -std=c++11  \
+g++ `pkg-config --cflags --libs opencv` \
+-I/opt/vc/include -L/opt/vc/lib \
+-lraspicam \
+-lraspicam_cv \
+-lmmal \
+-lmmal_core \
+-lmmal_util \
+examples/getStillImages_rpi.cpp \
+-o bin/getstill.out
+
+fi
 
 ## i2c test functions
 if [ ”$1” = ”i2c” ];then

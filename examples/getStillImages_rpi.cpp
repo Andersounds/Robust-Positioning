@@ -1,9 +1,9 @@
-#include <iostream>
-#include <opencv2/opencv.hpp>
-#include "../src/videoStream.hpp"
-#include "../src/logger.hpp"
-#include "../src/timeStamp.cpp"
-#define PI 3.1416
+//#include <iostream>
+//#include <opencv2/opencv.hpp>
+//#include "../src/videoStream.hpp"
+//#include "../src/logger.hpp"
+//#include "../src/timeStamp.cpp"
+//#define PI 3.1416
 
 
 /**********************************************************
