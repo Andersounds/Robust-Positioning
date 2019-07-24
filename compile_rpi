@@ -109,7 +109,7 @@ if [ ”$1” = ”still” ];then
         echo Compiling example: get still images
 
 g++ -std=c++11  \
-g++ `pkg-config --cflags --libs opencv` \
+`pkg-config --cflags --libs opencv` \
 -I/opt/vc/include -L/opt/vc/lib \
 -lraspicam \
 -lraspicam_cv \
@@ -119,6 +119,8 @@ g++ `pkg-config --cflags --libs opencv` \
 examples/getStillImages_rpi.cpp \
 -o bin/getstill.out
 
+echo Run with command ./bin/getstill.out
+echo add lib path with e x p o r t LD_LIBRARY_PATH="/usr/local/lib"
 fi
 
 ## i2c test functions
