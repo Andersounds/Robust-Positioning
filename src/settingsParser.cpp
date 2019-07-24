@@ -230,10 +230,10 @@ int set::settings::setAllDefault(void){
     //General values that are needed
     setDefault("FRAME_RESOLUTION_X", (int) 0,"In pixles. Used to specify RPI video input res. Specify here or hardcode?");
     setDefault("FRAME_RESOLUTION_Y", (int) 0," ");
-    setDefault("K_MAT_cx", (float) 0," ");
-    setDefault("K_MAT_cy", (float) 0," ");
-    setDefault("K_MAT_fx", (float) 0," ");
-    setDefault("K_MAT_fy", (float) 0," ");
+    setDefault("K_MAT_cx", (float) 320,"For image resolution 640 in x dir");
+    setDefault("K_MAT_cy", (float) 240,"For image resolution 480 in y dir");
+    setDefault("K_MAT_fx", (float) 607.13635578,"For image resolution 640 in x dir");
+    setDefault("K_MAT_fy", (float) 607.13635578,"For image resolution 480 in y dir");
     setDefault("T_MAT_1_1", (float) 0," ");
     setDefault("T_MAT_1_2", (float) 0," ");
     setDefault("T_MAT_1_3", (float) 0," ");
@@ -409,3 +409,26 @@ bool set::settings::constructSettingsStruct(void){
     data.anchorPath = settingsS["PATH_TO_ARUCO_DATABASE"];
     return true;
 }
+
+
+
+/*
+Resolution:
+2592*1944
+Camera matrix: K= [2458.902240893194, 0, 1296;
+ 0, 2458.902240893194, 972;
+ 0, 0, 1]
+-> 640*480
+Camera matrix: K= [607.13635578, 0, 320;
+ 0, 607.13635578, 240;
+ 0, 0, 1]
+
+
+
+
+Distortion coefficients: [0.2486857357354474;
+ -1.452670730319596;
+ 0;
+ 0;
+ 2.638858641887943]
+*/
