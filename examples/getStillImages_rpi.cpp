@@ -69,8 +69,10 @@ void usage() {
 int main ( int argc, char *argv[] ) {
     usage();
 
-    int width = getParamVal ( "-w",argc,argv,2592 );//define width
-    int height =getParamVal ( "-h",argc,argv,1944 );//define height
+    //int width = getParamVal ( "-w",argc,argv,2592 );//define width
+    //int height =getParamVal ( "-h",argc,argv,1944 );//define height
+    int width = getParamVal ( "-w",argc,argv,640 );//define width
+    int height =getParamVal ( "-h",argc,argv,480 );//define height
     cout << "Initializing ..."<<width<<"x"<<height<<endl;
     Camera.set ( CV_CAP_PROP_FRAME_WIDTH, width );
     Camera.set ( CV_CAP_PROP_FRAME_HEIGHT, height );
