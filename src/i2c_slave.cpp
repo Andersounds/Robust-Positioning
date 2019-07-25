@@ -46,6 +46,7 @@ class i2cSlave_decode: public i2cSlave{
 public:
     i2cSlave_decode(int address_);
     ~i2cSlave_decode(void);
+    void emptyRxBuffer(void);
     int readAndDecodeBuffer(std::vector<float>&);
     int writeAndEncodeBuffer(const std::vector<float>&);     //Special case method for encoding info-x-y-z-yaw - values and writing them to buffer
     int encodeScale;// The scale to use when converting the floats to ints. floor(float*scale)
@@ -202,6 +203,13 @@ int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<f
 
     return writeBuffer(txbuffer,size);
 }
+
+/* This method is used to read and discard all contents of the RX buffer in order to recieve new values
+ */
+void robustpositioning::i2cSlave_decode::emptyRxBuffer(void){
+    readAndDecodeBuffer(std::vector<float> discardValues);
+}
+
 /*
 //Info byte
 07 06 05 04 03 02 01 00
