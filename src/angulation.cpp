@@ -114,26 +114,6 @@ int ang::angulation::calculate(std::vector<cv::Mat_<float>>& q, std::vector<cv::
     return az::azipe(v_m,q_m,pos,yaw,roll,pitch);
 }
 
-/*Overloaded version of calculate. It takes the mean value of the provided vector<point2f> for each ID and then
- * calls standard caluclate-method
- * This is used if instead of marker location, a vector of the locations of all marker corners are given. mid point is then mean point
- */
-/*int ang::angulation::calculate(std::vector<std::vector<cv::Point2f>>& cornerLocations, std::vector<int>& IDs,std::vector<bool>& mask,cv::Mat_<float>& pos,float& yaw, float roll,float pitch){
-    std::vector<cv::Point2f> anchorLocations;
-    for(int i=0;i<cornerLocations.size();i++){//Go through all anchors
-        std::vector<cv::Point2f>::iterator cornerIt = cornerLocations[i].begin();
-        cv::Point2f location(0,0);
-        while(cornerIt != cornerLocations[i].end()){
-            location += *cornerIt;
-            cornerIt++;
-        }
-        location.x /= cornerLocations[i].size();
-        location.y /= cornerLocations[i].size();
-        anchorLocations.push_back(location);
-    }
-    //Do standard function call to calculate
-    return calculate(anchorLocations,IDs,mask,pos,yaw,roll,pitch);
-}*/
 /*Converts a vector of camera pixel coordinates to a vector of uLOS vectors expressed as Mat_<float>
  *
  */
@@ -145,7 +125,7 @@ void ang::angulation::pix2uLOS(const std::vector<cv::Point2f>& points,std::vecto
     while(it!=points.end()){
         // Create a mat_<float> with pixel coordinates and z coordinte = 1
         cv::Mat_<float> point_mat = cv::Mat_<float>::ones(3,1);
-        cv::Point2f undistortedPoint = unDistort(*it);
+        cv::Point2f undistortedPoint = unDistort(*it);//Compensate for the radial distortion
         point_mat(0,0) = undistortedPoint.x;
         point_mat(1,0) = undistortedPoint.y;
         //Transform to 3d image plane coordinates, then transfrom from image frame to uav frame
@@ -239,7 +219,7 @@ void ang::angulation::setTmat(cv::Mat_<float> T_){
 }
 /* Interface method to set distortion coefficients for barrel distortion compensation
 */
-void ang::angulation::setTmat(float k1, float k2, float k3){
+void ang::angulation::setDistortCoefficents(float k1, float k2, float k3){
     k1_barrel = k1;
     k2_barrel = k2;
     k3_barrel = k3;
