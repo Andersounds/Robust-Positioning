@@ -243,6 +243,9 @@ int set::settings::setAllDefault(void){
     setDefault("T_MAT_3_1", (float) 0," ");
     setDefault("T_MAT_3_2", (float) 0," ");
     setDefault("T_MAT_3_3", (float) 0," ");
+    setDefault("DIST_COEFF_K1", (float) 0.2486857357354474,"Barrel distortion coefficient k1");
+    setDefault("DIST_COEFF_K2", (float) -1.452670730319596,"Barrel distortion coefficient k2");
+    setDefault("DIST_COEFF_K3", (float) 2.638858641887943,"Barrel distortion coefficient k3");
 
     setDefault("PATH_TO_ARUCO_DATABASE", "database.txt" ," ");
     setDefault("ARUCO_DICT_TYPE", (int) 0," ");
@@ -413,6 +416,7 @@ bool set::settings::constructSettingsStruct(void){
 
 
 /*
+Square_size: 26.2 (Expressed in mm). It is the same if we set square size 0.0262 (expressed in meter)
 Resolution:
 2592*1944
 Camera matrix: K= [2458.902240893194, 0, 1296;
@@ -422,10 +426,6 @@ Camera matrix: K= [2458.902240893194, 0, 1296;
 Camera matrix: K= [607.13635578, 0, 320;
  0, 607.13635578, 240;
  0, 0, 1]
-
-
-
-
 Distortion coefficients: [0.2486857357354474;
  -1.452670730319596;
  0;
