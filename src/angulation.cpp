@@ -16,7 +16,9 @@ Then there is no repeated calculations
 ang::angulation::angulation(int maxId_,std::string path){
     maxId = maxId_;
     minAnchors = 2;
-    //minAnchors = 2;             //At least visible anchors are needed to attempt AZIPE angulation
+    k1_barrel = 0; //Initialize with coefficients 0 for barrel distortion compensation
+    k2_barrel = 0;
+    k3_barrel = 0;
     for(int i=0;i<maxId;i++){
         dataBase.push_back(cv::Mat_<float>::zeros(3,1));//Set empty mat
         activeAnchors.push_back(false);                 //Set all anchors to inactive
@@ -211,6 +213,22 @@ int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_
     return amountOfKnown;
 }
 
+
+/* method to perform in-place correction of barrel distortion of pixel coordinates
+ * Using the following formula: https://docs.opencv.org/3.4.0/d4/d94/tutorial_camera_calibration.html
+ */
+void ang::angulation::unDistort(std::vector<cv::Point2f>& data){
+    for(cv::Point2f point:data){
+        float r2 = point.x*point.x + point.y+point.y;//Radius squared
+        float A = (1 + k1_barrel*r2 + k2_barrel*r2*r2 + k3_barrel*r2*r2*r2);
+        float x_undistorted = point.x/A; //NOTE SHOULD IT BE MULTIPLIED?
+        float y_undistorted = point.y/A; //SHOULD IT?? BE MULTIPLIED??
+        point.x = x_undistorted;
+        point.y = y_undistorted;
+    }
+
+}
+
 /* Interface mathod used to set K mat and calculate its inverse
  */
 void ang::angulation::setKmat(cv::Mat_<float>K_){
@@ -222,4 +240,11 @@ void ang::angulation::setKmat(cv::Mat_<float>K_){
 void ang::angulation::setTmat(cv::Mat_<float> T_){
     T = T_;
     T_inv = T.inv();
+}
+/* Interface method to set distortion coefficients for barrel distortion compensation
+*/
+void ang::angulation::setTmat(float k1, float k2, float k3){
+    k1_barrel = k1;
+    k2_barrel = k2;
+    k3_barrel = k3;
 }
