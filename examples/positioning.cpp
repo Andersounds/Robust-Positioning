@@ -42,12 +42,12 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
 
 
     //Initialize video stream
-    std::string basePath = "Generated-dataSets/5_jul/";
-    std::string imageInfo = "data.csv";
+    std::string basePath = S.data.imageStreamBasePath;
+    std::string imageInfo = S.data.imageStreamInfoFile;
     robustPositioning::Streamer VStreamer(basePath,imageInfo);
     cv::Mat frame, colorFrame;
     //Initialize data stream
-    std::string dataFile = "Generated-dataSets/5_jul/truePath.csv";
+    std::string dataFile = S.data.dataStreamFile;
     int skipLines = 1;
     robustPositioning::dataStreamer getData(dataFile,skipLines);
     std::vector<float> data;
