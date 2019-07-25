@@ -35,7 +35,7 @@ namespace ang{
         void setDistortCoefficents(float,float,float);//Set k1,k2,k3 distortion coefficients
         int addAnchor(int,cv::Mat_<float>);     //Add an anchor to database (id and 3d coordinate)
         int calculate(std::vector<cv::Mat_<float>>&, std::vector<cv::Mat_<float>>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float); //Take pixel coordinates and IDs of anchors and calculate AZIPE
-        void unDistort(std::vector<cv::Point2f>&);//Compensate for barrel distortion
+        cv::Point2f unDistort(const cv::Point2f&);//Compensate for barrel distortion
         void pix2uLOS(const std::vector<cv::Point2f>&,std::vector<cv::Mat_<float>>&);//Converts image pixel coordinates to uLOS vectors in uav frame
         void pix2uLOS(const std::vector<std::vector<cv::Point2f>>&,std::vector<cv::Mat_<float>>&);//Overloaded version for corner locations of anchors instead of center locations
         int dataBase2q(const std::vector<int>&,std::vector<cv::Mat_<float>>&,std::vector<bool>&);//Retrieves Q vectors from database given the IDs
