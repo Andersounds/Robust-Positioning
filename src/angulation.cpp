@@ -145,8 +145,9 @@ void ang::angulation::pix2uLOS(const std::vector<cv::Point2f>& points,std::vecto
     while(it!=points.end()){
         // Create a mat_<float> with pixel coordinates and z coordinte = 1
         cv::Mat_<float> point_mat = cv::Mat_<float>::ones(3,1);
-        point_mat(0,0) = it->x;
-        point_mat(1,0) = it->y;
+        cv::Point2f undistortedPoint = unDistort(*it);
+        point_mat(0,0) = undistortedPoint.x;
+        point_mat(1,0) = undistortedPoint.y;
         //Transform to 3d image plane coordinates, then transfrom from image frame to uav frame
         cv::Mat_<float> direction = T * K_inv * point_mat;
         float v_norm = (float) cv::norm(direction,cv::NORM_L2);
@@ -217,16 +218,11 @@ int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_
 /* method to perform in-place correction of barrel distortion of pixel coordinates
  * Using the following formula: https://docs.opencv.org/3.4.0/d4/d94/tutorial_camera_calibration.html
  */
-void ang::angulation::unDistort(std::vector<cv::Point2f>& data){
-    for(cv::Point2f point:data){
-        float r2 = point.x*point.x + point.y+point.y;//Radius squared
-        float A = (1 + k1_barrel*r2 + k2_barrel*r2*r2 + k3_barrel*r2*r2*r2);
-        float x_undistorted = point.x/A; //NOTE SHOULD IT BE MULTIPLIED?
-        float y_undistorted = point.y/A; //SHOULD IT?? BE MULTIPLIED??
-        point.x = x_undistorted;
-        point.y = y_undistorted;
-    }
-
+cv::Point2f ang::angulation::unDistort(const cv::Point2f& point){
+    float r2 = point.x*point.x + point.y+point.y;//Radius squared
+    float A = (1 + k1_barrel*r2 + k2_barrel*r2*r2 + k3_barrel*r2*r2*r2);
+    cv::Point2f undistortedPoint(point.x/A,point.y/A);//SHOULD IT BE MULTIPLIED? docs are not definitive
+    return undistortedPoint;
 }
 
 /* Interface mathod used to set K mat and calculate its inverse
