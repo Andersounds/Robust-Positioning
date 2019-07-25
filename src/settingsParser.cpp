@@ -32,6 +32,9 @@ struct dataStruct{
     std::string imageStreamBasePath;//Base path to image directory (ending with / if not pwd)
     std::string imageStreamInfoFile;//path to image info file to be appended to base path
     std::string dataStreamFile;//Path to csv fata file to be streamed
+    float dist_k1;//Distortion coefficients for radial distortion
+    float dist_k2;
+    float dist_k3;
 };
 /* This is a class containing all necessary settings and their default values.
 */
@@ -412,6 +415,9 @@ bool set::settings::constructSettingsStruct(void){
     data.imageStreamBasePath = settingsS["STREAM_IMAGES_BASEPATH"];
     data.imageStreamInfoFile = settingsS["STREAM_IMAGES_INFO_FILE"];
     data.dataStreamFile = settingsS["STREAM_DATA_FILE"];
+    data.dist_k1 = settingsF["DIST_COEFF_K1"];
+    data.dist_k2 = settingsF["DIST_COEFF_K2"];
+    data.dist_k3 = settingsF["DIST_COEFF_K3"];
     return true;
 }
 
