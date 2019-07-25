@@ -40,12 +40,12 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
 
 
     //Initialize video stream
-    std::string basePath = "Generated-dataSets/5_jul/";
-    std::string imageInfo = "data.csv";
+    std::string basePath = S.data.imageStreamBasePath;
+    std::string imageInfo = S.data.imageStreamInfoFile;
     robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM);
     cv::Mat frame, colorFrame;
     //Initialize data stream
-    std::string dataFile = "Generated-dataSets/5_jul/truePath.csv";
+    std::string dataFile = S.data.dataStreamFile;
     int skipLines = 1;
     robustPositioning::dataStreamer getData(dataFile,skipLines);
     std::vector<float> data;
@@ -62,6 +62,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
                         pos::VO_MODE_AFFINE,
                         cv::aruco::DICT_4X4_50,
                         maxIdAruco,anchorPath,flowGrid,roiSize,K,T);
+    P.setDistortCoefficents(S.data.dist_k1,S.data.dist_k2,S.data.dist_k3);//Set distortion coefficients
     //Init values of position and yaw
     cv::Mat_<float> t = cv::Mat_<float>::zeros(3,1);
     t(0,0) = S.data.x0;
