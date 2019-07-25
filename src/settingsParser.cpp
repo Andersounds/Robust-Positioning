@@ -29,7 +29,9 @@ struct dataStruct{
     float y0;
     float z0;
     float yaw0;
-
+    std::string imageStreamBasePath;//Base path to image directory (ending with / if not pwd)
+    std::string imageStreamInfoFile;//path to image info file to be appended to base path
+    std::string dataStreamFile;//Path to csv fata file to be streamed
 };
 /* This is a class containing all necessary settings and their default values.
 */
@@ -204,8 +206,6 @@ int set::settings::initFlags(void){
     flags.insert ( std::pair<std::string,std::string>("-usb",       "<No argument>  Use usb cam 0 as input. No acc/gyro data.") );
     flags.insert ( std::pair<std::string,std::string>("-log",       "<Path to dir>  Log collected data") );
     flags.insert ( std::pair<std::string,std::string>("-out",       "<Path file/dir>Output file. Path to dir to auto name, path to file to set name") );
-    flags.insert ( std::pair<std::string,std::string>("TODO",       "<Name base of images for dataset") );
-    flags.insert ( std::pair<std::string,std::string>("TODO",       "<Path to images dataset, path to measurement dataset") );
     return 1;
 }
 int set::settings::setAllDefault(void){
@@ -257,10 +257,9 @@ int set::settings::setAllDefault(void){
     setDefault("INITIAL_Z", (float) 0," ");
     setDefault("INITIAL_YAW", (float) 0," ");
 
-    setDefault("TILT_FILT_A", (float) 0,"");
-    setDefault("TILT_FILT_B", (float) 0," ");
-    setDefault("TILT_FILT_C", (float) 0," ");
-    setDefault("TILT_FILT_D", (float) 0," ");
+    setDefault("STREAM_IMAGES_BASEPATH", "Generated-dataSets/5_jul/","Base path from program working directory to image directory, ending with /");
+    setDefault("STREAM_IMAGES_INFO_FILE", "data.csv","File (located in IMAGES_BASEPATH with image data. (timestamps, image name))");
+    setDefault("STREAM_DATA_FILE", "Generated-dataSets/5_jul/truePath.csv","Path to csv file to be streamed");
     return 1;
 }
 int set::settings::setDefault(std::string key, int          value, std::string description){
@@ -410,10 +409,11 @@ bool set::settings::constructSettingsStruct(void){
     data.z0 = settingsF["INITIAL_Z"];
     data.yaw0 = settingsF["INITIAL_YAW"];
     data.anchorPath = settingsS["PATH_TO_ARUCO_DATABASE"];
+    data.imageStreamBasePath = settingsS["STREAM_IMAGES_BASEPATH"];
+    data.imageStreamInfoFile = settingsS["STREAM_IMAGES_INFO_FILE"];
+    data.dataStreamFile = settingsS["STREAM_DATA_FILE"];
     return true;
 }
-
-
 
 /*
 Square_size: 26.2 (Expressed in mm). It is the same if we set square size 0.0262 (expressed in meter)
