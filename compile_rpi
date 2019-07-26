@@ -52,9 +52,10 @@ if [ ”$1” = ”positioning” ];then
 	echo Compiling general positioning program
 #	g++ -std=c++11	\
 g++ `pkg-config --cflags --libs opencv` \
--I/opt/vc/include -L/opt/vc/lib \
+-I/usr/local/include -L/usr/local/lib \
 -lraspicam \
 -lraspicam_cv \
+-I/opt/vc/include -L/opt/vc/lib \
 -lmmal \
 -lmmal_core \
 -lmmal_util \
@@ -84,22 +85,23 @@ if [ ”$1” = ”dataCollection” ];then
         #
         echo Compiling rpi data collection program
 #       g++ -std=c++11  \
-g++ `pkg-config --cflags --libs opencv` \
--I/opt/vc/include -L/opt/vc/lib \
+g++ -std=c++11 \
+`pkg-config --cflags --libs opencv` \
+-lpthread \
+-lpigpio \
 -lraspicam \
 -lraspicam_cv \
+-I/opt/vc/include -L/opt/vc/lib \
 -lmmal \
 -lmmal_core \
 -lmmal_util \
--lpthread \
--lpigpio \
 examples/dataCollection_rpi.cpp \
 src/videoStream_RPI.cpp \
 src/dataStream.cpp \
 src/logger.cpp \
 -o bin/dataCollection.out
 
-
+#-I/usr/local/include -L/usr/local/lib \
 
 echo add usr/local/lib to search path of ld linker
 echo e x p o r t LD_LIBRARY_PATH="/usr/local/lib"
