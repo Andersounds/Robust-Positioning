@@ -207,7 +207,8 @@ int robustpositioning::i2cSlave_decode::writeAndEncodeBuffer(const std::vector<f
 /* This method is used to read and discard all contents of the RX buffer in order to recieve new values
  */
 void robustpositioning::i2cSlave_decode::emptyRxBuffer(void){
-    readAndDecodeBuffer(std::vector<float> discardValues);
+    std::vector<float> discardValues;
+    readAndDecodeBuffer(discardValues);
 }
 
 /*

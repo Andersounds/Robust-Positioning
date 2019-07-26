@@ -66,7 +66,7 @@ int main(int argc, char** argv){
 
         //Log data
         std::vector<float> logData{timeStamp_data, height, pitch, roll};
-        databin_LOG.dump(truePath);
+        databin_LOG.dump(logData);
         imagebin.dump(timeStamp_image,frame);
 
         counter++;
