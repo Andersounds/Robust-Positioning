@@ -91,11 +91,13 @@ g++ `pkg-config --cflags --libs opencv` \
 -lmmal \
 -lmmal_core \
 -lmmal_util \
+-lpthread \
+-lpigpio \
 examples/dataCollection_rpi.cpp \
 src/videoStream_RPI.cpp \
 src/dataStream.cpp \
-src/logger.cpp -o \
-bin/dataCollection.out
+src/logger.cpp \
+-o bin/dataCollection.out
 
 
 
@@ -129,7 +131,7 @@ src/videoStream_RPI.cpp \
 src/logger.cpp \
 -o bin/speedtest.out
 
-
+#is lpthread necessary?
 #Add usr/local/lib to search path of ld linker
 export LD_LIBRARY_PATH="/usr/local/lib"
        echo Run with command ./bin/speedtest.out
