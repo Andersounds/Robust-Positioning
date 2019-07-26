@@ -10,6 +10,10 @@
 #include "../src/timeStamp.cpp"
 #include "../src/i2c_slave.cpp"
 
+//#include "../include/raspicam-0.1.6/src/raspicam_cv.h" //Can we just include <raspicam/raspicam_cv.h>? since it is installed?
+#include <raspicam/raspicam.h>
+#include <raspicam/raspicam_cv.h>
+
 #include <unistd.h> //For sleep
 #define PI 3.1416
 
@@ -40,7 +44,7 @@ int main(int argc, char** argv){
     //const int slaveAddress = 0x04;
     robustpositioning::i2cSlave_decode i2cComm(0x04);
 
-    std::vector<float> data;
+    std::vector<float> data{0,0,0};
 
     //Read data until done
     float timeStamp_data;
@@ -54,6 +58,7 @@ int main(int argc, char** argv){
         int watchdog=0;//Wait maximal 0.5s on imu data
         while(i2cComm.readAndDecodeBuffer(data)<0 && watchdog<500){          //Try to read until we get the requested data
             usleep(1000);//Wait an additional ms
+	    watchdog++;
         }
         float height = -data[0];//This is used as a subst as actual height is not in dataset
         float pitch = data[1];
