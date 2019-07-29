@@ -54,8 +54,8 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     //Initialize positioning object
     int maxIdAruco = 50;
     std::string anchorPath = S.data.anchorPath;//"anchors.txt";
-    int flowGrid = 4;
-    cv::Rect2f roiSize(245,125,150,150);
+    int flowGrid = S.data.optical_flow_grid;
+    cv::Rect2f roiSize = S.data.ROI;
     cv::Mat_<float> K = S.data.K;
     cv::Mat_<float> T = S.data.T;//warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
     pos::positioning P(pos::OF_MODE_KLT,
@@ -76,25 +76,29 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
 float timeStamp_data;
 float timeStamp_image;
 int counter = 0;
+double timeStamp_start;
+stamp.get(timeStamp_start);
     while(getData.get(data)){
         timeStamp_data = data[0];
-        float height = -data[3];//This is used as a subst as actual height is not in dataset
-        float pitch = data[5];
-        float roll = data[6];
+        float height = data[1];//This is used as a subst as actual height is not in dataset
+        float pitch = data[2];
+        float roll = data[3];
 
 //Get new image
         if(VStreamer.peek()<=timeStamp_data){
             VStreamer.getImage(frame);
             if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-            int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,colorFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
+            //int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,colorFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
+            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,height, roll, pitch, yaw, t);
 //            cv::imshow("showit",colorFrame);
             //cv::waitKey(0);
 //            if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
-std::cout << "Lap " << counter << std::endl;
+            std::cout << "Lap " << counter << std::endl;
+            counter++;
       }
-counter++;
+
 
         //Maybe convert to color for illustartion?
         //cv::cvtColor(colorFrame, frame, cv::COLOR_BGR2GRAY);
@@ -118,5 +122,10 @@ counter++;
 
 
     }
+    double timeStamp_end;
+    stamp.get(timeStamp_end);
+    double tot_time_s = (timeStamp_end-timeStamp_start)/1000;
+    double fps = ((double)counter)/tot_time_s;
+    std::cout << "Processed " << counter << "images in " << tot_time_s << " s. (" << fps << " fps)" << std::endl;
     return 1;
 }
