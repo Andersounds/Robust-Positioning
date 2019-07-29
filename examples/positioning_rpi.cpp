@@ -42,7 +42,8 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     //Initialize video stream
     std::string basePath = S.data.imageStreamBasePath;
     std::string imageInfo = S.data.imageStreamInfoFile;
-    robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM);
+//    robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM);
+    robustPositioning::Streamer VStreamer(basePath,imageInfo);
     cv::Mat frame, colorFrame;
     //Initialize data stream
     std::string dataFile = S.data.dataStreamFile;
