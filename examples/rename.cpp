@@ -9,9 +9,9 @@
 
 int main(int argc, char** argv){
 
-    log::imageLogger imagebin;
+    robustPositioning::imageLogger imagebin;
     imagebin.init("","");
-    imagebin.rename(cv::String("5_jul/"),cv::String("img_"));
+    imagebin.rename(cv::String("../TryOuts/dataColl/26_jul/"),cv::String("img_"));
 
 
     return 1;
