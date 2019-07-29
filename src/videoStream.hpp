@@ -54,7 +54,7 @@ class datasetStreamer{// : public Streamer{
     float getImage(cv::Mat&); //This method returns the image via inputoutput and timestamp via return if timestamp mode is chosen
     float peek(void);
     int setSettings(int);
-    int readTimeStampData(void);
+    int readTimeStampData(std::string);
 };
 /*
 Raspberry pi camera module stream

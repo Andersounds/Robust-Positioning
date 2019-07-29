@@ -157,7 +157,7 @@ std::cout << "Initializing image dataset streamer..." << std::endl;
     useTimeStampFile = useTimeStampFile_;
     if(useTimeStampFile){
         std::cout <<"\tReading filenames from \"" << pathToDataset+dataFile << "\"..." << std::endl;
-        if(readTimeStampData()){
+        if(readTimeStampData(dataFile_)){
             initialized = 1;
             std::cout << "\tRead " << timeStamps_f.size() << " timestamps and image file names" << std::endl;
             std::cout << "Done." << std::endl;
@@ -213,15 +213,15 @@ float robustPositioning::datasetStreamer::peek(void){
     }
 }
 
-int robustPositioning::datasetStreamer::readTimeStampData(void){
+int robustPositioning::datasetStreamer::readTimeStampData(std::string path_to_data_file){
         std::string line;
         std::string delim = ",";
         std::ifstream file;
-        file.open(pathToDataset+ dataFile);
+        file.open(path_to_data_file);
         int skiplines = 1;// skip header
         int count = -1; //start at -1 so it is 0 in first lap as while starts with incrementing count
         if(file.is_open()){
-            std::cout << "\topened " <<pathToDataset<< dataFile << "\"..."<< std::endl;
+            std::cout << "\topened " <<path_to_data_file << "\"..."<< std::endl;
             //std::cout << "Opened file \"" << pathToDataset+ dataFile <<"\" ." <<std::endl;
              while(getline(file,line)){
                 count++;
@@ -234,7 +234,7 @@ int robustPositioning::datasetStreamer::readTimeStampData(void){
              }
         }else{
 
-            std::cout << "datasetStreamer::readTimeStampData: Could not open file \"" << pathToDataset+ dataFile <<"\" ." <<std::endl;
+            std::cout << "datasetStreamer::readTimeStampData: Could not open file \"" << path_to_data_file <<"\" ." <<std::endl;
             return 0;
         }
         file.close();
