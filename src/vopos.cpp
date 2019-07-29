@@ -39,14 +39,60 @@ pos::positioning::positioning(int opticalFlow_mode,
 Process the given data and update the position and yaw
 */
 int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, float pitch,float& yaw, cv::Mat_<float>& pos){
-    //Aruco detect and draw
+    static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
+    //Aruco detect
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
     cv::aruco::detectMarkers(frame, dictionary, corners, ids);
-
-
-
-    return 1;
+    //Only do angulation if at least two known anchors are visible
+    int status = 0;
+    int returnMode = pos::RETURN_MODE_AZIPE;
+    //Convert IDs to q-coordinates and count number of known anchors from database
+    std::vector<cv::Mat_<float>> q;
+    std::vector<bool> mask;
+    int knownAnchors = dataBase2q(ids,q,mask);
+    if(knownAnchors == 0){
+        returnMode = pos::RETURN_MODE_VO;
+    }else if(knownAnchors < minAnchors){
+        returnMode = pos::RETURN_MODE_PROJ;
+    } else{
+        returnMode = pos::RETURN_MODE_AZIPE;
+    }
+    bool vo_success = false;
+    switch (returnMode) {
+        case pos::RETURN_MODE_VO:{
+            //Get flow field
+            std::vector<cv::Point2f> features;
+            std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
+            of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
+            vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+            if(!vo_success){
+                returnMode = pos::RETURN_MODE_INERTIA;
+                //std::cout << "VO inertia  mode" << std::endl;
+            }
+            break;
+        }
+        case pos::RETURN_MODE_PROJ:{
+            //Get flow field
+            std::vector<cv::Point2f> features;
+            std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
+            of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
+            vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+            std::vector<cv::Mat_<float>> v;
+            pix2uLOS(corners,v);
+        //    projectionFusing(pos,q,v,mask,yaw,roll,pitch);
+            break;
+        }
+        case pos::RETURN_MODE_AZIPE:{
+            std::vector<cv::Mat_<float>> v;
+            pix2uLOS(corners,v);
+            ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+            //calculate(q,v,mask,pos,yaw,roll,pitch);
+            break;
+        }
+    }
+    frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
+    return returnMode;
 }
 /*
 Process the given data and update position and yaw. Also illustrate by drawing on the outputFrame mat
