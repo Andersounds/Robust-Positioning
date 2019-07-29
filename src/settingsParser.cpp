@@ -63,18 +63,20 @@ struct dataStruct{
             int setDefault(std::string,float,       std::string);
             int setDefault(std::string,std::string, std::string);
             int set(std::string, std::string); //Used to set new settings.
-            int writeDefaultSettingsFile(std::string);
+            int writeDefaultSettingsFile(std::string);//Give base path as argument
             int readSettingsFile(std::string);//If it can not be read then write default and say where it has been written
             std::vector<std::string> parseRow(std::string);
             bool success_;//Check if settings are read correctly.
             bool useDefaultSettings;// = true;
-            std::string pathToSettings;
+            std::string basePath; //Base path paths in settings file are relative to this
+            bool settingsPathGiven;
+            std::string settingsFile;//Settings file located in path to settings
+
             int streamMode;
             std::string pathToDataSet;
             bool log;
             std::string pathTologDirectory;
             std::string pathToOutputFile;
-            bool settingsPathGiven;
             bool constructSettingsStruct(void);
     };
 
@@ -86,17 +88,19 @@ bool set::settings::success(void){
 set::settings::settings(int argc, char** argv){
     success_ = true;
     /*DEFAULT SETTINGS*/
+    basePath = "";
     setAllDefault();
     initFlags();
     /*Check input*/
     readArguments(argc,argv);
     if(useDefaultSettings == false){
         if(settingsPathGiven == true){
-            std::cout << "Reading settings file from \"" << pathToSettings << "\"... " << std::endl;
+            std::string pathToSettingsFile = basePath + settingsFile;
+            std::cout << "Reading settings file from \"" << pathToSettingsFile << "\"... " << std::endl;
             //if(!readSettingsFile(argv[1])){
-            if(!readSettingsFile(pathToSettings)){
+            if(!readSettingsFile(pathToSettingsFile)){
                 success_=false;
-                std::cout << "Failed. \n\tCould not open provided settings-file: \"" << pathToSettings << "\". Please give valid path." << std::endl;
+                std::cout << "Failed. \n\tCould not open provided settings-file: \"" << pathToSettingsFile << "\". Please give valid path." << std::endl;
             }else{
                 std::cout << "Done." << std::endl;
             }
@@ -105,8 +109,8 @@ set::settings::settings(int argc, char** argv){
             success_=false;
         }
     } else if(settingsPathGiven == true){
-        std::cout << "Writing default settings file to \"" << pathToSettings <<"\" ...";
-        if(writeDefaultSettingsFile(pathToSettings)){
+        std::cout << "Writing default settings file to \"" << basePath <<"\" ...";
+        if(writeDefaultSettingsFile(basePath)){
             std::cout << "Done.";
         }else{
             std::cout << "Failed.";
@@ -115,7 +119,7 @@ set::settings::settings(int argc, char** argv){
         std::cout << std::endl;
     } else{
         std::cout << "Writing default settings file to settings.txt ...";
-        if(writeDefaultSettingsFile("settings.txt")){
+        if(writeDefaultSettingsFile("")){
             std::cout << "Done.";
         }else{
             std::cout << "Failed.";
@@ -147,16 +151,21 @@ int set::settings::readArguments(int argc, char** argv){
             std::string flag = argv[i];
             std::string arg;
             if((i+1)<argc){ arg = argv[i+1];}
-            if(flag == "-d"){
+            if(flag == "-d"){//Default settings
                 useDefaultSettings = true;
-            } else if(flag == "-p"){
-                if((i+1)<argc && !std::regex_match(arg,std::regex("(-)(.*)")) && std::regex_match(arg,std::regex("(.*)(.txt)"))) { //if there is another argument, that does not begin with "-" and that ends with .txt
-                    pathToSettings =  arg;
+            } else if(flag == "-p"){//Base path
+//                if((i+1)<argc && !std::regex_match(arg,std::regex("(-)(.*)")) && std::regex_match(arg,std::regex("(.*)(.txt)"))) { //if there is another argument, that does not begin with "-" and that ends with .txt
+                if((i+1)<argc && !std::regex_match(arg,std::regex("(-)(.*)")) && std::regex_match(arg,std::regex("(.*)(/)"))) { //if there is another argument, that does not begin with "-" and that ends with /
+                    basePath =  arg;
                     settingsPathGiven = true;
                     i++;
                 } else{
-                    std::cout << "No valid path for flag -p is given" << std::endl;
+                    std::cout << "No valid path for flag -p is given. (is it ending with \"/\"?)" << std::endl;
                     std::cout << "Given path: \"" << arg << "\""<<std::endl;
+                }
+            } else if(flag == "-s"){//Settings file
+                if((i+1)<argc && !std::regex_match(arg,std::regex("(-)(.*)")) && ( std::regex_match(arg,std::regex("(.*)(.txt)")) || std::regex_match(arg,std::regex("(.*)(.csv)")) ) ){
+                    settingsFile = arg;
                 }
             } else if(flag == "-rpi"){
                 streamMode = 2;
@@ -204,8 +213,10 @@ int set::settings::readArguments(int argc, char** argv){
     return 1;
 }
 int set::settings::initFlags(void){
-    flags.insert ( std::pair<std::string,std::string>("-d",         "<No argument>  Use default settings and write file to settings.txt if not -p is set") );
+    flags.insert ( std::pair<std::string,std::string>("-d",         "<No argument>  Use default settings and write file to settings.txt if not -p or -s is set") );
     flags.insert ( std::pair<std::string,std::string>("-p",         "<Path to file> Path to settings file. If -d is set, file is written, otherwise read") );
+    flags.insert ( std::pair<std::string,std::string>("-s",         "<Settings file name>  Settings file name at path -p or pwd if -p not set") );
+
     flags.insert ( std::pair<std::string,std::string>("-rpi",       "<No argument>  Use rpi cam and i2c as input") );
     flags.insert ( std::pair<std::string,std::string>("-dset",      "<Path to set>  Use dataset as input") );
     flags.insert ( std::pair<std::string,std::string>("-usb",       "<No argument>  Use usb cam 0 as input. No acc/gyro data.") );
@@ -220,7 +231,7 @@ int set::settings::initFlags(void){
 int set::settings::setAllDefault(void){
     useDefaultSettings = false;
     settingsPathGiven = false;
-    std::string pathToSettings = "";
+    std::string basePath = "";
     //int streamMode;
     std::string pathToDataSet = "";
     log = false;
@@ -266,9 +277,9 @@ int set::settings::setAllDefault(void){
     setDefault("INITIAL_Z", (float) -1," ");
     setDefault("INITIAL_YAW", (float) 0," ");
 
-    setDefault("STREAM_IMAGES_BASEPATH", "Generated-dataSets/5_jul/","Base path from program working directory to image directory ending with /");
-    setDefault("STREAM_IMAGES_INFO_FILE", "data.csv","File (located in IMAGES_BASEPATH with image data. (timestamps image name))");
-    setDefault("STREAM_DATA_FILE", "Generated-dataSets/5_jul/truePath.csv","Path to csv file to be streamed");
+    setDefault("STREAM_IMAGES_BASEPATH", "some_dir/","Base path from program working directory to image directory ending with /");
+    setDefault("STREAM_IMAGES_INFO_FILE", "some_image_info_file.csv","File (located in IMAGES_BASEPATH with image data. (timestamps image name))");
+    setDefault("STREAM_DATA_FILE", "some_data_file.csv","Path to csv file to be streamed");
     return 1;
 }
 int set::settings::setDefault(std::string key, int          value, std::string description){
@@ -333,7 +344,8 @@ int set::settings::set(std::string key, std::string value){
 }
 /* Reads all default settings and writes them into a file settings.txt
  */
-int set::settings::writeDefaultSettingsFile(std::string path){
+int set::settings::writeDefaultSettingsFile(std::string basePath){
+    std::string path = basePath+"settings.txt";
     std::ofstream settingsFile;
     settingsFile.open(path, std::ofstream::out | std::ofstream::trunc);//Trunc option clears the file before anything is written
     std::map<std::string, int>::iterator it;
@@ -417,10 +429,10 @@ bool set::settings::constructSettingsStruct(void){
     data.y0 = settingsF["INITIAL_Y"];
     data.z0 = settingsF["INITIAL_Z"];
     data.yaw0 = settingsF["INITIAL_YAW"];
-    data.anchorPath = settingsS["PATH_TO_ARUCO_DATABASE"];
-    data.imageStreamBasePath = settingsS["STREAM_IMAGES_BASEPATH"];
-    data.imageStreamInfoFile = settingsS["STREAM_IMAGES_INFO_FILE"];
-    data.dataStreamFile = settingsS["STREAM_DATA_FILE"];
+    data.imageStreamBasePath = basePath + settingsS["STREAM_IMAGES_BASEPATH"];
+    data.imageStreamInfoFile = basePath + settingsS["STREAM_IMAGES_INFO_FILE"];
+    data.anchorPath = basePath + settingsS["PATH_TO_ARUCO_DATABASE"];
+    data.dataStreamFile = basePath + settingsS["STREAM_DATA_FILE"];
     data.dist_k1 = settingsF["DIST_COEFF_K1"];
     data.dist_k2 = settingsF["DIST_COEFF_K2"];
     data.dist_k3 = settingsF["DIST_COEFF_K3"];
