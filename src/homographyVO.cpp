@@ -88,7 +88,7 @@ void vo::planarHomographyVO::setDefaultSettings(void){
  */
 bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
                                         std::vector<cv::Point2f>& p2,
-                                        float roll,float pitch,float height,
+                                        float roll,float pitch,float dist,
                                         cv::Mat_<float>& t,
                                         float& yaw){
                                         //cv::Mat_<float>& R){
@@ -96,9 +96,9 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
     cv::Mat_<double> A_double;//odometry estimation of rotation in camera frame
     bool success;
     if(USE_AFFINETRANSFORM){
-        success = odometryAffine(p1,p2,roll,pitch,height,b_double,A_double);
+        success = odometryAffine(p1,p2,roll,pitch,dist,b_double,A_double);
     }else if(USE_HOMOGRAPHY){
-        success = odometryHom(p1,p2,roll,pitch,height,b_double,A_double);
+        success = odometryHom(p1,p2,roll,pitch,dist,b_double,A_double);
     }else{std::cout << "Invalid homography mode (vo::planarHomographyVO::process)";return false;}
     //Convert to float
     cv::Mat_<float> b;//odometry estimation of translation in camera frame
@@ -169,14 +169,14 @@ bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1,
  */
 bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
                 std::vector<cv::Point2f>& p2,
-                float roll,float pitch, float height,
+                float roll,float pitch, float dist,//height should rather be distance. not corresponding to coordinate system height
                 cv::Mat_<double>& b,
                 cv::Mat_<double>& A){
     static float roll_prev = 0;
     static float pitch_prev = 0;
 
     //Check that there are enough point correspondances
-    if((p1.size()<3)|| (p2.size()<3)){std::cout << "Not enough point correspondances" << std::endl;
+    if((p1.size()<3)|| (p2.size()<3)){std::cout << "odometryAffine::Not enough point correspondances" << std::endl;
         return false;
     }
     //De-rotate
@@ -201,25 +201,28 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
     cv::Mat_<double> R_ = At(cv::Rect(0,0,2,2));
     double s = sqrt(cv::determinant(R_));
     R_ /= s;//Scale back by s to obtain rotation matrix
+    //std::cout << "Affine scale: " << s << std::endl;
+    //std::cout << "Base translation: " << b.t() << std::endl;
     //Update rotation matrix Note: only azimuthal rotation
-    //Update coordinates
+    //Update coordinates . If  A is not initialized then initialize it. It basically always i not initialized
     if(A.empty()){
         cv::Mat_<double> A_ = cv::Mat_<double>::zeros(3,3);
         cv::Mat_<double> b_ = cv::Mat_<double>::zeros(3,1);
         R_.copyTo(A_(cv::Rect(0,0,2,2)));
         At(cv::Rect(2,0,1,2)).copyTo(b_(cv::Rect(0,0,1,2))); //Set x-y values
-        b_(2,0) /=s;//Set height according to scale change
+        //Scale seems to be not very good at estimating height. do it in some other way?
+        //b_(2,0) =dist*(1-s);//dist/s-dist;//Set delta-height according to dist and scale change
         A_.copyTo(A);
         b_.copyTo(b);
-    }else{
+    }/*else{
         R_.copyTo(A(cv::Rect(0,0,2,2)));
         At(cv::Rect(0,2,1,2)).copyTo(b(cv::Rect(0,0,1,2))); //Set x-y values
         b(2,0) /=s;//Set height according to scale change
-    }
+    }*/
     //Scale x-y with height
-    b(0,0) *= height;
-    b(1,0) *= height;
-
+    b(0,0) *= dist;
+    b(1,0) *= dist;
+    //std::cout << "Scaled translation: " << b.t() << std::endl;
     //Shift roll and pitch static variables
     roll_prev = roll;
     pitch_prev = pitch;
