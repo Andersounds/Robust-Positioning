@@ -76,7 +76,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     } else{
         returnMode = pos::RETURN_MODE_AZIPE;
     }
-    //Always tru AZIPE
+    bool vo_success = false;
     switch (returnMode) {
         case pos::RETURN_MODE_VO:{
             //Get flow field
@@ -84,13 +84,14 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
             of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
             //Draw flow field arrows
-            float scale = 10;
+            float scale = 5;
             cv::Point2f focusOffset(roi.x,roi.y);
             drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset);
             cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);
-            bool success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
-            if(!success){
+            vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+            if(!vo_success){
                 returnMode = pos::RETURN_MODE_INERTIA;
+                //std::cout << "VO inertia  mode" << std::endl;
             }
             break;
         }
@@ -99,7 +100,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             std::vector<cv::Point2f> features;
             std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
             of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
-            vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+            vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
             std::vector<cv::Mat_<float>> v;
             pix2uLOS(corners,v);
         //    projectionFusing(pos,q,v,mask,yaw,roll,pitch);
