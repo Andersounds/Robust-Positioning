@@ -62,12 +62,12 @@ of::opticalFlow::opticalFlow(int mode_, int grid_, int roiSize){
 void of::opticalFlow::setDefaultSettings(void){
     if(mode == USE_KLT){
         flags = 0;//No flag. Use normal L2 norm error
-        windowSize = 51;//51;
+        windowSize = 31;//51;
         maxLevel = 2;
         termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 20, 0.01);
         init = true;
     } else if(mode == USE_CORR){
-        corrQualityLevel = 0.3;
+        corrQualityLevel = 0.2;//0.3;
         init = true;
     }
 
