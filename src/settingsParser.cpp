@@ -35,6 +35,8 @@ struct dataStruct{
     float dist_k1;//Distortion coefficients for radial distortion
     float dist_k2;
     float dist_k3;
+    cv::Rect2f ROI;
+    int optical_flow_grid;
 };
 /* This is a class containing all necessary settings and their default values.
 */
@@ -209,6 +211,10 @@ int set::settings::initFlags(void){
     flags.insert ( std::pair<std::string,std::string>("-usb",       "<No argument>  Use usb cam 0 as input. No acc/gyro data.") );
     flags.insert ( std::pair<std::string,std::string>("-log",       "<Path to dir>  Log collected data") );
     flags.insert ( std::pair<std::string,std::string>("-out",       "<Path file/dir>Output file. Path to dir to auto name, path to file to set name") );
+
+    flags.insert ( std::pair<std::string,std::string>("TODO -s",       "Settings file") );
+    flags.insert ( std::pair<std::string,std::string>("TODO -p",       "change base path for dataset stream. settings file located here. paths in settings file should be relative to this") );
+    flags.insert ( std::pair<std::string,std::string>("TODO -s",       "Settings file") );
     return 1;
 }
 int set::settings::setAllDefault(void){
@@ -226,13 +232,13 @@ int set::settings::setAllDefault(void){
     setDefault("USE_CAM_NMBR",(int) 0,"-1: rpi cam, >=0: webcam nmbr");
     //Modes
     setDefault("OPTICAL_FLOW_MODE", (int) 0," KLT with grid or correlation based");
-    setDefault("OPTICAL_FLOW_GRID", (int) 0," ");
+    setDefault("OPTICAL_FLOW_GRID", (int) 4," sqrt of total amount of points used in optical flow.");
     setDefault("VISUAL_ODOMETRY_MODE", (int) 0," ");
     setDefault("POS_EST_MODE", (int) 0,"Azipe, VO, benchmark, azipe+VO, azipe+benchmark");
     setDefault("LOG_MODE", (int) 0,"Log position estimation, pos est and video");
     //General values that are needed
-    setDefault("FRAME_RESOLUTION_X", (int) 0,"In pixles. Used to specify RPI video input res. Specify here or hardcode?");
-    setDefault("FRAME_RESOLUTION_Y", (int) 0," ");
+    setDefault("FRAME_RESOLUTION_X", (int) 640,"In pixles. Used to specify RPI video input res. Specify here or hardcode?");
+    setDefault("FRAME_RESOLUTION_Y", (int) 480," ");
     setDefault("K_MAT_cx", (float) 320,"For image resolution 640 in x dir");
     setDefault("K_MAT_cy", (float) 240,"For image resolution 480 in y dir");
     setDefault("K_MAT_fx", (float) 607.13635578,"For image resolution 640 in x dir");
@@ -252,16 +258,16 @@ int set::settings::setAllDefault(void){
 
     setDefault("PATH_TO_ARUCO_DATABASE", "database.txt" ," ");
     setDefault("ARUCO_DICT_TYPE", (int) 0," ");
-    setDefault("MAX_ID_ARUCO", (int) 0,"Database size. must be able to contain all IDs in ARUCO_DICT_TYPE");
-    setDefault("ROI_SIZE", (int) 0,"Specify the size in pixles of the side of the centered ROI that is considered in VO. Used to edit K mat of VO alg.");
+    setDefault("MAX_ID_ARUCO", (int) 50,"Database size. must be able to contain all IDs in ARUCO_DICT_TYPE");
+    setDefault("ROI_SIZE", (int) 150,"Specify the size in pixles of the side of the centered ROI that is considered in VO. Used to edit K mat of VO alg.");
 
     setDefault("INITIAL_X", (float) 0," ");
     setDefault("INITIAL_Y", (float) 0," ");
-    setDefault("INITIAL_Z", (float) 0," ");
+    setDefault("INITIAL_Z", (float) -1," ");
     setDefault("INITIAL_YAW", (float) 0," ");
 
-    setDefault("STREAM_IMAGES_BASEPATH", "Generated-dataSets/5_jul/","Base path from program working directory to image directory, ending with /");
-    setDefault("STREAM_IMAGES_INFO_FILE", "data.csv","File (located in IMAGES_BASEPATH with image data. (timestamps, image name))");
+    setDefault("STREAM_IMAGES_BASEPATH", "Generated-dataSets/5_jul/","Base path from program working directory to image directory ending with /");
+    setDefault("STREAM_IMAGES_INFO_FILE", "data.csv","File (located in IMAGES_BASEPATH with image data. (timestamps image name))");
     setDefault("STREAM_DATA_FILE", "Generated-dataSets/5_jul/truePath.csv","Path to csv file to be streamed");
     return 1;
 }
@@ -315,7 +321,7 @@ int set::settings::set(std::string key, std::string value){
             }
             case TYPE_STRING:{
                 settingsS[key] = value;
-                //std::cout << "Set setting  << key << " to " << value << std::endl;
+                std::cout << "Set setting "  << key << " to " << value << std::endl;
                 break;
             }
         }
@@ -418,6 +424,11 @@ bool set::settings::constructSettingsStruct(void){
     data.dist_k1 = settingsF["DIST_COEFF_K1"];
     data.dist_k2 = settingsF["DIST_COEFF_K2"];
     data.dist_k3 = settingsF["DIST_COEFF_K3"];
+    float roi_side = (float)settingsI["ROI_SIZE"];
+    float roi_x = ((float)settingsI["FRAME_RESOLUTION_X"]-roi_side)/2;
+    float roi_y = ((float)settingsI["FRAME_RESOLUTION_Y"]-roi_side)/2;
+    data.ROI = cv::Rect2f(roi_x,roi_y,roi_side,roi_side);
+    data.optical_flow_grid = settingsI["OPTICAL_FLOW_GRID"];
     return true;
 }
 
