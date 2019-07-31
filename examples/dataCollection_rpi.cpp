@@ -27,10 +27,10 @@ int main(int argc, char** argv){
 
     //Initialize imagebin. It automatically creates a directory 'images' in the given path
     robustPositioning::imageLogger imagebin;
-    imagebin.init("Generated_dataSets/","25_jul");
+    imagebin.init("../TryOuts/dataColl/","31_jul");
     //Initialize databin
     robustPositioning::dataLogger databin_LOG;
-    if(!databin_LOG.init("Generated_dataSets/25_jul/imuData.csv",std::vector<std::string>{"Timestamp [ms]","height [m]","pitch [rad]","roll [rad]"})) return 0;
+    if(!databin_LOG.init("../TryOuts/dataColl/31_jul/imuData.csv",std::vector<std::string>{"Timestamp [ms]","height [m]","pitch [rad]","roll [rad]"})) return 0;
 
     //Initialize settings
     set::settings S(argc,argv);
@@ -65,7 +65,7 @@ int main(int argc, char** argv){
         float roll = data[2];
 
         //Log data
-	std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
+	//std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
         std::vector<float> logData{timeStamp_data, height, pitch, roll};
         databin_LOG.dump(logData);
         imagebin.dump(timeStamp_image,frame);
