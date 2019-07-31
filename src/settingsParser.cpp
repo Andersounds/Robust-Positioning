@@ -256,14 +256,14 @@ int set::settings::setAllDefault(void){
     setDefault("K_MAT_fx", (float) 607.13635578,"For image resolution 640 in x dir");
     setDefault("K_MAT_fy", (float) 607.13635578,"For image resolution 480 in y dir");
     setDefault("T_MAT_1_1", (float) 0," ");
-    setDefault("T_MAT_1_2", (float) 0," ");
+    setDefault("T_MAT_1_2", (float) 1," ");
     setDefault("T_MAT_1_3", (float) 0," ");
-    setDefault("T_MAT_2_1", (float) 0," ");
+    setDefault("T_MAT_2_1", (float) -1," ");
     setDefault("T_MAT_2_2", (float) 0," ");
     setDefault("T_MAT_2_3", (float) 0," ");
     setDefault("T_MAT_3_1", (float) 0," ");
     setDefault("T_MAT_3_2", (float) 0," ");
-    setDefault("T_MAT_3_3", (float) 0," ");
+    setDefault("T_MAT_3_3", (float) 1," ");
     setDefault("DIST_COEFF_K1", (float) 0.2486857357354474,"Barrel distortion coefficient k1");
     setDefault("DIST_COEFF_K2", (float) -1.452670730319596,"Barrel distortion coefficient k2");
     setDefault("DIST_COEFF_K3", (float) 2.638858641887943,"Barrel distortion coefficient k3");
