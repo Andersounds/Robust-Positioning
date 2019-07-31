@@ -89,13 +89,14 @@ stamp.get(timeStamp_start);
         if(VStreamer.peek()<=timeStamp_data){
             VStreamer.getImage(frame);
             if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
-            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,height, roll, pitch, yaw, t);
-/*            cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
+//            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,height, roll, pitch, yaw, t);
+            cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
             int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,colorFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
+            std::cout << "roll: " << roll<<", pitch: " << pitch <<std::endl;
             cv::imshow("showit",colorFrame);
-            //cv::waitKey(0);
+            cv::waitKey(0);
             if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
-*/
+
             std::cout << "Lap " << counter << std::endl;
             counter++;
       }
