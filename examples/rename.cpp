@@ -11,7 +11,7 @@ int main(int argc, char** argv){
 
     robustPositioning::imageLogger imagebin;
     imagebin.init("","");
-    imagebin.rename(cv::String("../TryOuts/dataColl/26_jul/"),cv::String("img_"));
+    imagebin.rename(cv::String("../TryOuts/dataColl/31_jul/"),cv::String("img_"));
 
 
     return 1;
