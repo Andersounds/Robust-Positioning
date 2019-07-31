@@ -81,9 +81,9 @@ double timeStamp_start;
 stamp.get(timeStamp_start);
     while(getData.get(data)){
         timeStamp_data = data[0];
-        float height = data[1];//This is used as a subst as actual height is not in dataset
-        float pitch = data[2];
-        float roll = data[3];
+        float height = data[S.data.distColumn];//This is used as a subst as actual height is not in dataset
+        float pitch = data[S.data.pitchColumn];
+        float roll = data[S.data.rollColumn];
 
 //Get new image
         if(VStreamer.peek()<=timeStamp_data){

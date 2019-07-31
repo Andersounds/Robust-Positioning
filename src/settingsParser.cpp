@@ -37,6 +37,9 @@ struct dataStruct{
     float dist_k3;
     cv::Rect2f ROI;
     int optical_flow_grid;
+    int distColumn;
+    int pitchColumn;
+    int rollColumn;
 };
 /* This is a class containing all necessary settings and their default values.
 */
@@ -213,19 +216,17 @@ int set::settings::readArguments(int argc, char** argv){
     return 1;
 }
 int set::settings::initFlags(void){
-    flags.insert ( std::pair<std::string,std::string>("-d",         "<No argument>  Use default settings and write file to settings.txt if not -p or -s is set") );
+    flags.insert ( std::pair<std::string,std::string>("-d",         "<No argument>  Use default settings and write file to settings.txt at path -p if given") );
     flags.insert ( std::pair<std::string,std::string>("-p",         "<Path to file> Path to settings file. If -d is set, file is written, otherwise read") );
     flags.insert ( std::pair<std::string,std::string>("-s",         "<Settings file name>  Settings file name at path -p or pwd if -p not set") );
 
+//Are these necessary? Should we maybe have one example with dataset and one example with rpi stream?
     flags.insert ( std::pair<std::string,std::string>("-rpi",       "<No argument>  Use rpi cam and i2c as input") );
     flags.insert ( std::pair<std::string,std::string>("-dset",      "<Path to set>  Use dataset as input") );
     flags.insert ( std::pair<std::string,std::string>("-usb",       "<No argument>  Use usb cam 0 as input. No acc/gyro data.") );
     flags.insert ( std::pair<std::string,std::string>("-log",       "<Path to dir>  Log collected data") );
     flags.insert ( std::pair<std::string,std::string>("-out",       "<Path file/dir>Output file. Path to dir to auto name, path to file to set name") );
 
-    flags.insert ( std::pair<std::string,std::string>("TODO -s",       "Settings file") );
-    flags.insert ( std::pair<std::string,std::string>("TODO -p",       "change base path for dataset stream. settings file located here. paths in settings file should be relative to this") );
-    flags.insert ( std::pair<std::string,std::string>("TODO -s",       "Settings file") );
     return 1;
 }
 int set::settings::setAllDefault(void){
@@ -276,6 +277,9 @@ int set::settings::setAllDefault(void){
     setDefault("INITIAL_Y", (float) 0," ");
     setDefault("INITIAL_Z", (float) -1," ");
     setDefault("INITIAL_YAW", (float) 0," ");
+    setDefault("ROLL_COLUMN", (int) 3," Specifies which column of csv file that contains roll data");
+    setDefault("PITCH_COLUMN", (int) 2," Specifies which column of csv file that contains pitch data");
+    setDefault("DIST_COLUMN", (int) 1," Specifies which column of csv file that contains distance (lidar) data");
 
     setDefault("STREAM_IMAGES_BASEPATH", "some_dir/","Base path from program working directory to image directory ending with /");
     setDefault("STREAM_IMAGES_INFO_FILE", "some_image_info_file.csv","File (located in IMAGES_BASEPATH with image data. (timestamps image name))");
@@ -441,6 +445,9 @@ bool set::settings::constructSettingsStruct(void){
     float roi_y = ((float)settingsI["FRAME_RESOLUTION_Y"]-roi_side)/2;
     data.ROI = cv::Rect2f(roi_x,roi_y,roi_side,roi_side);
     data.optical_flow_grid = settingsI["OPTICAL_FLOW_GRID"];
+    data.distColumn = settingsI["DIST_COLUMN"];
+    data.pitchColumn = settingsI["PITCH_COLUMN"];
+    data.rollColumn = settingsI["ROLL_COLUMN"];
     return true;
 }
 
