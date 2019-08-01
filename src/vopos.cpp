@@ -40,55 +40,69 @@ Process the given data and update the position and yaw
 */
 int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, float pitch,float& yaw, cv::Mat_<float>& pos){
     static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
-    //Aruco detect
+    //Vectors containing detected Aruco info
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
-    cv::aruco::detectMarkers(frame, dictionary, corners, ids);
-    //Only do angulation if at least two known anchors are visible
-    int status = 0;
-    int returnMode = pos::RETURN_MODE_AZIPE;
-    //Convert IDs to q-coordinates and count number of known anchors from database
-    std::vector<cv::Mat_<float>> q;
-    std::vector<bool> mask;
-    int knownAnchors = dataBase2q(ids,q,mask);
-    if(knownAnchors == 0){
-        returnMode = pos::RETURN_MODE_VO;
-    }else if(knownAnchors < minAnchors){
-        returnMode = pos::RETURN_MODE_PROJ;
-    } else{
-        returnMode = pos::RETURN_MODE_AZIPE;
-    }
-    bool vo_success = false;
-    switch (returnMode) {
-        case pos::RETURN_MODE_VO:{
-            //Get flow field
-            std::vector<cv::Point2f> features;
-            std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
-            of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
-            vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
-            if(!vo_success){
-                returnMode = pos::RETURN_MODE_INERTIA;
-                //std::cout << "VO inertia  mode" << std::endl;
+    int returnMode;//Return integer showing what algorithm was used to calculate new position
+    switch (mode){
+        case pos::MODE_AZIPE:{
+            cv::aruco::detectMarkers(frame, dictionary, corners, ids);
+            //Convert IDs to q-coordinates and count number of known anchors from database
+            std::vector<cv::Mat_<float>> q;
+            std::vector<cv::Mat_<float>> v;
+            std::vector<bool> mask;
+            int knownAnchors = dataBase2q(ids,q,mask);
+            if(knownAnchors < minAnchors){
+                returnMode = pos::RETURN_MODE_AZIPE_FAILED;
+            } else{
+                pix2uLOS(corners,v);
+                ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+                returnMode = pos::RETURN_MODE_AZIPE;
             }
             break;
         }
-        case pos::RETURN_MODE_PROJ:{
-            //Get flow field
+        case pos::MODE_AZIPE_AND_VO:{
+            cv::aruco::detectMarkers(frame, dictionary, corners, ids);
+            //Convert IDs to q-coordinates and count number of known anchors from database
+            std::vector<cv::Mat_<float>> q;
+            std::vector<cv::Mat_<float>> v;
+            std::vector<bool> mask;
+            int knownAnchors = dataBase2q(ids,q,mask);
+            if(knownAnchors == 0){//do pure VO
+                //Get flow field
+                std::vector<cv::Point2f> features;
+                std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
+                of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
+                bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+                if(!vo_success) returnMode = pos::RETURN_MODE_INERTIA;
+                else returnMode = pos::RETURN_MODE_VO;
+            } else if(knownAnchors < minAnchors){//Use VO and projectionFusing
+                std::vector<cv::Point2f> features;
+                std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
+                of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
+                bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+                std::vector<cv::Mat_<float>> v;
+                pix2uLOS(corners,v);
+                projectionFusing(pos,q,v,mask,yaw,roll,pitch);
+                returnMode = pos::RETURN_MODE_PROJ;
+            } else{//Do pure Azipe
+                pix2uLOS(corners,v);
+                ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+                returnMode = pos::RETURN_MODE_AZIPE;
+            }
+            break;
+        }
+        case pos::MODE_VO:{
             std::vector<cv::Point2f> features;
             std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
             of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
-            vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
-            std::vector<cv::Mat_<float>> v;
-            pix2uLOS(corners,v);
-        //    projectionFusing(pos,q,v,mask,yaw,roll,pitch);
+            bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+            if(!vo_success) returnMode = pos::RETURN_MODE_INERTIA;
+            else returnMode = pos::RETURN_MODE_VO;
             break;
         }
-        case pos::RETURN_MODE_AZIPE:{
-            std::vector<cv::Mat_<float>> v;
-            pix2uLOS(corners,v);
-            ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
-            //calculate(q,v,mask,pos,yaw,roll,pitch);
-            break;
+        default:{
+            std::cout << "Invalid process mode given to pos::positioning::process" << std::endl;
         }
     }
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
