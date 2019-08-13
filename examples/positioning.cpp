@@ -81,7 +81,7 @@ double timeStamp_start;
 stamp.get(timeStamp_start);
     while(getData.get(data)){
         timeStamp_data = data[0];
-        float height = data[S.data.distColumn];//This is used as a subst as actual height is not in dataset
+        float dist = data[S.data.distColumn];//This is used as a subst as actual height is not in dataset
         float pitch = data[S.data.pitchColumn];
         float roll = data[S.data.rollColumn];
 
@@ -92,7 +92,7 @@ stamp.get(timeStamp_start);
 //            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,height, roll, pitch, yaw, t);
 //            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,height, roll, pitch, yaw, t);
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-            int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,colorFrame,pos::ILLUSTRATE_ALL,height,roll,pitch,yaw,t);
+            int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t);
             std::cout << "roll: " << roll<<", pitch: " << pitch <<std::endl;
             cv::imshow("showit",colorFrame);
             cv::waitKey(0);
