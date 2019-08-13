@@ -124,7 +124,7 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
  */
 bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1,
                 std::vector<cv::Point2f>& p2,
-                float roll,float pitch, float height,
+                float roll,float pitch, float dist,
                 cv::Mat_<double>& b,
                 cv::Mat_<double>& A){
     static float roll_prev = 0;
@@ -155,7 +155,7 @@ bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1,
         return false;
     }
     //Return the valid rotation and translation mats
-    b = translations[validIndex]*height*cos(roll)*cos(pitch); //Maybe flip signs or something? how to express this as camera movement and not scene movement?
+    b = translations[validIndex]*dist*cos(roll)*cos(pitch); //Maybe flip signs or something? how to express this as camera movement and not scene movement?
     A = rotations[validIndex];
     //Shift roll and pitch static variables
     roll_prev = roll;
@@ -220,8 +220,9 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
         b(2,0) /=s;//Set height according to scale change
     }*/
     //Scale x-y with height
-    b(0,0) *= dist;
-    b(1,0) *= dist;
+    //Should we edit dist value??
+    b(0,0) *= dist;//*cos(roll)*cos(pitch);
+    b(1,0) *= dist;//*cos(roll)*cos(pitch);
     //std::cout << "Scaled translation: " << b.t() << std::endl;
     //Shift roll and pitch static variables
     roll_prev = roll;
