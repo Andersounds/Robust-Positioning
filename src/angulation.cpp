@@ -199,11 +199,20 @@ int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_
  * Using the following formula: https://docs.opencv.org/3.4.0/d4/d94/tutorial_camera_calibration.html
  */
 cv::Point2f ang::angulation::unDistort(const cv::Point2f& point){
-    float r2 = point.x*point.x + point.y+point.y;//Radius squared
+    //Shift coordinate system center to middle of image
+    float x = point.x - K(0,2);
+    float y = point.y - K(1,2);
+    //Perform undistortion
+    float r2 = x*x + y+y;//Radius squared
     float A = (1 + k1_barrel*r2 + k2_barrel*r2*r2 + k3_barrel*r2*r2*r2);
-    cv::Point2f undistortedPoint(point.x/A,point.y/A);//SHOULD IT BE MULTIPLIED? docs are not definitive
+    cv::Point2f undistortedPoint(x/A,y/A);//SHOULD IT BE MULTIPLIED? docs are not definitive. Different in diferent version of docs
+    //Shift coordinates back to image
+    undistortedPoint.x += K(0,2);
+    undistortedPoint.y += K(1,2);
     return undistortedPoint;
 }
+
+
 
 /* Interface mathod used to set K mat and calculate its inverse
  */
