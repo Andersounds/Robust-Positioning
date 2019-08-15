@@ -164,6 +164,7 @@ void ang::angulation::pix2uLOS(const std::vector<std::vector<cv::Point2f>>& corn
 /* Takes IDs and returns vector of corresponding q vectors, if available.
     fills the inputoutputarray mask with values showing which anchors are known and which are unknown.
 returns the amount of known anchors available
+    q vector is global coordinate of anchor
  */
 int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_<float>>& q_vectors,std::vector<bool>& mask){
     int amountOfKnown = 0;
