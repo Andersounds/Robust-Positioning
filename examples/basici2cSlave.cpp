@@ -45,9 +45,17 @@ int main(int argc, char** argv){
     std::vector<float> values{0,0,0,0};
     std::vector<float> valuesTX{1.3,2.5,0.8};
     while(1){
-        int recievedFloats = i2cComm.readAndDecodeBuffer(values);
-        if(recievedFloats>0){
-            std::cout << "Recieved " << recievedFloats <<" decoded floats" << std::endl;
+	i2cComm.clearRxBuffer();       
+	int watchdog = 0;
+	int recv_amount = -1;
+	while(recv_amount<0 && watchdog < 500){
+            recv_amount = i2cComm.readAndDecodeBuffer(values);
+	    watchdog ++;
+	    usleep(1000);//Wait an additional ms
+	}        
+	    std::cout << "watchdog: " << watchdog << std::endl;
+	if(recv_amount>0){
+            std::cout << "Recieved " << recv_amount <<" decoded floats" << std::endl;
             for(float i:values){
                 std::cout << i << ", ";
             }
