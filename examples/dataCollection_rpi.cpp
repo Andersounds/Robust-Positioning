@@ -30,7 +30,7 @@ int main(int argc, char** argv){
     imagebin.init("../TryOuts/dataColl/","32_jul");
     //Initialize databin
     robustPositioning::dataLogger databin_LOG;
-    if(!databin_LOG.init("../TryOuts/dataColl/32_jul/imuData.csv",std::vector<std::string>{"Timestamp [ms]","dist [mm]","height [mm]","pitch [rad]","roll [rad]","watchdog [ms]"})) return 0;
+    if(!databin_LOG.init("../TryOuts/dataColl/32_jul/imuData.csv",std::vector<std::string>{"Timestamp [ms]","dist [m]","height [m]","pitch [rad]","roll [rad]","watchdog [ms]"})) return 0;
 
     //Initialize settings
     set::settings S(argc,argv);
