@@ -79,7 +79,7 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
         paths.clear();
         paths.push_back(basePath);
         paths.push_back(newDirName);
-        paths.push_back(basePath + csvDataName);
+        paths.push_back(basePath + "/" + csvDataName);
     }
     return laps;
 }
