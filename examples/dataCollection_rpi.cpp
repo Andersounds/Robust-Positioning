@@ -24,10 +24,10 @@
 -d new directory name
 -f wanted filename of the data logger
 */
-int parsePaths(std::vector<string>& paths,int argc, char** argv){
-    string basePath = "";
-    string newDirName = "";
-    string csvDataName = "imudata.csv";
+int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
+    std::string basePath = "";
+    std::string newDirName = "";
+    std::string csvDataName = "imudata.csv";
     int laps = 100;
     bool gotDirName = false;
     for(int i=0;i<argc<i++){
@@ -89,7 +89,7 @@ int main(int argc, char** argv){
     //Can these two rows be written as stamp.get(double timeStamp); is timeStamp available in this scope then?
     double timeStamp; //Can it be float? can i just give something else?
     stamp.get(timeStamp);//Initialize .. Do i need to even?
-    std::vector<string> paths;
+    std::vector<std::string> paths;
     if(!parsePaths(paths,argc,argv)){return 0;}
     //Initialize imagebin. It automatically creates a directory 'images' in the given path
     robustPositioning::imageLogger imagebin;
