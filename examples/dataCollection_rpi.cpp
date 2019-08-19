@@ -91,7 +91,8 @@ int main(int argc, char** argv){
     double timeStamp; //Can it be float? can i just give something else?
     stamp.get(timeStamp);//Initialize .. Do i need to even?
     std::vector<std::string> paths;
-    if(!parsePaths(paths,argc,argv)){return 0;}
+    int laps = parsePaths(paths,argc,argv);
+    if(!laps){return 0;}
     //Initialize imagebin. It automatically creates a directory 'images' in the given path
     robustPositioning::imageLogger imagebin;
     imagebin.init(paths[0],paths[1]);
