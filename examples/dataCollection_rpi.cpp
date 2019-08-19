@@ -35,7 +35,7 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
         std::string arg;
         if((i+1)<argc){
             arg = argv[i+1];
-            if(argv[i] == "-p"){
+            if(flag == "-p"){
                 //Make sure that dir ends with /
                 if(std::regex_match(arg,std::regex("(.*)(/)"))){
                     basePath = arg;
@@ -43,11 +43,11 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
                     basePath = arg + "/";
                 }
                 std::cout << "Set base path to: " << basePath << std::endl;
-            }else if(argv[i] == "-d"){
+            }else if(flag == "-d"){
                 newDirName = arg;
                 gotDirName = true;
                 std::cout << "Set dir name to: " << newDirName << std::endl;
-            }else if(argv[i] == "-f"){
+            }else if(flag == "-f"){
                 //Make sure that file ending is there
                 if(std::regex_match(arg,std::regex("(.*)(.csv)"))){
                     csvDataName = arg;
@@ -55,15 +55,13 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
                     csvDataName = arg + ".csv";
                 }
                 std::cout << "Set file name to: " << csvDataName << std::endl;
-            }else if(argv[i] == "-l"){
+            }else if(flag == "-l"){
                 try{
                     laps = stoi(arg);
                 } catch(const std::invalid_argument& ia){
                     std::cout << "Gave invalid number of laps to run (specified with flag -l): " << arg << std::endl;
                 }
                 std::cout << "Set number of laps to: " << laps << std::endl;
-            }else{
-                std::cout << "Invalid flag: \"" << argv[i] << "\". " << std:endl;
             }
         }
     }
@@ -119,7 +117,7 @@ int main(int argc, char** argv){
     float timeStamp_data;
     double timeStamp_image;
     float counter = 0;
-    while(counter<100){
+    while(counter<laps){
         i2cComm.clearRxBuffer();                            //Clear data so that new can be recieved
         stamp.get(timeStamp_data);                          //Set data timestamp
         stamp.get(timeStamp_image);                         //Set image timestamp
