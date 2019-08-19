@@ -214,17 +214,18 @@ void robustpositioning::i2cSlave_decode::emptyRxBuffer(void){
 /*
 //Info byte
 07 06 05 04 03 02 01 00
--  -  A  A  A  S  S  ID
+D  D  A  A  A  S  S  ID
 //Sign byte
 07 06 05 04 03 02 01 00
-            S3 S2 S1 ID
+S7 S6 S5 S4 S3 S2 S1 ID
 //Data bytes
-07 - 01              00
-<data>               ID
+07 06 05 04 03 02 01 00
+        <data>       ID
 //Legend
 ID:     bit identifying the info-byte. 1: info byte, 0: data or sign byte
 S:      bits encoding the scale of floats. 00: 1, 01:10, 10:100, 11:1000
-A:      bits encoding the message length. 1-7 bytes.
+A:      bits encoding the message length. 1-6 bytes.
+D:      bits identifying which message it is (0-3). Can specify before that 0: 3 floats in certain order, 1: 2 ints etc.
 SX:     Bit identifying the sign of float X. 1: neg, 0: pos
 
 Each float is encoded as 7 high bits and 7 low bits in that order.
