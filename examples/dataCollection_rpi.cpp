@@ -30,7 +30,7 @@ int main(int argc, char** argv){
     imagebin.init("../TryOuts/dataColl/","32_jul");
     //Initialize databin
     robustPositioning::dataLogger databin_LOG;
-    if(!databin_LOG.init("../TryOuts/dataColl/32_jul/imuData.csv",std::vector<std::string>{"Timestamp [ms]","height [m]","pitch [rad]","roll [rad]"})) return 0;
+    if(!databin_LOG.init("../TryOuts/dataColl/32_jul/imuData.csv",std::vector<std::string>{"Timestamp [ms]","dist [mm]","height [mm]","pitch [rad]","roll [rad]","watchdog [ms]"})) return 0;
 
     //Initialize settings
     set::settings S(argc,argv);
@@ -44,7 +44,7 @@ int main(int argc, char** argv){
     //const int slaveAddress = 0x04;
     robustpositioning::i2cSlave_decode i2cComm(0x04);
 
-    std::vector<float> data{0,0,0};
+    std::vector<float> data{0,0,0,0};
 
     //Read data until done
     float timeStamp_data;
@@ -53,20 +53,22 @@ int main(int argc, char** argv){
     while(counter<100){
         i2cComm.clearRxBuffer();                            //Clear data so that new can be recieved
         stamp.get(timeStamp_data);                          //Set data timestamp
+        stamp.get(timeStamp_image);                         //Set image timestamp
         VStreamer.getImage(frame);
-        stamp.get(timeStamp_image);                          //Set image timestamp
         int watchdog=0;//Wait maximal 0.5s on imu data
         while(i2cComm.readAndDecodeBuffer(data)<0 && watchdog<500){          //Try to read until we get the requested data
             usleep(1000);//Wait an additional ms
 	    watchdog++;
         }
-        float height = -data[0];//This is used as a subst as actual height is not in dataset
-        float pitch = data[1];
-        float roll = data[2];
+        float dist = -data[0];//This is used as a subst as actual height is not in dataset
+        float height = data[1];//This may drift significantly. When processing, offset it to correct value when possible
+        float pitch = data[2];
+        float roll = data[3];
+
 
         //Log data
 	//std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
-        std::vector<float> logData{timeStamp_data, height, pitch, roll};
+        std::vector<float> logData{timeStamp_data, dist, height,pitch, roll,watchdog};
         databin_LOG.dump(logData);
         imagebin.dump(timeStamp_image,frame);
 
