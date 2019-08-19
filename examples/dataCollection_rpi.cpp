@@ -122,7 +122,7 @@ int main(int argc, char** argv){
         stamp.get(timeStamp_data);                          //Set data timestamp
         stamp.get(timeStamp_image);                         //Set image timestamp
         VStreamer.getImage(frame);
-        int watchdog=0;//Wait maximal 0.5s on imu data
+        float watchdog=0;//Wait maximal 0.5s on imu data
         while(i2cComm.readAndDecodeBuffer(data)<0 && watchdog<500){          //Try to read until we get the requested data
             usleep(1000);//Wait an additional ms
 	    watchdog++;
