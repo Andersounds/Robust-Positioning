@@ -136,6 +136,7 @@ int main(int argc, char** argv){
 
         //Log data
 	//std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
+        std::cout << "Watchdog: " << watchdog << " [ms]" << std::endl;
         std::vector<float> logData{timeStamp_data, dist, height,pitch, roll,watchdog};
         databin_LOG.dump(logData);
         imagebin.dump(timeStamp_image,frame);
