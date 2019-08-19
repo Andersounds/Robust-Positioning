@@ -21,6 +21,8 @@ class martonRobust{
         float k1_barrel;                        //Distortion coefficients for barrel distortion
         float k2_barrel;
         float k3_barrel;
+        int polyParameters;//How many parameters? ie what degree should the polynomial be?
+        int bufferSize; //How many previous locations are to be saved in circular buffer? (min value dep on polyParameters)
     public:
         void setKmat(cv::Mat_<float>);          //Camera matrix
         void setTmat(cv::Mat_<float>);          //uav -to- camera frame transformation matrix
@@ -28,7 +30,7 @@ class martonRobust{
         cv::Point2f unDistort(const cv::Point2f&);//Compensate for barrel distortion
         void pix2angles(const std::vector<cv::Point2f>&,std::vector<cv::Mat_<float>>&);//Converts image pixel coordinate(s) to apparent angles in x,y direction and around z
         void pix2angles(const std::vector<std::vector<cv::Point2f>>&,std::vector<cv::Mat_<float>>&);//Overloaded version for corner locations of anchors instead of center location
-
+        void process(void);// template for complete process method. add arguments and return type when clear
     };
 
 }

@@ -51,8 +51,11 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
             std::vector<cv::Mat_<float>> q;
             std::vector<cv::Mat_<float>> v;
             std::vector<bool> mask;
-            int knownAnchors = dataBase2q(ids,q,mask);
+            int knownAnchors = dataBase2q(ids,q,mask);//Count how many known anchors are found and return their coordinates from database (in q)
             if(knownAnchors < minAnchors){
+                //robustPositioning::martonRobust::pix2angles(corners,angles) angles defined above. this line extracts the alpha beta gamma angles from the first known anchor
+                //robustPositioning::martonRobust::process(q,mask,pos,yaw,roll,pitch) //Perform estimation
+                
                 returnMode = pos::RETURN_MODE_AZIPE_FAILED;
             } else{
                 pix2uLOS(corners,v);

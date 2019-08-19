@@ -1,6 +1,25 @@
 
 
 
+/* This is the main process method that handles the estimation
+ *      q: q vectors (anchor coordinates), of which the first known one as indicated by mask will be used.
+ *   mask: Mask that indicates which anchor to use
+ * angles: alpha, beta, gamma angles as calculated from pix2angles
+ * heightEst: estimated z coordinate in global system. Etimation read from atsam
+ * roll, pitch: measured roll and pitch of uav.
+ * outputs:
+ * yaw:     yaw angle of uav estimation
+ * pos:     global coordinate of uav
+ */
+void robustPositioning::martonRobust::process(const std::vector<cv::Mat_<float>>& q,const std::vector<bool>& mask,const std::vector<float>& angles,float heightEst, float roll, float pitch, float& yaw, cv::Mat_<float>& pos){
+
+    //Derotate (just subtract roll and pitch)
+    //
+
+}
+
+
+
 /* This method takes one or more pixel locations, undistorts them, and calculate alpha, beta, and gamma angles
     alpha: apparent roll angle of uav if anchor were located directly below it and uav has 0 yaw angle
     beta : apparent pitch angle of uav if anchor were located directly below it and uav has 0 yaw angle
