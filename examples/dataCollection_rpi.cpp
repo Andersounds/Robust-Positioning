@@ -124,9 +124,11 @@ int main(int argc, char** argv){
         stamp.get(timeStamp_image);                         //Set image timestamp
         VStreamer.getImage(frame);
         float watchdog=0;//Wait maximal 0.5s on imu data
-        while(i2cComm.readAndDecodeBuffer(data)<0 && watchdog<500){          //Try to read until we get the requested data
+        int recv_amount = -1;//Number of recieved and decoded floats
+        while(recv_amount<0 && watchdog<500){          //Try to read until we get the requested data
+            recv_amount = i2cComm.readAndDecodeBuffer(data);
             usleep(1000);//Wait an additional ms
-	    watchdog++;
+	        watchdog++;
         }
         float dist = -data[0];//This is used as a subst as actual height is not in dataset
         float height = data[1];//This may drift significantly. When processing, offset it to correct value when possible
