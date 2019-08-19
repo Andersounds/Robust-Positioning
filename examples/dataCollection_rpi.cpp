@@ -116,7 +116,7 @@ int main(int argc, char** argv){
     //Read data until done
     float timeStamp_data;
     double timeStamp_image;
-    int counter = 0;
+    float counter = 0;
     while(counter<100){
         i2cComm.clearRxBuffer();                            //Clear data so that new can be recieved
         stamp.get(timeStamp_data);                          //Set data timestamp
