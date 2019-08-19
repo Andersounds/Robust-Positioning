@@ -71,7 +71,7 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
         std::cout << "-d   mandatory   Name of new directory in which data is logged" << std::endl;
         std::cout << "-f   optional    Name of csv file in which i2c data is to be saved. default imudata.csv" << std::endl;
         std::cout << "-p   optional    Relative path to directory in which new dir is to be created. Default to pwd. \"\" gives top of hierarchy"  << std::endl;
-        std::cout << "-l   optional    Number of laps to do. default to 100.";
+        std::cout << "-l   optional    Number of laps to do. default to 100." << std::endl;
         return 0;
     }else{
         std::cout << "Logging to directory " << basePath << newDirName << std::endl;
@@ -79,7 +79,7 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
         paths.clear();
         paths.push_back(basePath);
         paths.push_back(newDirName);
-        paths.push_back(basePath + "/" + csvDataName);
+        paths.push_back(basePath + newDirName +"/" + csvDataName);
     }
     return laps;
 }
