@@ -40,8 +40,6 @@ g++ `pkg-config --cflags --libs opencv` \
 include/raspicam-0.1.6/utils/raspicam_cv_test.cpp -o bin/simpletest_cv_raspicam
 
 echo run with command ./bin/simpletest_cv_raspicam
-#Add usr/local/lib to search path of ld linker
-export LD_LIBRARY_PATH="/usr/local/lib"
 fi
 
 
@@ -71,16 +69,11 @@ src/dataStream.cpp \
 src/logger.cpp -o bin/positioning.out
 
 
-
-echo NOT DONE YET
-#Add usr/local/lib to search path of ld linker
-export LD_LIBRARY_PATH="/usr/local/lib"
-
-#	echo Run with command ./bin/positioning.out [option]
+	echo Run with command ./bin/positioning.out [option]
 fi
 
 
-################# MASTER POSITIONING EXAMPLE (general) RPI
+################# MASTER DATA COLLECTION RPI
 if [ ”$1” = ”dataCollection” ];then
         #
         echo Compiling rpi data collection program
@@ -103,12 +96,12 @@ src/logger.cpp \
 
 #-I/usr/local/include -L/usr/local/lib \
 
-echo add usr/local/lib to search path of ld linker
-echo e x p o r t LD_LIBRARY_PATH="/usr/local/lib"
+#echo add usr/local/lib to search path of ld linker
+#echo e x p o r t LD_LIBRARY_PATH="/usr/local/lib"
 #Add usr/local/lib to search path of ld linker
 export LD_LIBRARY_PATH="/usr/local/lib"
 
-#       echo Run with command ./bin/dataCollection.out [option]
+       echo Run with command ./bin/dataCollection.out [option]
 fi
 
 
