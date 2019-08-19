@@ -14,9 +14,74 @@
 #include <raspicam/raspicam.h>
 #include <raspicam/raspicam_cv.h>
 
+#include <regex>
+
 #include <unistd.h> //For sleep
 #define PI 3.1416
 
+/*
+-p relative path to directory where new directory is to be saved (optional. if skipped then it is created in pwd)
+-d new directory name
+-f wanted filename of the data logger
+*/
+int parsePaths(std::vector<string>& paths,int argc, char** argv){
+    string basePath = "";
+    string newDirName = "";
+    string csvDataName = "imudata.csv";
+    int laps = 100;
+    bool gotDirName = false;
+    for(int i=0;i<argc<i++){
+        std::string flag = argv[i];
+        std::string arg;
+        if((i+1)<argc){
+            arg = argv[i+1];
+            if(argv[i] == "-p"){
+                //Make sure that dir ends with /
+                if(std::regex_match(arg,std::regex("(.*)(/)"))){
+                    basePath = arg;
+                }else{
+                    basePath = arg + "/";
+                }
+            }
+            if(argv[i] == "-d"){
+                newDirName = arg;
+                gotDirName = true;
+            }
+            if(argv[i] == "-f"){
+                //Make sure that file ending is there
+                if(std::regex_match(arg,std::regex("(.*)(.csv)"))){
+                    csvDataName = arg;
+                }else{
+                    csvDataName = arg + ".csv";
+                }
+            }
+            if(argv[i] == "-l"){
+                try{
+                    laps = stoi(arg);
+                } catch(const std::invalid_argument& ia){
+                    std::cout << "Gave invalid number of laps to run (specified with flag -l): " << arg << std::endl;
+                }
+
+            }
+        }
+        if(!gotDirName){
+            std::cout << "Usage:" << std::endl;
+            std::cout << "Flag Remark      Purpose" << std::endl;
+            std::cout << "-d   mandatory   Name of new directory in which data is logged" << std::endl;
+            std::cout << "-f   optional    Name of csv file in which i2c data is to be saved. default imudata.csv" << std::endl;
+            std::cout << "-p   optional    Relative path to directory in which new dir is to be created. Default to pwd. \"\" gives top of hierarchy"  << std::endl;
+            std::cout << "-l   optional    Number of laps to do. default to 100."
+            return 0;
+        }else{
+            std::cout << "Logging to directory " << basePath << newDirName << std::endl;
+            std::cout << "Logging csv data to file " << csvDataName << std::endl;
+            paths.clear();
+            paths.push_back(basePath);
+            paths.push_back(newDirName);
+            paths.push_back(basePath + csvDataName);
+        }
+        return laps;
+}
 
 
 int main(int argc, char** argv){
@@ -24,13 +89,14 @@ int main(int argc, char** argv){
     //Can these two rows be written as stamp.get(double timeStamp); is timeStamp available in this scope then?
     double timeStamp; //Can it be float? can i just give something else?
     stamp.get(timeStamp);//Initialize .. Do i need to even?
-
+    std::vector<string> paths;
+    if(!parsePaths(paths,argc,argv)){return 0;}
     //Initialize imagebin. It automatically creates a directory 'images' in the given path
     robustPositioning::imageLogger imagebin;
-    imagebin.init("../TryOuts/dataColl/","32_jul");
+    imagebin.init(paths[0],paths[1]);
     //Initialize databin
     robustPositioning::dataLogger databin_LOG;
-    if(!databin_LOG.init("../TryOuts/dataColl/32_jul/imuData.csv",std::vector<std::string>{"Timestamp [ms]","dist [m]","height [m]","pitch [rad]","roll [rad]","watchdog [ms]"})) return 0;
+    if(!databin_LOG.init(paths[2],std::vector<std::string>{"Timestamp [ms]","dist [m]","height [m]","pitch [rad]","roll [rad]","watchdog [ms]"})) return 0;
 
     //Initialize settings
     set::settings S(argc,argv);
