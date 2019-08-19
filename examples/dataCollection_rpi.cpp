@@ -30,7 +30,7 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
     std::string csvDataName = "imudata.csv";
     int laps = 100;
     bool gotDirName = false;
-    for(int i=0;i<argc<i++){
+    for(int i=0;i<argc;i++){
         std::string flag = argv[i];
         std::string arg;
         if((i+1)<argc){
@@ -64,23 +64,24 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
 
             }
         }
-        if(!gotDirName){
-            std::cout << "Usage:" << std::endl;
-            std::cout << "Flag Remark      Purpose" << std::endl;
-            std::cout << "-d   mandatory   Name of new directory in which data is logged" << std::endl;
-            std::cout << "-f   optional    Name of csv file in which i2c data is to be saved. default imudata.csv" << std::endl;
-            std::cout << "-p   optional    Relative path to directory in which new dir is to be created. Default to pwd. \"\" gives top of hierarchy"  << std::endl;
-            std::cout << "-l   optional    Number of laps to do. default to 100."
-            return 0;
-        }else{
-            std::cout << "Logging to directory " << basePath << newDirName << std::endl;
-            std::cout << "Logging csv data to file " << csvDataName << std::endl;
-            paths.clear();
-            paths.push_back(basePath);
-            paths.push_back(newDirName);
-            paths.push_back(basePath + csvDataName);
-        }
-        return laps;
+    }
+    if(!gotDirName){
+        std::cout << "Usage:" << std::endl;
+        std::cout << "Flag Remark      Purpose" << std::endl;
+        std::cout << "-d   mandatory   Name of new directory in which data is logged" << std::endl;
+        std::cout << "-f   optional    Name of csv file in which i2c data is to be saved. default imudata.csv" << std::endl;
+        std::cout << "-p   optional    Relative path to directory in which new dir is to be created. Default to pwd. \"\" gives top of hierarchy"  << std::endl;
+        std::cout << "-l   optional    Number of laps to do. default to 100.";
+        return 0;
+    }else{
+        std::cout << "Logging to directory " << basePath << newDirName << std::endl;
+        std::cout << "Logging csv data to file " << csvDataName << std::endl;
+        paths.clear();
+        paths.push_back(basePath);
+        paths.push_back(newDirName);
+        paths.push_back(basePath + csvDataName);
+    }
+    return laps;
 }
 
 
