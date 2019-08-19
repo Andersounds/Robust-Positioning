@@ -42,26 +42,28 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
                 }else{
                     basePath = arg + "/";
                 }
-            }
-            if(argv[i] == "-d"){
+                std::cout << "Set base path to: " << basePath << std::endl;
+            }else if(argv[i] == "-d"){
                 newDirName = arg;
                 gotDirName = true;
-            }
-            if(argv[i] == "-f"){
+                std::cout << "Set dir name to: " << newDirName << std::endl;
+            }else if(argv[i] == "-f"){
                 //Make sure that file ending is there
                 if(std::regex_match(arg,std::regex("(.*)(.csv)"))){
                     csvDataName = arg;
                 }else{
                     csvDataName = arg + ".csv";
                 }
-            }
-            if(argv[i] == "-l"){
+                std::cout << "Set file name to: " << csvDataName << std::endl;
+            }else if(argv[i] == "-l"){
                 try{
                     laps = stoi(arg);
                 } catch(const std::invalid_argument& ia){
                     std::cout << "Gave invalid number of laps to run (specified with flag -l): " << arg << std::endl;
                 }
-
+                std::cout << "Set number of laps to: " << laps << std::endl;
+            }else{
+                std::cout << "Invalid flag: \"" << argv[i] << "\". " << std:endl;
             }
         }
     }
