@@ -101,8 +101,8 @@ int main(int argc, char** argv){
     if(!databin_LOG.init(paths[2],std::vector<std::string>{"Timestamp [ms]","dist [m]","height [m]","pitch [rad]","roll [rad]","watchdog [ms]"})) return 0;
 
     //Initialize settings
-    set::settings S(argc,argv);
-    if(!S.success()){return 0;}
+    //set::settings S(argc,argv);
+    //if(!S.success()){return 0;}
 
     //Initialize video stream
     robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM);
@@ -137,7 +137,7 @@ int main(int argc, char** argv){
 
 
         //Log data
-	//std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
+	    std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
         std::cout << "Watchdog: " << watchdog << " [ms]" << std::endl;
         std::vector<float> logData{timeStamp_data, dist, height,pitch, roll,watchdog};
         databin_LOG.dump(logData);
