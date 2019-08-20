@@ -134,8 +134,8 @@ int main(int argc, char** argv){
 
     //Initialize video stream
     robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM,CV_8UC1);
-    VStreamer.params = imWriteParams;
-    VStreamer.imgFormatStr = paths[3];
+    imagebin.params = imWriteParams;
+    imagebin.imgFormatStr = paths[3];
     cv::Mat frame;
     //Initialize data stream
     //initialize i2c slave object with the inherited encode/decode class
@@ -162,7 +162,7 @@ int main(int argc, char** argv){
 	// Read i2c message
         float watchdog=0;//Wait maximal 0.5s on imu data
         int recv_amount = i2cComm.readAndDecodeBuffer(data);;//Number of recieved and decoded floats
-        while(recv_amount<0 && watchdog<500){          //Try to read until we get the requested data
+        while(recv_amount<0 && watchdog<10){          //Try to read until we get the requested data. max 1/10 s
 	        usleep(2000);//Wait 2 ms
 	        watchdog++;
 	        recv_amount = i2cComm.readAndDecodeBuffer(data);
