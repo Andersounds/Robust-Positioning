@@ -101,7 +101,7 @@ int robustPositioning::dataLogger::dump(std::vector<std::string>& data){
  robustPositioning::imageLogger::imageLogger(void){
      imgBaseStr = "img_";       //After renaming the images will by default have the format img_XXXX.png
      dumpDirName = "images";        //By default images arw written to a new directory called images in the given directory
-     imgFormatStr = ".png";
+     imgFormatStr = ".bmp";//Default to .bmp as this is by far the fastest
      numOfDigits = 4;
      renameFile = "data.csv";
      std::vector<int> params_{cv::IMWRITE_PNG_COMPRESSION,1};
