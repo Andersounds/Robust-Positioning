@@ -105,7 +105,7 @@ int main(int argc, char** argv){
     //if(!S.success()){return 0;}
 
     //Initialize video stream
-    robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM);
+    robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM,CV_8UC1);
     cv::Mat frame;
     //Initialize data stream
     //initialize i2c slave object with the inherited encode/decode class
@@ -135,7 +135,7 @@ int main(int argc, char** argv){
 	        watchdog++;
 	        recv_amount = i2cComm.readAndDecodeBuffer(data);
         }
-	//Only update the variables that  have been recieved. And do not try to access outside bounds of data vector. 
+	//Only update the variables that  have been recieved. And do not try to access outside bounds of data vector.
 	switch(recv_amount){
 	    case 4:roll = data[3];
 	    case 3:pitch = data[2];
