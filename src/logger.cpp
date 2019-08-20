@@ -104,6 +104,8 @@ int robustPositioning::dataLogger::dump(std::vector<std::string>& data){
      imgFormatStr = ".png";
      numOfDigits = 4;
      renameFile = "data.csv";
+     std::vector<int> params_{IMWRITE_PNG_COMPRESSION,1};
+     params = params_;
  }
 
  // https://techoverflow.net/2013/04/05/how-to-use-mkdir-from-sysstat-h/
@@ -134,7 +136,6 @@ int robustPositioning::imageLogger::init(std::string dumpDir,std::string newDir)
      int no_decimals = static_cast<int>(timeStamp);
      std::string ts = std::to_string(no_decimals);
      std::string file = dirPath + "/" + imgBaseStr + ts + imgFormatStr;
-     std::vector<int> params;
      if(!cv::imwrite(file,image,params)){
          std::cout << "Could not write file. " << std::endl;
      }

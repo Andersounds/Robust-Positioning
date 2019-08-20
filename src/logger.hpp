@@ -42,6 +42,7 @@ public:
     std::string dirPath;
     std::string dumpDirName;
     std::string imgFormatStr;
+    std::vector<int> params;//Parameters for imwrite
     int numOfDigits;        //standard four for images img_0001, img_0002, etc.
     std::string renameFile;
     int dump(const double&,cv::Mat&);//Timestamp is given as float, image is given as Mat
