@@ -24,10 +24,14 @@
 -d new directory name
 -f wanted filename of the data logger
 */
-int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
+int parsePaths(std::vector<std::string>& paths,std::vector<int>& params_,int argc, char** argv){
     std::string basePath = "";
     std::string newDirName = "";
     std::string csvDataName = "imudata.csv";
+    int cp1;
+    bool cp1Set = false;
+    int cp2;
+    std::string fileEnding = ".png";//default to png
     int laps = 100;
     bool gotDirName = false;
     for(int i=0;i<argc;i++){
@@ -62,6 +66,28 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
                     std::cout << "Gave invalid number of laps to run (specified with flag -l): " << arg << std::endl;
                 }
                 std::cout << "Set number of laps to: " << laps << std::endl;
+            }else if(flag == "-cp1"){
+                try{
+                    cp1 = stoi(arg);
+                    cp1Set = true;
+                } catch(const std::invalid_argument& ia){
+                    std::cout << "Gave invalid int for cp1: " << arg << std::endl;
+                }
+            }else if(flag == "-cp2"){
+                try{
+                    cp2 = stoi(arg);
+                    if(cp1Set){
+                        params_.push_back(cp1);
+                        params_.push_back(cp2);
+                        cp1Set = false;
+                    }else{
+                        std::cout << "cp2 set without specifying cp1.." << std::endl;
+                    }
+                } catch(const std::invalid_argument& ia){
+                    std::cout << "Gave invalid int for cp2: " << arg << std::endl;
+                }
+            }else if(flag == "-cp3"){
+                fileEnding = arg;
             }
         }
     }
@@ -72,6 +98,9 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
         std::cout << "-f   optional    Name of csv file in which i2c data is to be saved. default imudata.csv" << std::endl;
         std::cout << "-p   optional    Relative path to directory in which new dir is to be created. Default to pwd. \"\" gives top of hierarchy"  << std::endl;
         std::cout << "-l   optional    Number of laps to do. default to 100." << std::endl;
+        std::cout << "-cp1 optional    imwrite compression parameter 1 (name) " << std::endl;
+        std::cout << "-cp2 optional    imwrite compression parameter 1 (name) " << std::endl;
+        std::cout << "-cp3 optional    imwrite file ending" << std::endl;
         return 0;
     }else{
         std::cout << "Logging to directory " << basePath << newDirName << std::endl;
@@ -80,6 +109,7 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
         paths.push_back(basePath);
         paths.push_back(newDirName);
         paths.push_back(basePath + newDirName +"/" + csvDataName);
+        paths.push_back(fileEnding);
     }
     return laps;
 }
@@ -87,11 +117,9 @@ int parsePaths(std::vector<std::string>& paths,int argc, char** argv){
 
 int main(int argc, char** argv){
     timestamp::timeStamp_ms stamp;
-    //Can these two rows be written as stamp.get(double timeStamp); is timeStamp available in this scope then?
-    double timeStamp; //Can it be float? can i just give something else?
-    stamp.get(timeStamp);//Initialize .. Do i need to even?
     std::vector<std::string> paths;
-    int laps = parsePaths(paths,argc,argv);
+    std::vector<int> imWriteParams;
+    int laps = parsePaths(paths,imWriteParams,argc,argv);
     if(!laps){return 0;}
     //Initialize imagebin. It automatically creates a directory 'images' in the given path
     robustPositioning::imageLogger imagebin;
@@ -106,6 +134,8 @@ int main(int argc, char** argv){
 
     //Initialize video stream
     robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM,CV_8UC1);
+    VStreamer.params = imWriteParams;
+    VStreamer.imgFormatStr = paths[3];
     cv::Mat frame;
     //Initialize data stream
     //initialize i2c slave object with the inherited encode/decode class
@@ -121,6 +151,8 @@ int main(int argc, char** argv){
     float timeStamp_data;
     double timeStamp_image;
     float counter = 0;
+    double timeStamp; //
+    stamp.get(timeStamp);//Initialize to get start value
     while(counter<laps){
         i2cComm.clearRxBuffer();                            //Clear data so that new can be recieved
         stamp.get(timeStamp_data);                          //Set data timestamp
