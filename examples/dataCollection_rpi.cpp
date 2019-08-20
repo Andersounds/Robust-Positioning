@@ -122,30 +122,31 @@ int main(int argc, char** argv){
         i2cComm.clearRxBuffer();                            //Clear data so that new can be recieved
         stamp.get(timeStamp_data);                          //Set data timestamp
         stamp.get(timeStamp_image);                         //Set image timestamp
-        VStreamer.getImage(frame);
+        VStreamer.getImage(frame);			    //Get image
+	imagebin.dump(timeStamp_image,frame);		    //Log image (By doing this now we give some extra time  for i2c)
+	// Read i2c message
         float watchdog=0;//Wait maximal 0.5s on imu data
         int recv_amount = i2cComm.readAndDecodeBuffer(data);;//Number of recieved and decoded floats
         while(recv_amount<0 && watchdog<500){          //Try to read until we get the requested data
             std::cout << "      WD: "<< watchdog << ", Recieved floats: " << recv_amount << ", roll: "<< data[3]<<std::endl;
-	        usleep(1000);//Wait an additional ms
+	        usleep(2000);//Wait 2 ms
 	        watchdog++;
 	        recv_amount = i2cComm.readAndDecodeBuffer(data);
         }
-	std::cout << "DONE. WD: "<< watchdog << ", Recieved floats: " << recv_amount << ", roll: " << data[3] <<std::endl;
-
+	float ts_temp;
+	stamp.get(ts_temp);
+	float time = ts_temp-timeStamp_data;
+	std::cout << "DONE. WD: "<< watchdog << ",("<<time <<"ms), Recieved floats: " << recv_amount << ", roll: " << data[3] <<std::endl;
 	float dist = -data[0];//This is used as a subst as actual height is not in dataset
         float height = data[1];//This may drift significantly. When processing, offset it to correct value when possible
         float pitch = data[2];
         float roll = data[3];
-
 
         //Log data
 	//    std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
         //std::cout << "Watchdog: " << watchdog << " [ms]" << std::endl;
         std::vector<float> logData{timeStamp_data, dist, height,pitch, roll,watchdog};
         databin_LOG.dump(logData);
-        imagebin.dump(timeStamp_image,frame);
-
         counter++;
     }
     stamp.get(timeStamp_data);
