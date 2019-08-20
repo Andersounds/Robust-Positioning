@@ -113,7 +113,10 @@ int main(int argc, char** argv){
     robustpositioning::i2cSlave_decode i2cComm(0x04);
 
     std::vector<float> data{0,0,0,0};
-
+    float dist = 0;
+    float height = 0;
+    float pitch = 0;
+    float roll = 0;
     //Read data until done
     float timeStamp_data;
     double timeStamp_image;
@@ -128,20 +131,17 @@ int main(int argc, char** argv){
         float watchdog=0;//Wait maximal 0.5s on imu data
         int recv_amount = i2cComm.readAndDecodeBuffer(data);;//Number of recieved and decoded floats
         while(recv_amount<0 && watchdog<500){          //Try to read until we get the requested data
-            std::cout << "      WD: "<< watchdog << ", Recieved floats: " << recv_amount << ", roll: "<< data[3]<<std::endl;
 	        usleep(2000);//Wait 2 ms
 	        watchdog++;
 	        recv_amount = i2cComm.readAndDecodeBuffer(data);
         }
-	float ts_temp;
-	stamp.get(ts_temp);
-	float time = ts_temp-timeStamp_data;
-	std::cout << "DONE. WD: "<< watchdog << ",("<<time <<"ms), Recieved floats: " << recv_amount << ", roll: " << data[3] <<std::endl;
-	float dist = -data[0];//This is used as a subst as actual height is not in dataset
-        float height = data[1];//This may drift significantly. When processing, offset it to correct value when possible
-        float pitch = data[2];
-        float roll = data[3];
-
+	//Only update the variables that  have been recieved. And do not try to access outside bounds of data vector. 
+	switch(recv_amount){
+	    case 4:roll = data[3];
+	    case 3:pitch = data[2];
+	    case 2:height = data[1];//This may drift significantly. When processing, offset it to correct value when possible
+	    case 1:dist = -data[0];//This is used as a subst as actual height is not in dataset
+	}
         //Log data
 	//    std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
         //std::cout << "Watchdog: " << watchdog << " [ms]" << std::endl;
