@@ -126,24 +126,32 @@ int main(int argc, char** argv){
         float watchdog=0;//Wait maximal 0.5s on imu data
         int recv_amount = -1;//Number of recieved and decoded floats
         while(recv_amount<0 && watchdog<500){          //Try to read until we get the requested data
-            recv_amount = i2cComm.readAndDecodeBuffer(data);
-            usleep(1000);//Wait an additional ms
-	        watchdog++;
+            std::cout << "      WD: "<< watchdog << ", Recieved floats: " << recv_amount << ", roll: "<< data[3]<<std::endl;
+	    usleep(1000);//Wait an additional ms
+	    watchdog++;
+	    recv_amount = i2cComm.readAndDecodeBuffer(data);
         }
-        float dist = -data[0];//This is used as a subst as actual height is not in dataset
+	std::cout << "DONE. WD: "<< watchdog << ", Recieved floats: " << recv_amount << ", roll: " << data[3] <<std::endl;
+        
+	float dist = -data[0];//This is used as a subst as actual height is not in dataset
         float height = data[1];//This may drift significantly. When processing, offset it to correct value when possible
         float pitch = data[2];
         float roll = data[3];
 
 
         //Log data
-	    std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
-        std::cout << "Watchdog: " << watchdog << " [ms]" << std::endl;
+	//    std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
+        //std::cout << "Watchdog: " << watchdog << " [ms]" << std::endl;
         std::vector<float> logData{timeStamp_data, dist, height,pitch, roll,watchdog};
         databin_LOG.dump(logData);
         imagebin.dump(timeStamp_image,frame);
 
         counter++;
     }
+    stamp.get(timeStamp_data);
+    float total_time_s = (timeStamp_data-timeStamp)/1000;
+    float fps = counter/total_time_s;
+    std::cout << "Data collection done." << std::endl;
+    std::cout << counter << " frames in " << total_time_s << " seconds. (" << fps << " fps)" << std::endl;
     return 0;
 }
