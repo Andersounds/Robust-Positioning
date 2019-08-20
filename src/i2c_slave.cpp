@@ -148,12 +148,14 @@ robustpositioning::i2cSlave_decode::~i2cSlave_decode(void){
 int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& values){
     uint8_t rxbuffer[16];             //Create array able to hold whole buffer
     int rxSize = readBuffer(rxbuffer);//Read rx buffer
+    std::cout << "    Read " << rxSize << " bytes from buffer..." << std::endl;
     int infoByte = -1;
     for(int i=0;i<rxSize;i++){        //Find the first info byte
         if(rxbuffer[i]&0x01){
             infoByte = i;
         }
     }
+    std::cout << "    Info byte index: " << infoByte << std::endl;
     if(infoByte<0){return -1;}//If no infobyte has been found, return
     values.clear();
     int sgnByte   = infoByte+1; //Sign-byte is the one after infobyte always
