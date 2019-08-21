@@ -128,21 +128,6 @@ int main(int argc, char** argv){
     robustPositioning::dataLogger databin_LOG;
     if(!databin_LOG.init(paths[2],std::vector<std::string>{"Timestamp [ms]","dist [m]","height [m]","pitch [rad]","roll [rad]","watchdog [ms]"})) return 0;
 
-    //Initialize settings
-    //set::settings S(argc,argv);
-    //if(!S.success()){return 0;}
-    ///////// TESTING VIDEO WRITER
-    cv::Size frame_size(640, 480);
-    double frames_per_second = 30;
-    cv::VideoWriter oVideoWriter("../TryOuts/MyVideo.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),frames_per_second, frame_size, false);
-    if(oVideoWriter.isOpened() == false){
-      std::cout << "Cannot save the video to a file" << std::endl;
-       return 0;
-   }
-
-
-    ///////// TESTING VIDEO WRITER
-
     //Initialize video stream
     robustPositioning::Streamer VStreamer(robustPositioning::MODE_RPI_CAM,CV_8UC1);
     imagebin.params = imWriteParams;
@@ -170,8 +155,7 @@ int main(int argc, char** argv){
         stamp.get(timeStamp_data);                          //Set data timestamp
         stamp.get(timeStamp_image);                         //Set image timestamp
         VStreamer.getImage(frame);			    //Get image
-//	    imagebin.dump(timeStamp_image,frame);		    //Log image (By doing this now we give some extra time  for i2c)
-    oVideoWriter.write(frame);
+        imagebin.dump(timeStamp_image,frame);		    //Log image (By doing this now we give some extra time  for i2c)
     // Read i2c message
         float watchdog=0;//Wait maximal 0.5s on imu data
         int recv_amount = i2cComm.readAndDecodeBuffer(data);;//Number of recieved and decoded floats
@@ -204,6 +188,5 @@ int main(int argc, char** argv){
     float fps = counter/total_time_s;
     std::cout << "Data collection done." << std::endl;
     std::cout << counter << " frames in " << total_time_s << " seconds. (" << fps << " fps)" << std::endl;
-    oVideoWriter.release();
     return 0;
 }
