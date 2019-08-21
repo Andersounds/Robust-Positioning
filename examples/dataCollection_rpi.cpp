@@ -31,7 +31,7 @@ int parsePaths(std::vector<std::string>& paths,std::vector<int>& params_,int arg
     int cp1;
     bool cp1Set = false;
     int cp2;
-    std::string fileEnding = ".png";//default to png
+    std::string fileEnding = ".bmp";//default to png
     int laps = 100;
     bool gotDirName = false;
     for(int i=0;i<argc;i++){
