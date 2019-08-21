@@ -20,31 +20,36 @@ void closeSlave() {
 
 int main(int argc, char** argv){
 // Parse argument
+    int lapCounter = 0;
+    int lapMax = 0;
     if(argc!=2){
         std::cout << "Give -one- argument"<< std::endl;
-        std::cout << "1: enable gpio, i2c on BSC peripheral and run example" << std::endl;
-        std::cout << "0: disable gpio and i2c on BSC peripheral" << std::endl;
+        std::cout << "-1: enable gpio, i2c on BSC peripheral and run example indefinitely until ^c" << std::endl;
+        std::cout << " 0: disable gpio and i2c on BSC peripheral" << std::endl;
+	std::cout << " <non neg number>" << "Run the specified amount of laps and then return. disable BSC with destructor. "<< std::endl;
         return 0;
     }else{
 	std::string arg = argv[1];
 	std::cout <<"Given argument: "<< arg << std::endl;
-        if((arg != "0") && arg!="1"){
-            std::cout << "Valid arguments:" << std::endl;
-            std::cout << "1: enable gpio, i2c on BSC peripheral and run example" << std::endl;
-            std::cout << "0: disable gpio and i2c on BSC peripheral" << std::endl;
-            return 0;
-        }
     	if(arg=="0"){
         	closeSlave();
         	return 0;
-   	 }
+ 	}else{
+	    try{
+                lapMax = stoi(arg);
+            }catch(const std::invalid_argument& ia){
+                std::cout << "Gave invalid number of laps to run: " << arg << std::endl;
+                return 0;
+	    }
+	}
     }
     //initialize i2c slave object with the inherited encode/decode class
     const int slaveAddress = 0x04;
     robustpositioning::i2cSlave_decode i2cComm(slaveAddress);
-    std::vector<float> values{0,0,0,0};
+    std::vector<float> values{0,0,0,0,0};
     std::vector<float> valuesTX{1.3,2.5,0.8};
-    while(1){
+    while(lapMax < 0 || lapCounter<lapMax){
+	lapCounter++;
 	i2cComm.clearRxBuffer();
 	usleep(25000);//wait approx 25 ms to simulate image collect and log
 	int watchdog = 0;
@@ -55,7 +60,7 @@ int main(int argc, char** argv){
 	    watchdog ++;
 	}
 	if(recv_amount>0){
-            std::cout << "WD: "<< watchdog << ". Recieved " << recv_amount <<" decoded floats. roll: "<< values[3] << std::endl;
+            std::cout <<lapCounter <<". WD: "<< watchdog << ". Recieved " << recv_amount <<" decoded floats. roll: "<< values[1]<< ", batt: " << values[4] << std::endl;
         }else{std::cout << "No available data in rx buffer" << std::endl;}
         usleep(3000);//Pause a bit more to simulate data logging
         /* int writtenBytes = i2cComm.writeAndEncodeBuffer(valuesTX);
