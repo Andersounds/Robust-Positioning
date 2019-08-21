@@ -45,30 +45,25 @@ int main(int argc, char** argv){
     std::vector<float> values{0,0,0,0};
     std::vector<float> valuesTX{1.3,2.5,0.8};
     while(1){
-	i2cComm.clearRxBuffer();       
+	i2cComm.clearRxBuffer();
+	usleep(25000);//wait approx 25 ms to simulate image collect and log
 	int watchdog = 0;
-	int recv_amount = -1;
+	int recv_amount = i2cComm.readAndDecodeBuffer(values);//-1;
 	while(recv_amount<0 && watchdog < 500){
-            recv_amount = i2cComm.readAndDecodeBuffer(values);
+	    usleep(1000);
+	    recv_amount = i2cComm.readAndDecodeBuffer(values);
 	    watchdog ++;
-	    usleep(1000);//Wait an additional ms
-	}        
-	    std::cout << "watchdog: " << watchdog << std::endl;
+	}
 	if(recv_amount>0){
-            std::cout << "Recieved " << recv_amount <<" decoded floats" << std::endl;
-            for(float i:values){
-                std::cout << i << ", ";
-            }
-            std::cout << std::endl;
+            std::cout << "WD: "<< watchdog << ". Recieved " << recv_amount <<" decoded floats. roll: "<< values[3] << std::endl;
         }else{std::cout << "No available data in rx buffer" << std::endl;}
-        /*usleep(3000000);
-        int writtenBytes = i2cComm.writeAndEncodeBuffer(valuesTX);
+        usleep(3000);//Pause a bit more to simulate data logging
+        /* int writtenBytes = i2cComm.writeAndEncodeBuffer(valuesTX);
         if(writtenBytes>0){
             std::cout << "Wrote " << writtenBytes << " bytes to tx buffer" << std::endl;
         }else{ std::cout << "Could not write to tx buffer " << std::endl;
                 std::cout << "Tx buf content size: " <<i2cComm.TxBufferContentSize() << std::endl;}
         */
-        usleep(3000000);
     }
 
 }
