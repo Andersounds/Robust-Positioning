@@ -240,16 +240,18 @@ Each float is encoded as 7 high bits and 7 low bits in that order.
 DD message number specification:
 bin     dec     description
 00       0
-                byte 0: info byte
-                byte 1: sign byte
-                byte 2: lidar dist HB
-                byte 3: lidar dist LB
-                byte 4: height est HB
-                byte 5: height est LB
-                byte 6: pitch (rad) HB
-                byte 7: pitch (rad) LB
-                byte 8: roll (rad) HB
-                byte 9: roll (rad) LB
+                byte 0:  info byte
+                byte 1:  sign byte
+		byte 2:  pitch (rad) HB
+                byte 3:  pitch (rad) LB
+                byte 4:  roll (rad) HB
+                byte 5:  roll (rad) LB
+                byte 6:  lidar dist HB
+                byte 7:  lidar dist LB
+                byte 8:  height est HB
+                byte 9:  height est LB
+		byte 10: atsam batt HB
+                byte 11: atsam batt LB
 01       1
 10       2
 11       3
