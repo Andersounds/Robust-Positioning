@@ -142,11 +142,12 @@ int main(int argc, char** argv){
     //const int slaveAddress = 0x04;
     robustpositioning::i2cSlave_decode i2cComm(0x04);
 
-    std::vector<float> data{0,0,0,0};
+    std::vector<float> data{0,0,0,0,0};
     float dist = 0;
     float height = 0;
     float pitch = 0;
     float roll = 0;
+    float batt = 0;
     //Read data until done
     float timeStamp_data;
     double timeStamp_image;
@@ -169,10 +170,15 @@ int main(int argc, char** argv){
         }
 	//Only update the variables that  have been recieved. And do not try to access outside bounds of data vector.
 	switch(recv_amount){
-	    case 4:roll = data[3];
-	    case 3:pitch = data[2];
-	    case 2:height = data[1];//This may drift significantly. When processing, offset it to correct value when possible
-	    case 1:dist = -data[0];//This is used as a subst as actual height is not in dataset
+	    case 5:batt = data[4];
+	    case 4:height = -data[3];
+	    case 3:dist = data[2];
+	    case 2:roll = data[1];
+	    case 1:{pitch = data[0];
+			std::cout <<counter <<". WD: "<< watchdog << ". Recieved " << recv_amount <<" decoded floats. roll: "<< roll<< ", batt: " << batt << std::endl;
+			break;}
+	    case 0:{std::cout << "No available data in rx buffer" << std::endl;break;}
+	    default:{std::cout << "Recieved more than 5 decoded floats? " << recv_amount << std::endl;}
 	}
         //Log data
 	//    std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
