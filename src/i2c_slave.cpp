@@ -155,6 +155,7 @@ int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& 
 	    break;//If the first info byte is found then use that
        }
     }
+    std::cout << "Info byte index: " << infoByte << std::endl;
     if(infoByte<0){return -1;}//If no infobyte has been found, return
     values.clear();
     int sgnByte   = infoByte+1; //Sign-byte is the one after infobyte always
