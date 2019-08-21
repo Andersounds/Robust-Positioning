@@ -132,11 +132,11 @@ int main(int argc, char** argv){
     //set::settings S(argc,argv);
     //if(!S.success()){return 0;}
     ///////// TESTING VIDEO WRITER
-    Size frame_size(640, 480);
+    cv::Size frame_size(640, 480);
     double frames_per_second = 30;
-    cv::VideoWriter oVideoWriter("../TryOuts/MyVideo.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'),frames_per_second, frame_size, false);
-   if (oVideoWriter.isOpened() == false){
-       cout << "Cannot save the video to a file" << endl;
+    cv::VideoWriter oVideoWriter("../TryOuts/MyVideo.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),frames_per_second, frame_size, false);
+    if(oVideoWriter.isOpened() == false){
+      std::cout << "Cannot save the video to a file" << std::endl;
        return 0;
    }
 
@@ -175,7 +175,7 @@ int main(int argc, char** argv){
     // Read i2c message
         float watchdog=0;//Wait maximal 0.5s on imu data
         int recv_amount = i2cComm.readAndDecodeBuffer(data);;//Number of recieved and decoded floats
-        while(recv_amount<0 && watchdog<10){          //Try to read until we get the requested data. max 1/10 s
+        while(recv_amount<0 && watchdog<10&& false){          //Try to read until we get the requested data. max 1/10 s
 	        usleep(2000);//Wait 2 ms
 	        watchdog++;
 	        recv_amount = i2cComm.readAndDecodeBuffer(data);
