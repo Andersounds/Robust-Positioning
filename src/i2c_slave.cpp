@@ -145,10 +145,14 @@ robustpositioning::i2cSlave_decode::~i2cSlave_decode(void){
     std::cout << "Terminated GPIOs."<< std::endl;;
 }
 //Additional methods for special case class
+// return value -2: no data at all available
+//	  	-1: data read but no infuo byte found
+//	       >=0: number of read and decoded floats
 int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& values){
     uint8_t rxbuffer[16];             //Create array able to hold whole buffer
     int rxSize = readBuffer(rxbuffer);//Read rx buffer. rxSize is total number of read bytes
     int infoByte = -1;
+    if(rxSize == 0){return -2;}//If no data at all available
     for(int i=0;i<rxSize;i++){        //Find the first info byte
         if(rxbuffer[i]&0x01){
 	    infoByte = i;
@@ -156,7 +160,7 @@ int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& 
        }
     }
 //    std::cout << "Info byte index: " << infoByte << std::endl;
-    if(infoByte<0){return -1;}//If no infobyte has been found, return
+    if(infoByte<0){return -1;}//If no infobyte has been found (But there was some data)
     values.clear();
     int sgnByte   = infoByte+1; //Sign-byte is the one after infobyte always (index)
     int startByte = infoByte+2; //First datafield			(index)
