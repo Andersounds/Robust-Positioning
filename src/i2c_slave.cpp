@@ -147,7 +147,7 @@ robustpositioning::i2cSlave_decode::~i2cSlave_decode(void){
 //Additional methods for special case class
 int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& values){
     uint8_t rxbuffer[16];             //Create array able to hold whole buffer
-    int rxSize = readBuffer(rxbuffer);//Read rx buffer
+    int rxSize = readBuffer(rxbuffer);//Read rx buffer. rxSize is total number of read bytes
     int infoByte = -1;
     for(int i=0;i<rxSize;i++){        //Find the first info byte
         if(rxbuffer[i]&0x01){
@@ -155,23 +155,26 @@ int robustpositioning::i2cSlave_decode::readAndDecodeBuffer(std::vector<float>& 
 	    break;//If the first info byte is found then use that
        }
     }
-    std::cout << "Info byte index: " << infoByte << std::endl;
+//    std::cout << "Info byte index: " << infoByte << std::endl;
     if(infoByte<0){return -1;}//If no infobyte has been found, return
     values.clear();
-    int sgnByte   = infoByte+1; //Sign-byte is the one after infobyte always
-    int startByte = infoByte+2; //First datafield
-    int readableBytes = rxSize-infoByte-2;//Number of databytes
-    int floatNmbr = 0;          //Number of the decoded float
+    int sgnByte   = infoByte+1; //Sign-byte is the one after infobyte always (index)
+    int startByte = infoByte+2; //First datafield			(index)
+    int msgSize = (int)(rxbuffer[infoByte]>>3)&0b111;
     int decodeScale = (int)(rxbuffer[infoByte]>>1)&0b11;
+    int lastReadableByte = std::min(rxSize,startByte-1 + 2*msgSize);//Read only the data bytes that are needed to construct whole message(msgSize). if it does not fit then read as much as possible
+   // int readableBytes = std::min(msgSize*2+2,rxSize-infoByte); //See if we can read the whole msg length or if buffer space is too small
+    //int readableBytes = rxSize-infoByte-2;//Number of databytes
+    int floatNmbr = 0;          //Number of the decoded float
     //std::cout << "Decode scale: " << decodeScale << ": " << scales[decodeScale] << std::endl;
     //std::cout << "Read bytes: " << rxSize << std::endl;
-    for(int i=startByte;i<rxSize-1;i+=2){//go through all complete data-pairs. if there is an odd number of data fields then skip the last one
+    for(int i=startByte;i<lastReadableByte;i+=2){//go through all complete data-pairs. if there is an odd number of data fields then skip the last one
+    //for(int i=startByte;i<rxSize-1;i+=2){//go through all complete data-pairs. if there is an odd number of data fields then skip the last one
         int value_abs_int = (int)((rxbuffer[i]<<6)|(rxbuffer[i+1]>>1));//build HB and LB to a int
         if((rxbuffer[sgnByte]>>(floatNmbr+1))&0b1){
             value_abs_int*=(-1);//value is negative
         }
         float value = (float)value_abs_int / scales[decodeScale];
-
         values.push_back(value);
         floatNmbr++;
     }
@@ -227,7 +230,7 @@ S7 S6 S5 S4 S3 S2 S1 ID
 //Legend
 ID:     bit identifying the info-byte. 1: info byte, 0: data or sign byte
 S:      bits encoding the scale of floats. 00: 1, 01:10, 10:100, 11:1000
-A:      bits encoding the message length. 1-6 bytes.
+A:      bits encoding the message length. 1-7 floats (7 floats = 14 unsigned bytes + sgn byte + info byte = 16 bytes.
 D:      bits identifying which message it is (0-3). Can specify before that 0: 3 floats in certain order, 1: 2 ints etc.
 SX:     Bit identifying the sign of float X. 1: neg, 0: pos
 
