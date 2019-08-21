@@ -104,7 +104,7 @@ int robustPositioning::dataLogger::dump(std::vector<std::string>& data){
      imgFormatStr = ".bmp";//Default to .bmp as this is by far the fastest
      numOfDigits = 4;
      renameFile = "data.csv";
-     std::vector<int> params_{cv::IMWRITE_PNG_COMPRESSION,1};
+     std::vector<int> params_{};
      params = params_;
  }
 
