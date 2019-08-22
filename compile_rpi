@@ -71,7 +71,33 @@ src/logger.cpp -o bin/positioning.out
 
 	echo Run with command ./bin/positioning.out [option]
 fi
+################# MASTER POSITIONING EXAMPLE (REALTIME)) RPI
+if [ ”$1” = ”rtpositioning” ];then
+        #
+        echo Compiling general positioning program
+#       g++ -std=c++11  \
+g++ `pkg-config --cflags --libs opencv` \
+-I/usr/local/include -L/usr/local/lib \
+-lraspicam \
+-lraspicam_cv \
+-I/opt/vc/include -L/opt/vc/lib \
+-lmmal \
+-lmmal_core \
+-lmmal_util \
+examples/positioning_rpi.cpp \
+src/vopos.cpp \
+src/angulation.cpp \
+src/azipe.cpp \
+src/opticalFlow.cpp \
+src/homographyVO.cpp \
+include/Quartic-master/quartic.cpp \
+src/videoStream_RPI.cpp \
+src/dataStream.cpp \
+src/logger.cpp -o bin/rtpositioning.out
 
+
+        echo Run with command ./bin/rtpositioning.out [option]
+fi
 
 ################# MASTER DATA COLLECTION RPI
 if [ ”$1” = ”dataCollection” ];then
