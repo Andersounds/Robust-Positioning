@@ -60,7 +60,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     cv::Rect2f roiSize = S.data.ROI;
     cv::Mat_<float> K = S.data.K;
     cv::Mat_<float> T = S.data.T;//warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
-    pos::positioning P(pos::OF_MODE_CORR,//pos::OF_MODE_CORR,//pos::OF_MODE_KLT,
+    pos::positioning P(pos::OF_MODE_KLT,//pos::OF_MODE_CORR,//pos::OF_MODE_KLT,
                         pos::VO_MODE_AFFINE,//pos::VO_MODE_HOMOGRAPHY,//pos::VO_MODE_AFFINE,
                         cv::aruco::DICT_4X4_50,
                         maxIdAruco,anchorPath,flowGrid,roiSize,K,T);
@@ -79,6 +79,7 @@ float timeStamp_image;
 int counter = 0;
 double timeStamp_start;
 stamp.get(timeStamp_start);
+float rad2Grad = 57.2958;
     while(getData.get(data)){
         timeStamp_data = data[0];
         float dist = data[S.data.distColumn];//This is used as a subst as actual height is not in dataset
@@ -93,7 +94,7 @@ stamp.get(timeStamp_start);
 //            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,height, roll, pitch, yaw, t);
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
             int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t);
-            std::cout << "roll: " << roll<<", pitch: " << pitch <<std::endl;
+            std::cout << "roll: " << roll*rad2Grad<<", pitch: " << pitch*rad2Grad <<std::endl;
             cv::imshow("showit",colorFrame);
             cv::waitKey(0);
             if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
