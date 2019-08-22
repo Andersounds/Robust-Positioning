@@ -108,7 +108,7 @@ int parsePaths(std::vector<std::string>& paths,std::vector<int>& params_,int arg
         std::cout << "-cp1 optional    imwrite compression parameter 1 (name) " << std::endl;
         std::cout << "-cp2 optional    imwrite compression parameter 1 (name) " << std::endl;
         std::cout << "-cp3 optional    imwrite file ending" << std::endl;
-	std::cout << "-w   optional    wait before starting data collection [s]" << std::endl;
+	    std::cout << "-w   optional    wait before starting data collection [s]" << std::endl;
         return 0;
     }else{
         std::cout << "Logging to directory " << basePath << newDirName << std::endl;
@@ -176,7 +176,7 @@ int main(int argc, char** argv){
     // Read i2c message
         float watchdog=0;//Wait maximal 0.5s on imu data
         int recv_amount = i2cComm.readAndDecodeBuffer(data);;//Number of recieved and decoded floats
-        while(recv_amount<0 && watchdog<10&& false){          //Try to read until we get the requested data. max 1/10 s
+        while(recv_amount<0 && watchdog<10){          //Try to read until we get the requested data. max 1/10 s
 	        usleep(2000);//Wait 2 ms
 	        watchdog++;
 	        recv_amount = i2cComm.readAndDecodeBuffer(data);
