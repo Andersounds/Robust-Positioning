@@ -28,6 +28,7 @@ int parsePaths(std::vector<std::string>& paths,std::vector<int>& params_,int arg
     std::string basePath = "";
     std::string newDirName = "";
     std::string csvDataName = "imudata.csv";
+    int waitSeconds = 0;
     int cp1;
     bool cp1Set = false;
     int cp2;
@@ -88,7 +89,13 @@ int parsePaths(std::vector<std::string>& paths,std::vector<int>& params_,int arg
                 }
             }else if(flag == "-cp3"){
                 fileEnding = arg;
-            }
+            }else if(flag == "-w"){
+	        try{
+                    waitSeconds = stoi(arg);
+                } catch(const std::invalid_argument& ia){
+                    std::cout << "Gave invalid int for -w wait [s]: " << arg << std::endl;
+                }
+   	    }
         }
     }
     if(!gotDirName){
@@ -101,6 +108,7 @@ int parsePaths(std::vector<std::string>& paths,std::vector<int>& params_,int arg
         std::cout << "-cp1 optional    imwrite compression parameter 1 (name) " << std::endl;
         std::cout << "-cp2 optional    imwrite compression parameter 1 (name) " << std::endl;
         std::cout << "-cp3 optional    imwrite file ending" << std::endl;
+	std::cout << "-w   optional    wait before starting data collection [s]" << std::endl;
         return 0;
     }else{
         std::cout << "Logging to directory " << basePath << newDirName << std::endl;
@@ -110,6 +118,15 @@ int parsePaths(std::vector<std::string>& paths,std::vector<int>& params_,int arg
         paths.push_back(newDirName);
         paths.push_back(basePath + newDirName +"/" + csvDataName);
         paths.push_back(fileEnding);
+        if(waitSeconds>0){
+	    std::cout << "Waiting " << waitSeconds << " seconds..." << std::endl;
+	    while(waitSeconds>0){
+		sleep(1);
+	        std::cout << waitSeconds << "..." << std::endl;
+		waitSeconds--;
+	    }
+	    std::cout << "Starting initialization..." << std::endl;
+	}
     }
     return laps;
 }
