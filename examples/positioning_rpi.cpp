@@ -44,12 +44,14 @@ int main(int argc, char** argv){
     //Initialize positioning object
     int maxIdAruco = 50;
     std::string anchorPath = S.data.anchorPath;//"anchors.txt";
-    int flowGrid = S.data.optical_flow_grid;
     cv::Rect2f roiSize = S.data.ROI;
     cv::Mat_<float> K = S.data.K;
     cv::Mat_<float> T = S.data.T;//warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
-    pos::positioning P(pos::OF_MODE_KLT,
-                        pos::VO_MODE_AFFINE,
+    int OpticalFlowMode = S.data.MODE_OpticalFlow;
+    int VisualOdometryMode = S.data.MODE_VisualOdometry;
+    int flowGrid = S.data.optical_flow_grid;
+    pos::positioning P(OpticalFlowMode,
+                        VisualOdometryMode,
                         cv::aruco::DICT_4X4_50,
                         maxIdAruco,anchorPath,flowGrid,roiSize,K,T);
     P.setDistortCoefficents(S.data.dist_k1,S.data.dist_k2,S.data.dist_k3);//Set distortion coefficients
@@ -69,6 +71,7 @@ int main(int argc, char** argv){
     double timeStamp_start;
     double avgProcessTime = 0; //Avarage process time in ms
     stamp.get(timeStamp_start);
+    int estimationMode = S.data.MODE_Positioning;
     while(getData.get(data)){
         timeStamp_data = data[0];
         float height = data[1];//This is used as a subst as actual height is not in dataset
@@ -83,7 +86,7 @@ int main(int argc, char** argv){
             double from;
             double to;
             stamp.get(from);
-            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,height, roll, pitch, yaw, t);
+            int mode = P.process(estimationMode,frame,height, roll, pitch, yaw, t);
             stamp.get(to);
             avgProcessTime += (to-from);
             std::cout << "Lap " << counter << std::endl;
