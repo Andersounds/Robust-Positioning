@@ -84,12 +84,14 @@ int main(int argc, char** argv){
     //Initialize positioning object
     int maxIdAruco = 50;
     std::string anchorPath = S.data.anchorPath;//"anchors.txt";
-    int flowGrid = S.data.optical_flow_grid;
     cv::Rect2f roiSize = S.data.ROI;
     cv::Mat_<float> K = S.data.K;
     cv::Mat_<float> T = S.data.T;//warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
-    pos::positioning P(pos::OF_MODE_KLT,
-                        pos::VO_MODE_AFFINE,
+    int OpticalFlowMode = S.data.MODE_OpticalFlow;
+    int VisualOdometryMode = S.data.MODE_VisualOdometry;
+    int flowGrid = S.data.optical_flow_grid;
+    pos::positioning P(OpticalFlowMode,
+                        flowGrid,
                         cv::aruco::DICT_4X4_50,
                         maxIdAruco,anchorPath,flowGrid,roiSize,K,T);
     P.setDistortCoefficents(S.data.dist_k1,S.data.dist_k2,S.data.dist_k3);//Set distortion coefficients
@@ -123,6 +125,7 @@ int main(int argc, char** argv){
     float counter = 0;
     double timeStamp; //
     stamp.get(timeStamp);//Initialize to get start value
+    int estimationMode = S.data.MODE_Positioning;
     while(counter<laps){
         i2cComm.clearRxBuffer();                            //Clear data so that new can be recieved
         stamp.get(timeStamp_data);                          //Set data timestamp
@@ -150,7 +153,7 @@ int main(int argc, char** argv){
     	    default:{std::cout << "Recieved more than 5 decoded floats? " << recv_amount << std::endl;}
     	}
     //Positioning...
-        int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,height, roll, pitch, yaw, t);
+        int mode = P.process(estimationMode,frame,height, roll, pitch, yaw, t);
 
 
         //Log data
