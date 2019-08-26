@@ -279,7 +279,13 @@ int robustPositioning::datasetStreamer::setSettings(int test){
 }
 
 
+/*
+ For knowledge:
+ raspicam_cv as video capturing is capped at 30fps. In most cases this will be fine as
+  when running positioning algorithm alongside, 30fps will not be reached. If faster
+  video is wanted, try to edit line 77 in private_impl.cpp and rebuild library.  (Or compile from source)
 
+*/
 //Default constructor. does not do anything. onl called when Streamer does NOT use picam
 robustPositioning::piCamStreamer::piCamStreamer(void){
 
