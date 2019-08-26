@@ -22,6 +22,17 @@
 #define PI 3.1416
 
 /*
+TODO::
+ - Read settings from settings file instead
+ - specify resolution via settings file
+
+
+
+*/
+
+
+
+/*
 -p relative path to directory where new directory is to be saved (optional. if skipped then it is created in pwd)
 -d new directory name
 -f wanted filename of the data logger
