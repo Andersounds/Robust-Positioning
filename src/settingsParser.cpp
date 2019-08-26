@@ -40,6 +40,9 @@ struct dataStruct{
     int distColumn;
     int pitchColumn;
     int rollColumn;
+    int MODE_OpticalFlow;
+    int MODE_VisualOdometry;
+    int MODE_Positioning;
 };
 /* This is a class containing all necessary settings and their default values.
 */
@@ -240,17 +243,17 @@ int set::settings::setAllDefault(void){
     std::string pathToOutputFile = "";
 
     /*DEFAULT SETTINGS*/
-    //Obtain data
+    //Below are settings needed for data I/O
     setDefault("USE_CAM_NMBR",(int) 0,"-1: rpi cam, >=0: webcam nmbr");
-    //Modes
-    setDefault("OPTICAL_FLOW_MODE", (int) 0," KLT with grid or correlation based");
-    setDefault("OPTICAL_FLOW_GRID", (int) 4," sqrt of total amount of points used in optical flow.");
-    setDefault("VISUAL_ODOMETRY_MODE", (int) 0," ");
-    setDefault("POS_EST_MODE", (int) 0,"Azipe, VO, benchmark, azipe+VO, azipe+benchmark");
     setDefault("LOG_MODE", (int) 0,"Log position estimation, pos est and video");
-    //General values that are needed
     setDefault("FRAME_RESOLUTION_X", (int) 640,"In pixles. Used to specify RPI video input res. Specify here or hardcode?");
     setDefault("FRAME_RESOLUTION_Y", (int) 480," ");
+
+    //Below are settings needed for positioning
+    setDefault("OPTICAL_FLOW_MODE", (int) 0," KLT (1) or correlation (2) based optical flow");
+    setDefault("OPTICAL_FLOW_GRID", (int) 4," sqrt of total amount of points used in optical flow.");
+    setDefault("VISUAL_ODOMETRY_MODE", (int) 0," Homography (1) or Affine (2) odometry estimation");
+    setDefault("POS_EST_MODE", (int) 0,"Azipe+VO (0), AZIPE (1), VO (2), (todo: benchmark, benchmark+azipe)");
     setDefault("K_MAT_cx", (float) 320,"For image resolution 640 in x dir");
     setDefault("K_MAT_cy", (float) 240,"For image resolution 480 in y dir");
     setDefault("K_MAT_fx", (float) 607.13635578,"For image resolution 640 in x dir");
@@ -267,20 +270,21 @@ int set::settings::setAllDefault(void){
     setDefault("DIST_COEFF_K1", (float) 0.2486857357354474,"Barrel distortion coefficient k1");
     setDefault("DIST_COEFF_K2", (float) -1.452670730319596,"Barrel distortion coefficient k2");
     setDefault("DIST_COEFF_K3", (float) 2.638858641887943,"Barrel distortion coefficient k3");
-
     setDefault("PATH_TO_ARUCO_DATABASE", "database.txt" ," ");
     setDefault("ARUCO_DICT_TYPE", (int) 0," ");
     setDefault("MAX_ID_ARUCO", (int) 50,"Database size. must be able to contain all IDs in ARUCO_DICT_TYPE");
     setDefault("ROI_SIZE", (int) 150,"Specify the size in pixles of the side of the centered ROI that is considered in VO. Used to edit K mat of VO alg.");
-
     setDefault("INITIAL_X", (float) 0," ");
     setDefault("INITIAL_Y", (float) 0," ");
     setDefault("INITIAL_Z", (float) -1," ");
     setDefault("INITIAL_YAW", (float) 0," ");
+
+
+
+    // Below are settings needed for dataset streaming
     setDefault("ROLL_COLUMN", (int) 3," Specifies which column of csv file that contains roll data");
     setDefault("PITCH_COLUMN", (int) 2," Specifies which column of csv file that contains pitch data");
     setDefault("DIST_COLUMN", (int) 1," Specifies which column of csv file that contains distance (lidar) data");
-
     setDefault("STREAM_IMAGES_BASEPATH", "some_dir/","Base path from program working directory to image directory ending with /");
     setDefault("STREAM_IMAGES_INFO_FILE", "some_image_info_file.csv","File (located in IMAGES_BASEPATH with image data. (timestamps image name))");
     setDefault("STREAM_DATA_FILE", "some_data_file.csv","Path to csv file to be streamed");
@@ -448,6 +452,9 @@ bool set::settings::constructSettingsStruct(void){
     data.distColumn = settingsI["DIST_COLUMN"];
     data.pitchColumn = settingsI["PITCH_COLUMN"];
     data.rollColumn = settingsI["ROLL_COLUMN"];
+    data.MODE_OpticalFlow = settingsI["OPTICAL_FLOW_MODE"];
+    data.MODE_VisualOdometry = settingsI["VISUAL_ODOMETRY_MODE"];
+    data.MODE_Positioning = settingsI["POS_EST_MODE"];
     return true;
 }
 
