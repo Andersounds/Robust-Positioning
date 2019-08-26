@@ -216,6 +216,7 @@ int main(int argc, char** argv){
             std::vector<float> logData{timeStamp_data, dist, height,pitch, roll,watchdog};
             databin_LOG.dump(logData);
         }
+	usleep(Sett.FpsThrottlingms*1000);
         counter++;
     }
     stamp.get(timeStamp_data);
