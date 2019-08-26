@@ -118,7 +118,7 @@ examples/dataCollection_rpi.cpp \
 src/videoStream_RPI.cpp \
 src/dataStream.cpp \
 src/logger.cpp \
--o bin/dataCollection.out
+-o bin/dataCollection_640_480.out
 
 #-I/usr/local/include -L/usr/local/lib \
 

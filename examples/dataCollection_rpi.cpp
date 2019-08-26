@@ -74,7 +74,7 @@ int parsePaths(dataCollSettings& settings,int argc, char** argv){
                     csvDataName = arg;
                 }else{
                     csvDataName = arg + ".csv";
-                    settings.csvDataName = arg + ".csv";
+                    //settings.csvDataPath = arg + ".csv";
                 }
                 std::cout << "Set file name to: " << csvDataName << std::endl;
             }else if(flag == "-l"){
@@ -127,12 +127,12 @@ int parsePaths(dataCollSettings& settings,int argc, char** argv){
     }else{
         std::cout << "Logging to directory " << basePath << newDirName << std::endl;
         std::cout << "Logging csv data to file " << csvDataName << std::endl;
-        paths.clear();
-        paths.push_back(basePath);
-        paths.push_back(newDirName);
-        paths.push_back(basePath + newDirName +"/" + csvDataName);
+        //paths.clear();
+        //paths.push_back(basePath);
+        //paths.push_back(newDirName);
+        //paths.push_back(basePath + newDirName +"/" + csvDataName);
         settings.csvDataPath = basePath + newDirName +"/" + csvDataName;
-        paths.push_back(fileEnding);
+        //paths.push_back(fileEnding);
         settings.fileEnding = fileEnding;
         if(waitSeconds>0){
 	    std::cout << "Waiting " << waitSeconds << " seconds..." << std::endl;
