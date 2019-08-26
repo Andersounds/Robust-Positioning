@@ -215,8 +215,8 @@ int main(int argc, char** argv){
         if(Sett.logData){
             std::vector<float> logData{timeStamp_data, dist, height,pitch, roll,watchdog};
             databin_LOG.dump(logData);
-            counter++;
         }
+        counter++;
     }
     stamp.get(timeStamp_data);
     float total_time_s = (timeStamp_data-timeStamp)/1000;
