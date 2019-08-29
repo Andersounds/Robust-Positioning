@@ -184,10 +184,10 @@ int main(int argc, char** argv){
     double timeStamp; //
     stamp.get(timeStamp);//Initialize to get start value
     while(counter<Sett.laps){
+	VStreamer.getImage(frame);                          //Get image
         i2cComm.clearRxBuffer();                            //Clear data so that new can be recieved
-        stamp.get(timeStamp_image);                         //Set image timestamp
         stamp.get(timeStamp_data);                          //Set data timestamp
-        VStreamer.getImage(frame);			    //Get image
+	stamp.get(timeStamp_image);                         //Set image timestamp
         if(Sett.logData){
             imagebin.dump(timeStamp_image,frame);		    //Log image (By doing this now we give some extra time  for i2c)
         }
