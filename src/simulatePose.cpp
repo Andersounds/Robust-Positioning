@@ -16,30 +16,33 @@ This class generates a visual simulation environment to evaluate VO-algorithm
     The object the constructs the camera K that fulfills the specifications
 -   For each new physical camera coordinate and pose [m],[rad], the object calculates the corresponding image warp
 TODO:   -Let user define general global coordinate at base scene DONE
-        -Relate UAV to camera pose with T matrix. needed?
+        -Relate UAV to camera pose with T matrix. begin with only rotation around z
+        -Let global coordinate system always be aligned with base image coordinate system.
+
+
+Configurations:
+        -0: Specify base image physical dimensions and camera base pose - K matrix is automatically calculated
+        -1: Specify a camera matrix, base image physical dimensions (x or y) and provide base image
+            base image can and should be high resolution. when generating a warped image, a new scaled camera matrix is used. returned image is then downscaled to correct resolution
+
 */
 simulatePose::simulatePose(void){
     std::cout << "Open issue in simulatepose: translation scaling. How should d be used to compensate?" <<std::endl;
     //Variables for definition of K matrix
-    N = 0;
-    cx = 0;
-    cy = 0;
-    f_p = 0;
-    //Relationship between global coordinate system and base pose. Default to being completely aligned
-    x_base = 0;
-    y_base = 0;
-    z_base = 0;
-    yaw_base  = 0;
-    pitch_base= 0;
-    roll_base = 0;
+    //N = 0;
+    //cx = 0;
+    //cy = 0;
+    //f_p = 0;
+    //Default T mat is no rotation around z.
     T_z = cv::Mat_<float>::eye(3,3);              //Base conversion from UAV frame to camera frame PURE ROTATION
     //Physical scale variables
-    sceneWidth = 0;//Maybe have dafault 1?
-    angle = 0;
-    f_m = 0;
+    sceneWidth = 0;
+    //angle = 0;
+    //f_m = 0;
     //gamma=0;
     //Define scene plane as expressed in base pose. perpendiculat to z-axis
-    d  = 0;                             // 0 is non-accepted value. user must define via some configuration
+    //d  = 0;                             // 0 is non-accepted value. user must define via some configuration
+    //base plane normal in global sys
     v = cv::Mat_<float>::zeros(3,1);
     v(2,0) = 1;
 }
@@ -48,27 +51,31 @@ simulatePose::simulatePose(void){
     */
 void simulatePose::setBaseScene(int blockSize,int rowsOfBoxes,int colsOfBoxes){
     baseScene = getChessboard(blockSize,rowsOfBoxes,colsOfBoxes);
-    cx = ((float) baseScene.cols)/2;
-    cy = ((float) baseScene.rows)/2;
-    N = (float) baseScene.cols;
 }
     /* Specify own image for basescene
-     * TODO: Perform check of filetype and make sure that it is of type CV_8UC3
      */
 void simulatePose::setBaseScene(cv::Mat baseScene_){
-    baseScene = baseScene_;
-    cx = ((float) baseScene.cols) /2;
-    cy = ((float) baseScene.rows) /2;
-    N = (float) baseScene.cols;
+    baseScene_.copyTo(baseScene);
+}
+void simulatePose::setBaseSceneWidth(float BaseSceneWidth_){
+    sceneWidth = BaseSceneWidth_;
+}
+void simulatePose::setKMat(cv::Mat_<float>K_){
+    K_.copyTo(K_specified);
+    camera_res_x = 2*K_specified(0,2);
+    camera_res_y = 2*K_specified(1,2);
+}
+void simulatePose::setTMat(cv::Mat_<float>T_){
+    T_.copyTo(T_z);
 }
 /*
 This function will be used to define the relationship between the global coordinate system and the base pose
  */
-void simulatePose::setBasePose(void){
+void simulatePose::setBasePose(float x0,float y0,float z0, float yaw0){
     //Base rotation of camera 1. i.e the R matrix of the camera that should achieve the non-distorted base projection
-    R1 = getTotRot(yaw_base,pitch_base,roll_base);                                    //Set base rotation matrix
+    R1 = getTotRot(yaw0,0,0);    //Set base rotation matrix. no roll pitch
     //Base coordinate of camera 1. i.e the t of the camera that should achieve the non-distorted base projection
-    t1 = coord2CMat (x_base,y_base,z_base);
+    t1 = coord2CMat (x0,y0,z0);
 }
 
 cv::Mat simulatePose::getChessboard(int blockSize,int rowsOfBoxes,int colsOfBoxes){
@@ -95,153 +102,72 @@ cv::Mat simulatePose::getChessboard(int blockSize,int rowsOfBoxes,int colsOfBoxe
     cv::waitKey(0);
     return chessBoard;
 }
-/*This function sets physical parameters of simulation environment one by one
- * TODO: add parameters x-y to shift global coordinate system??
- */
-int simulatePose::setParam(std::string parameterName,float value){
-    static int init = 0;
-    if(!init){
-        init=1;
-        std::vector<std::vector<std::string>> validParameters_;
-        //Init valid parameters as their names and description
-        std::vector<std::string> param0{"sceneWidth",   "Physical width of scene in x-direction         [m]"};
-        std::vector<std::string> param1{"d",            "Distance to scene in base positive             [m]"};
-        std::vector<std::string> param2{"f_m",          "Focal length in meter                          [m]"};
-        std::vector<std::string> param3{"f_p",          "Focal length in pixles                         [pixles]"};
 
-        std::vector<std::string> param4{"yaw",          "UAV yaw in base pose                           [rad]"};
-        std::vector<std::string> param5{"pitch",        "UAV pitch in base pose                         [rad]"};
-        std::vector<std::string> param6{"roll",         "UAV roll in base pose                          [rad]"};
-        std::vector<std::string> param7{"x",            "UAV Base pose coordinate in x-direction        [m]"};
-        std::vector<std::string> param8{"y",            "UAV Base pose coordinate in y-direction        [m]"};
-
-
-
-        validParameters_.push_back(param0);
-        validParameters_.push_back(param1);
-        validParameters_.push_back(param2);
-        validParameters_.push_back(param3);
-        validParameters_.push_back(param4);
-        validParameters_.push_back(param5);
-        validParameters_.push_back(param6);
-        validParameters_.push_back(param7);
-        validParameters_.push_back(param8);
-        validParameters = validParameters_; //Save as object attribute
-        std::vector<std::vector<int>> validConfigurations_;
-        std::vector<int> conf0{0,1};//sceneWidth and distance to base scene
-        std::vector<int> conf1{1,2};//distance to base scene in base pose and focal length in meters
-        std::vector<int> conf2{1,3};//distance to base scene in base pose and focal length in pixles
-        std::vector<int> conf3{0,2};//scene width in [m] focal length in [m]
-        std::vector<int> conf4{0,3};//scene width in [m] focal length in [pixles]
-        //There are more configurations..
-        validConfigurations_.push_back(conf0);
-        validConfigurations_.push_back(conf1);
-        validConfigurations_.push_back(conf2);
-        validConfigurations_.push_back(conf3);
-        validConfigurations_.push_back(conf4);
-        validConfigurations = validConfigurations_;
-    }
-    if(parameterName == "sceneWidth"){
-        sceneWidth = value;
-    }
-    else if(parameterName == "d"){
-        d = abs(value);
-        z_base = -d; //Coordinate system is ALWAYS fix in base scenez=0 in the plane
-    }
-    /*else if(parameterName == "z"){
-        z_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }
-    else if(parameterName == "angle"){
-        angle = value;
-    }
-    else if(parameterName == "f_m"){
-        f_m = value;
-    }
-    else if(parameterName == "f_p"){
-        f_p = value;
-    }*/
-    else if(parameterName == "y"){
-        y_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }
-    else if(parameterName == "x"){
-        x_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }
-    else if(parameterName == "yaw"){
-        yaw_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }
-    else if(parameterName == "pitch"){
-        pitch_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }
-    else if(parameterName == "roll"){
-        roll_base = value; //Only valid if base plane is horizontal and coplanar with base camera
-    }
-    else{
-        std::cout << "Parameter name '" << parameterName << "' is not valid. Valid parameter configurations are:" << std::endl;
-        std::cout << "Parameter name" << "\t\t" << "Description" << std::endl;
-        for(int i=0;i<validConfigurations.size();i++){  //Print out all valid configurations
-            std::cout << "---------Configuration " << i << "---------" << std::endl;
-            for(int parameterIndex:validConfigurations[i]){//For all parameters in configuration i:
-                std::cout << validParameters[parameterIndex][0] << "\t \t" << validParameters[parameterIndex][1] << std::endl;//Print out parameter name and its description
-            }
-        }
-    }
-    return 1;
-}
-//Overloaded version to give info in case of erronous function call
-int simulatePose::setParam(void){
-    setParam("",0); //Dummy call of set param with invalid parameter name
-    return 0;
-}
 /* This method initializes the simulation environment according to the configuration specified
  *
  */
-int simulatePose::init(int configuration){
-    switch(configuration){
-        /*
-        Begin with implementing case 0. scenewidth, d must be set
-        */
-        case 0:{
-            if(d!=0 && sceneWidth!=0 && N!=0){//If the necessary attributes are defined
-                //Set base pose
-                setBasePose();
-                setKMat();//Set K-mat according to default configuration, d,sceneWidth, N
-            }else{
-                std::cout << "The required parameters for configuration "<< configuration << " are not set." << std::endl;
-                return 0;
-            }
-            break;
-        }
-        default:{
-            std::cout << "configuration not yet implemented" << std::endl;
-            return 0;
-            break;
-        }
+int simulatePose::init(void){
+    //Check that K is defined, base scene is defined, scene width is defined
+    if(!K_specified.empty() && !baseScene.empty() && sceneWidth!=0){
+        //Scale K_specified to the resolution of base scene
+        float cx_specified = K_specified(0,2);
+        float cx_sim =((float)baseScene.cols)/2;
+        KmatScaleFactor = cx_sim/cx_specified;
+        K = K_specified*KmatScaleFactor; //The K mat that is used in simulation
+        K_inv = K.inv();
+        //Pad or crop base image in y direction so that it fits the camera resolution
+        //Create new base image of zeros of correct size and same type as base scene
+        int correctwidth = (int)(K(0,2)*2);
+        int correctheight = (int)(K(1,2)*2);
+        cv::Mat baseScene_corrected = cv::Mat::zeros(cv::Size(correctwidth,correctheight), baseScene.type());
+        int padheight = std::min(correctheight,baseScene.rows);
+        cv::Rect roi(0,0,correctwidth,padheight);
+        baseScene(roi).copyTo(baseScene_corrected(roi));
+        baseScene.release();
+        baseScene_corrected.copyTo(baseScene);
+
+        //Calculate base pose of camera
+        float x0 = sceneWidth/2;
+        float y0 = (float)correctheight/2*sceneWidth/(float)correctwidth;
+        //distance to base scene in base pose using similar triangles half resolution in x, focal length in pixles, and half scene width in m gives distance in m
+        d = (sceneWidth/2)*K(0,0)/K(0,2);
+        float z0 = -d;
+        float yaw0 = 0;
+        std::cout << "Simulatepose::init TODO: yaw0 is 0. what do?" << std::endl;
+        std::cout << "x0: " << x0 << std::endl;
+        std::cout << "y0: " << y0 << std::endl;
+        std::cout << "z0: " << z0 << std::endl;
+        //Set base pose of camera
+        setBasePose(x0,y0,z0,yaw0);
+    }else{
+        std::cout << "The required parameters are not set. " << std::endl;
+        std::cout << "Call the following functions before init()"<< std::endl;
+        std::cout << "setBaseScene          - either provide image or chess board size" << std::endl;
+        std::cout << "setBaseSceneWidth     - width of base scene (x dir) expressed in meters" << std::endl;
+        std::cout << "setKMat               - K mat of simulated camera" << std::endl;
+        return 0;
     }
     return 1;
 }
-/*Defines the K-matrix.
- TODO- give configuration as argument and build according to that
+/*
+Takes global coordinates x,y,z and angles yaw,pitch,roll (in that order) OF UAV. and simulates a camera capture
 */
-int simulatePose::setKMat(void){
-    cv::Mat_<float> K_ = cv::Mat_<float>::zeros(3,3);
-    if(sceneWidth){
-        float fx = d*N/sceneWidth;
-        float fy = fx;
-        K_(0,0) = fx;
-        K_(1,1) = fy;
-    }else{std::cout << "No scene width specified." << std::endl; return 0;}
-    K_(0,2) = cx;//Use the specified
-    K_(1,2) = cy;
-    K_(2,2) = 1;// Should this be 1 as 1 focal length or fx as one focal lengths worth of pixles?
-    K = K_;
-    K_inv = K.inv();//Perform inversion
-    return 1;
+cv::Mat simulatePose::simulateView(std::vector<float> angles,std::vector<float>t){
+    std::cout << "simulatepose::simulateView. todo: check dim of input" << std::endl;
+    //Warp image to simulate view
+    cv::Mat fullScaleImage = uav2BasePose(angles,t);
+    //Scale image to resolution of camera
+    cv::Mat correctedResolutionImage = cv::Mat::zeros(cv::Size(camera_res_x,camera_res_y), baseScene.type());;
+    cv::resize(fullScaleImage, correctedResolutionImage,correctedResolutionImage.size(),0,0,CV_INTER_AREA);
+    return correctedResolutionImage;
 }
 
 /* Re-calculates the requested UAV coordinates in global coordinate system to corresponding
  * translation and rotation matrix of the camera as realted to the base pose
  * Coordinates are to be given ass [yaw,pitch,roll], [z,y,x] of UAV expressed in global coordinate system
  * Finally the getWarpedImage method is called to calculate the corresponding warped view
+
+ Rename this function or separate from getwarpedimage?? what is best?
  */
 cv::Mat simulatePose::uav2BasePose(std::vector<float> angles,std::vector<float> t){
 //Define the given coordinates and angles in matrix form
@@ -253,7 +179,6 @@ cv::Mat simulatePose::uav2BasePose(std::vector<float> angles,std::vector<float> 
     float y = t[1];
     float z = t[2];
     cv::Mat_<float> t_shifted = coord2CMat(x,y,z) - t1;
-
     cv::Mat out = getWarpedImage(R_shifted,t_shifted);
     return out;
 }
@@ -287,6 +212,7 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
 
     //Define Homography according to 4.7. Wadenbaeck. Apply the inverse.
     // x,y,z,yaw are positive. roll, pitch are negative
+    std::cout << "simulatePose::getWarpedImage: What is T? no T inverse?" <<std::endl;
     cv::Mat_<float> H = K *R_x*R_y*R_z*T* K_inv;
     cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
 
@@ -294,7 +220,6 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
     //No inverse. idea: put image coordinates first through zrot, yrot, xrot, then translation No quite sure why inverse though
     //cv::Mat_<float> H = K  *T.inv()*R_z.t()*R_y.t()*R_x.t()* K_inv;
     //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::WARP_INVERSE_MAP,cv::BORDER_CONSTANT,0);
-
     return out;
 }
 /* Overloaded version of warp perspective that accepts arguments in matrix form
@@ -306,9 +231,11 @@ cv::Mat simulatePose::getWarpedImage(cv::Mat_<float> R2,cv::Mat_<float> t2){
         return out;
     }
     //Define T-matrix according to 4.8 Wadenbaeck
+    //cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t();
     cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t()/d;//Scale with initial d.
     //Define Homography according to 4.7. Wadenbaeck. Apply the inverse.
     // x,y,z,yaw are positive. roll, pitch are negative
+    std::cout << "simulatePose::getWarpedImage: What is T? no T inverse?" <<std::endl;
     cv::Mat_<float> H = K *R2*T* K_inv;
     cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
     return out;
