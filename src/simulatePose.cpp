@@ -27,7 +27,6 @@ Configurations:
 
 */
 simulatePose::simulatePose(void){
-    std::cout << "Open issue in simulatepose: translation scaling. How should d be used to compensate?" <<std::endl;
     //Variables for definition of K matrix
     //N = 0;
     //cx = 0;
@@ -55,7 +54,7 @@ void simulatePose::setBaseScene(int blockSize,int rowsOfBoxes,int colsOfBoxes){
     /* Specify own image for basescene
      */
 void simulatePose::setBaseScene(cv::Mat baseScene_){
-    baseScene_.copyTo(baseScene);
+        baseScene_.copyTo(baseScene);
 }
 void simulatePose::setBaseSceneWidth(float BaseSceneWidth_){
     sceneWidth = BaseSceneWidth_;
@@ -109,30 +108,46 @@ cv::Mat simulatePose::getChessboard(int blockSize,int rowsOfBoxes,int colsOfBoxe
 int simulatePose::init(void){
     //Check that K is defined, base scene is defined, scene width is defined
     if(!K_specified.empty() && !baseScene.empty() && sceneWidth!=0){
+        //Pad basescene in either x or y direction to get x/y ratio as the specified camera matrix
+        int baseSceneCols = baseScene.cols;
+        int baseSceneRows = baseScene.rows;
+        float s1 = ((float)baseSceneCols)/(2*K_specified(0,2)); //Scale factor from specified camera resolution to basescene resolution
+        float s2 = ((float)baseSceneRows)/(2*K_specified(1,2));
+        //If scale factors are not equal, apply the largest one
+        if(s1<s2){// Widen base scene
+            int baseSceneCols_new = (int)((2*K_specified(0,2))*s2);//New correct pixel count x direction
+            sceneWidth *=((float)baseSceneCols_new)/((float)baseSceneCols); //Correct physical width of base scene [m]
+            baseSceneCols = baseSceneCols_new;
+        }else if(s2<s1){ //Heighten base scene
+            baseSceneRows = (int)((2*K_specified(1,2))*s1);
+        }
+        if(s1!=s2){
+            //Redefine the base scene by padding.
+            cv::Mat baseScene_corrected = cv::Mat::zeros(cv::Size(baseSceneCols,baseSceneRows), baseScene.type());
+            cv::Rect roi(0,0,baseScene.cols,baseScene.rows);//Roi covering whole provided base scene
+            baseScene(roi).copyTo(baseScene_corrected(roi));
+            baseScene.release();
+            baseScene_corrected.copyTo(baseScene);
+            //The basescene now has the ratio of specified camera
+        }
         //Scale K_specified to the resolution of base scene
         float cx_specified = K_specified(0,2);
-        float cx_sim =((float)baseScene.cols)/2;
+        float cx_sim =((float)baseSceneCols)/2;
         KmatScaleFactor = cx_sim/cx_specified;
         K = K_specified*KmatScaleFactor; //The K mat that is used in simulation
+        K(2,2) = 1; //norm last element to 1 (!)
         K_inv = K.inv();
-        //Pad or crop base image in y direction so that it fits the camera resolution
-        //Create new base image of zeros of correct size and same type as base scene
-        int correctwidth = (int)(K(0,2)*2);
-        int correctheight = (int)(K(1,2)*2);
-        cv::Mat baseScene_corrected = cv::Mat::zeros(cv::Size(correctwidth,correctheight), baseScene.type());
-        int padheight = std::min(correctheight,baseScene.rows);
-        cv::Rect roi(0,0,correctwidth,padheight);
-        baseScene(roi).copyTo(baseScene_corrected(roi));
-        baseScene.release();
-        baseScene_corrected.copyTo(baseScene);
 
         //Calculate base pose of camera
+        //Note that the assumes square pixles
+
         float x0 = sceneWidth/2;
-        float y0 = (float)correctheight/2*sceneWidth/(float)correctwidth;
+        float pix2m = sceneWidth/((float)baseSceneCols); //scaling factor pixles to meters
+        float y0 = baseSceneRows*pix2m/2;
         //distance to base scene in base pose using similar triangles half resolution in x, focal length in pixles, and half scene width in m gives distance in m
-        d = (sceneWidth/2)*K(0,0)/K(0,2);
+        d = x0*K(0,0)/K(0,2);
         float z0 = -d;
-        float yaw0 = 0;
+        float yaw0 = 0; //Image coordinate system is comletely aligned with base scene (global) coordinate system
         std::cout << "Simulatepose::init TODO: yaw0 is 0. what do?" << std::endl;
         std::cout << "x0: " << x0 << std::endl;
         std::cout << "y0: " << y0 << std::endl;
@@ -157,6 +172,7 @@ cv::Mat simulatePose::simulateView(std::vector<float> angles,std::vector<float>t
     //Warp image to simulate view
     cv::Mat fullScaleImage = uav2BasePose(angles,t);
     //Scale image to resolution of camera
+    //KmatScaleFactor
     cv::Mat correctedResolutionImage = cv::Mat::zeros(cv::Size(camera_res_x,camera_res_y), baseScene.type());;
     cv::resize(fullScaleImage, correctedResolutionImage,correctedResolutionImage.size(),0,0,CV_INTER_AREA);
     return correctedResolutionImage;
@@ -208,11 +224,11 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
 
     //Define T-matrix according to 4.8 Wadenbaeck
     //cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t();
-    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t()/d;//Scale with initial d.
+    cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t()/d*KmatScaleFactor;//Scale with initial d.
 
     //Define Homography according to 4.7. Wadenbaeck. Apply the inverse.
     // x,y,z,yaw are positive. roll, pitch are negative
-    std::cout << "simulatePose::getWarpedImage: What is T? no T inverse?" <<std::endl;
+
     cv::Mat_<float> H = K *R_x*R_y*R_z*T* K_inv;
     cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
 
@@ -230,12 +246,12 @@ cv::Mat simulatePose::getWarpedImage(cv::Mat_<float> R2,cv::Mat_<float> t2){
         std::cout << "Not valid size of pose Mats" << std::endl;
         return out;
     }
+
     //Define T-matrix according to 4.8 Wadenbaeck
     //cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t();
     cv::Mat_<float> T = cv::Mat_<float>::eye(3,3) - t2*v.t()/d;//Scale with initial d.
     //Define Homography according to 4.7. Wadenbaeck. Apply the inverse.
     // x,y,z,yaw are positive. roll, pitch are negative
-    std::cout << "simulatePose::getWarpedImage: What is T? no T inverse?" <<std::endl;
     cv::Mat_<float> H = K *R2*T* K_inv;
     cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::INTER_LINEAR,cv::BORDER_CONSTANT,0);
     return out;
