@@ -63,6 +63,9 @@ int readToDataBase(std::string path,std::vector<int>& IDs, std::vector<cv::Mat_<
     std::string delim = ",";
     std::ifstream file;
     file.open(path);
+    float offsetX = 0.5;
+    float offsetY = 0.5;
+    std::cout << "GenerateArucoScene. Note that there is an offset of 0.5 to all x and y directions" << std::endl;
     if(file.is_open()){
          while(getline(file,line)){
             std::vector<std::string> parsed = parse(line);
@@ -72,8 +75,8 @@ int readToDataBase(std::string path,std::vector<int>& IDs, std::vector<cv::Mat_<
                 float y     =   std::stof(parsed[2]);
                 float z     =   std::stof(parsed[3]);
                 cv::Mat_<float> coord = cv::Mat_<float>::zeros(3,1);
-                coord(0,0) = x;
-                coord(0,1) = y;
+                coord(0,0) = x + 0.5;
+                coord(0,1) = y + 0.5;
                 coord(0,2) = z;
                 IDs.push_back(id);
                 coordinates.push_back(coord);
@@ -98,6 +101,7 @@ int createArucoScene(cv::Mat& baseScene,float sceneWidth,
     int counter = 0;
     for(marker M:markers){
         //Create marker
+        std::cout << "Marker nmbr: " << M.id<< std::endl;
         cv::Mat marker; //init marker mat
         float sidePixels = resolution*M.size;                                   //Marker size expressed in pixles
         dictionary->drawMarker(M.id,(int)sidePixels,marker,borderBits);         //Construct marker
@@ -156,16 +160,17 @@ std::vector<float> sequence(float start,float step,float max){
 }
 int main(int argc, char** argv){
     // Read base scene image
-    std::string scenePath = "/Users/Fredrik/Datasets/FloorTextures/wood-floor-pattern-calculator-ideas-photos_771567.jpg";
-    std::string anchorLocationPath = "anchors.txt";
+    std::string scenePath = "Generated-dataSets/Scene/wood-floor-pattern.jpg";
+    std::string anchorLocationPath = "Generated-dataSets/Scene/anchors.txt";
     cv::Mat baseScene = cv::imread(scenePath,cv::IMREAD_COLOR);     //Read the scene image as 8uC3
-
+    cv::imshow("Base scene with markers",baseScene);
+    cv::waitKey(0);
     std::vector<int> IDs;
     std::vector<cv::Mat_<float>> coordinates;
     readToDataBase(anchorLocationPath,IDs,coordinates);
     float amount = (float) IDs.size();
 
-    std::vector<float> markerSizes=linSpace(0.1,0.15,amount);
+    std::vector<float> markerSizes=linSpace(0.14,0.20,amount);
     std::vector<float> rotations = linSpace(0,0,amount);
 
 
@@ -176,7 +181,7 @@ int main(int argc, char** argv){
 
     float sceneWidth = 4;                                   //Scene width in meter
     createArucoScene(baseScene, sceneWidth, cv::aruco::DICT_4X4_50,markers);
-    std::string filename = "/Users/Fredrik/Datasets/FloorTextures/test2.png";
+    std::string filename = "Generated-dataSets/Scene/baseScene.png";
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_PNG_STRATEGY_DEFAULT);
     cv::imwrite(filename,baseScene,compression_params);
