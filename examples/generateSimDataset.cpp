@@ -14,6 +14,7 @@ double timeStamp;
 stamp.get(timeStamp);
 
 
+
 std::cout << "This file will be edited to be used to create simulation dataset" << std::endl;
 std::cout << "1. Read a predefined true path with roll, pitch, yaw" << std::endl;
 std::cout << "2. Simulation background. chessboard? backgroundimage?" << std::endl;
@@ -30,14 +31,16 @@ std::cout << "base scene width in meters" << std::endl;
 std::cout << "base scene. either path to image or something else to specify chessboard" << std::endl;
 std::cout << "optional settins" << std::endl;
 std::cout << "T mat" << std::endl;
+std::cout << "Base scene coordinate system must be aligned with pixel coordinates." << std::endl;
+std::cout << "The base scene will be resized to camera resolution proportions by padding with black pixles" << std::endl;
 
-/*robustPositioning::imageLogger imagebin;
-std::string pathToDir = "Generated-dataSets/";
-std::string newDir = "5-jul-2";
+robustPositioning::imageLogger imagebin;
+std::string pathToDir = "Generated-dataSets/28-sep/";
+std::string newDir = "images";
 imagebin.init(pathToDir,newDir);
-*/
+
 //robustPositioning::dataStreamer getData("Generated-dataSets/5_jul/truePath.csv");
-robustPositioning::dataStreamer getData("Generated-dataSets/test_simulatepose/path.csv");
+robustPositioning::dataStreamer getData("Generated-dataSets/12-sep/path.csv");
 
 
     //Initialize settings
@@ -54,24 +57,23 @@ robustPositioning::dataStreamer getData("Generated-dataSets/test_simulatepose/pa
 // Init simulation environment
     simulatePose warper;
     //cv::Mat floor = cv::imread("spike/test2.png",cv::IMREAD_REDUCED_COLOR_4);
-    cv::Mat floor = cv::imread("spike/test2.png");
+    cv::Mat floor = cv::imread("Generated-dataSets/Scene/baseScene.png");
     if(floor.empty()){std::cout << "Could not read base image" << std::endl; return 0;}
     cv::Mat floor8U;
     cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
-    warper.setBaseScene(floor);
-    //warper.setParam("d",2);             //Camera in base pose is 1 m from scene
-    warper.setBaseSceneWidth(4);    //Scenewidth is 4m
-    //warper.setParam("yaw",-3.1415/2);   // Camera is rotated 90 deg cc in base pose
+
     cv::Mat_<float> K = cv::Mat_<float>::eye(3,3);
     K(0,0) = 607;
     K(1,1) = 607;
     K(0,2) = 320;
     K(1,2) = 240;
+    warper.setBaseScene(floor);
+    warper.setBaseSceneWidth(6.4);    //Scenewidth is 4m
     warper.setKMat(K);
     warper.init();//Initialize with configuration 0
 
 
-
+std::cout << "Cpordinates are correct? sign of z?" << std::endl;
 
 //Go through whole path
 std::vector<float> data;
@@ -84,12 +86,13 @@ std::vector<float> data;
         //cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
-        cv::imshow("showit",rawFrame);
+        //cv::imshow("showit",rawFrame);
 
         //Dump image
         //stamp.get(timeStamp);
-        //imagebin.dump(timeStamp,frame);
-        cv::waitKey(0);
+        timeStamp = (double)data[0];
+        imagebin.dump(timeStamp,frame);
+        //cv::waitKey(0);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
     }
     //imagebin.rename(cv::String(pathToDir+newDir+"/"),cv::String("img_"));
