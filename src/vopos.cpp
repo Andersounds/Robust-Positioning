@@ -7,6 +7,7 @@
 /*
 Master positioning class constructor. Is called after the inherited classes are constructed
 Inherited class constructors are called with relevant arguments after the ":" in the initialization list.
+Rename to vispos? - Visual Positioning
 */
 pos::positioning::positioning(int opticalFlow_mode,
                                 int visualOdometry_mode,
@@ -55,7 +56,7 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
             if(knownAnchors < minAnchors){
                 //robustPositioning::martonRobust::pix2angles(corners,angles) angles defined above. this line extracts the alpha beta gamma angles from the first known anchor
                 //robustPositioning::martonRobust::process(q,mask,pos,yaw,roll,pitch) //Perform estimation
-                
+
                 returnMode = pos::RETURN_MODE_AZIPE_FAILED;
             } else{
                 pix2uLOS(corners,v);
