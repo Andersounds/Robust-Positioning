@@ -160,8 +160,8 @@ std::vector<float> sequence(float start,float step,float max){
 }
 int main(int argc, char** argv){
     // Read base scene image
-    std::string scenePath = "Generated-dataSets/Scene/wood-floor-pattern.jpg";
-    std::string anchorLocationPath = "Generated-dataSets/Scene/anchors.txt";
+    std::string scenePath = "Generated-dataSets/Scene_29_sep/wood-floor-pattern.jpg";
+    std::string anchorLocationPath = "Generated-dataSets/Scene_29_sep/anchors.txt";
     cv::Mat baseScene = cv::imread(scenePath,cv::IMREAD_COLOR);     //Read the scene image as 8uC3
     cv::imshow("Base scene with markers",baseScene);
     cv::waitKey(0);
@@ -181,7 +181,15 @@ int main(int argc, char** argv){
 
     float sceneWidth = 4;                                   //Scene width in meter
     createArucoScene(baseScene, sceneWidth, cv::aruco::DICT_4X4_50,markers);
-    std::string filename = "Generated-dataSets/Scene/baseScene.png";
+    std::string filename = "Generated-dataSets/Scene_29_sep/baseScene.png";
+
+    //Draw coordinate system
+    cv::arrowedLine(baseScene,cv::Point(20,20),cv::Point(400,20),cv::Scalar(0,0,0),15,8,1,0.2);
+    cv::arrowedLine(baseScene,cv::Point(20,20),cv::Point(20,400),cv::Scalar(0,0,0),15,8,1,0.2);
+    cv::putText(baseScene,"X",cv::Point(150,110),cv::FONT_HERSHEY_SIMPLEX,3,cv::Scalar(0,0,0),5,8,false);
+    cv::putText(baseScene,"Y",cv::Point(30,200),cv::FONT_HERSHEY_SIMPLEX,3,cv::Scalar(0,0,0),5,8,false);
+
+
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_PNG_STRATEGY_DEFAULT);
     cv::imwrite(filename,baseScene,compression_params);
