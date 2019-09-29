@@ -32,6 +32,7 @@ struct dataStruct{
     std::string imageStreamBasePath;//Base path to image directory (ending with / if not pwd)
     std::string imageStreamInfoFile;//path to image info file to be appended to base path
     std::string dataStreamFile;//Path to csv fata file to be streamed
+    std::string testImageRelPath;//Path from settings file to single test image for angulation test
     float dist_k1;//Distortion coefficients for radial distortion
     float dist_k2;
     float dist_k3;
@@ -288,6 +289,9 @@ int set::settings::setAllDefault(void){
     setDefault("STREAM_IMAGES_BASEPATH", "some_dir/","Base path from program working directory to image directory ending with /");
     setDefault("STREAM_IMAGES_INFO_FILE", "some_image_info_file.csv","File (located in IMAGES_BASEPATH with image data. (timestamps image name))");
     setDefault("STREAM_DATA_FILE", "some_data_file.csv","Path to csv file to be streamed");
+
+    // Below are needed for test
+    setDefault("TEST_IMAGE", "image.bmp","Relative path from settings file to single image for testing purposes");
     return 1;
 }
 int set::settings::setDefault(std::string key, int          value, std::string description){
@@ -455,6 +459,7 @@ bool set::settings::constructSettingsStruct(void){
     data.MODE_OpticalFlow = settingsI["OPTICAL_FLOW_MODE"];
     data.MODE_VisualOdometry = settingsI["VISUAL_ODOMETRY_MODE"];
     data.MODE_Positioning = settingsI["POS_EST_MODE"];
+    data.testImageRelPath = basePath + settingsS["TEST_IMAGE"];
     return true;
 }
 

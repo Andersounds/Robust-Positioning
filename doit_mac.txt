@@ -139,28 +139,22 @@ fi
 
 
 
+if [ ”$1” = ”azipetest” ];then
+	#This is for feature based anchors
+	echo Compiling azipe test
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/azipe_test.cpp src/azipe.cpp include/Quartic-master/quartic.cpp -o bin/azipetest
+	echo run with ./bin/azipetest
+fi
 
 
+################# fullangulationtest
+if [ ”$1” = ”fullangulationtest” ];then
+	#
+	echo Compiling full angulation test
+	g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` examples/full_angulation_test.cpp src/vopos.cpp src/angulation.cpp src/azipe.cpp src/opticalFlow.cpp src/homographyVO.cpp include/Quartic-master/quartic.cpp -o bin/fatest
+	echo Run with command ./bin/fatest [option]
+fi
 
-
-
-
-
-#Just stream images and data from gimlee
-#g++ -std=c++11 -ggdb `pkg-config --cflags --libs opencv` spike/basicGimLee.cpp -o bin/gimlee
-
-
-
-# Feature matching 
-#./bin/tryIt picsForMatching/roi1.png picsForMatching/img1.png
-#./bin/tryIt /Users/Fredrik/Datasets/picsForMatching/box.png /Users/Fredrik/Datasets/picsForMatching/box_in_scene.png
-
-#./bin/tryIt 3 /Users/Fredrik/Datasets/picsForMatching/objectDetection/images/
-#./bin/tryIt 3 /Users/Fredrik/Datasets/Euroc/V102/cam0/data/cam0_%04d.png
-
-#debug:
-#lldb ./bin/tryIt 3
-#compile flag -ggdb
 
 
 echo done
