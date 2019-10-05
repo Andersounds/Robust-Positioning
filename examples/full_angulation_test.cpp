@@ -46,8 +46,32 @@ int main(int argc, char** argv){
     float dist = 1.5;
     float roll = 0;
     float pitch = 0;
-    int mode = P.process(pos::MODE_AZIPE,frame,dist, roll, pitch, yaw, t2);
+    //int mode = P.process(pos::MODE_AZIPE,frame,dist, roll, pitch, yaw, t2);
+    cv::Mat colorFrame;
+    cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
+    int mode = P.processAndIllustrate(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t2);
+    cv::imshow("processing",colorFrame);
+    cv::waitKey(0);
+
+
+
     std::cout << "Diff: " << t.t() - t2.t() << std::endl;
+    std::cout << "Xest: " << t2.t() << std::endl;
 
     return 1;
 }
+
+
+
+
+
+/*
+std::cout << "V:" << std::endl;
+for(cv::Mat_<float> i:v){
+    std::cout  << ": "<< i.t() << std::endl;
+}
+
+
+
+
+*/
