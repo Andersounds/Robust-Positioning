@@ -35,12 +35,12 @@ std::cout << "Base scene coordinate system must be aligned with pixel coordinate
 std::cout << "The base scene will be resized to camera resolution proportions by padding with black pixles" << std::endl;
 
 robustPositioning::imageLogger imagebin;
-std::string pathToDir = "Generated-dataSets/28-sep/";
+std::string pathToDir = "Generated-dataSets/Tests/5-okt/";
 std::string newDir = "images";
 imagebin.init(pathToDir,newDir);
 
 //robustPositioning::dataStreamer getData("Generated-dataSets/5_jul/truePath.csv");
-robustPositioning::dataStreamer getData("Generated-dataSets/12-sep/path.csv");
+robustPositioning::dataStreamer getData("Generated-dataSets/Tests/5-okt/path.csv");
 
 
     //Initialize settings
@@ -68,7 +68,7 @@ robustPositioning::dataStreamer getData("Generated-dataSets/12-sep/path.csv");
     K(0,2) = 320;
     K(1,2) = 240;
     warper.setBaseScene(floor);
-    warper.setBaseSceneWidth(6.4);    //Scenewidth is 4m
+    warper.setBaseSceneWidth(4);    //Scenewidth is 4m
     warper.setKMat(K);
     warper.init();//Initialize with configuration 0
 
@@ -86,13 +86,13 @@ std::vector<float> data;
         //cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
         cv::Mat frame;
         cv::cvtColor(rawFrame, frame, cv::COLOR_BGR2GRAY);
-        //cv::imshow("showit",rawFrame);
+        cv::imshow("showit",rawFrame);
 
         //Dump image
         //stamp.get(timeStamp);
         timeStamp = (double)data[0];
         imagebin.dump(timeStamp,frame);
-        //cv::waitKey(0);
+        cv::waitKey(0);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
     }
     //imagebin.rename(cv::String(pathToDir+newDir+"/"),cv::String("img_"));
