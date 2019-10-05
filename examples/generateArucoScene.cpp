@@ -160,8 +160,8 @@ std::vector<float> sequence(float start,float step,float max){
 }
 int main(int argc, char** argv){
     // Read base scene image
-    std::string scenePath = "Generated-dataSets/Scene_29_sep/wood-floor-pattern.jpg";
-    std::string anchorLocationPath = "Generated-dataSets/Scene_29_sep/anchors.txt";
+    std::string scenePath = "Generated-dataSets/Scene/wood-floor-pattern.jpg";
+    std::string anchorLocationPath = "Generated-dataSets/Scene/anchors.txt";
     cv::Mat baseScene = cv::imread(scenePath,cv::IMREAD_COLOR);     //Read the scene image as 8uC3
     cv::imshow("Base scene with markers",baseScene);
     cv::waitKey(0);
@@ -181,7 +181,7 @@ int main(int argc, char** argv){
 
     float sceneWidth = 4;                                   //Scene width in meter
     createArucoScene(baseScene, sceneWidth, cv::aruco::DICT_4X4_50,markers);
-    std::string filename = "Generated-dataSets/Scene_29_sep/baseScene.png";
+    std::string filename = "Generated-dataSets/Tests/5-okt/baseScene.png";
 
     //Draw coordinate system
     cv::arrowedLine(baseScene,cv::Point(20,20),cv::Point(400,20),cv::Scalar(0,0,0),15,8,1,0.2);
