@@ -5,6 +5,8 @@
 //#include <chrono> //For timestamps
 #include "../src/vopos.hpp"
 
+#include "../src/angulation.hpp"
+
 #include "../src/settingsParser.cpp"
 
 
@@ -41,6 +43,7 @@ int main(int argc, char** argv){
     t(2,0) = S.data.z0;
     float yaw = S.data.yaw0;
 
+    std::cout << "K matrix: " << K.inv() << std::endl;
     cv::Mat_<float> t2;
     t.copyTo(t2);
     float dist = 1.5;
@@ -57,6 +60,7 @@ int main(int argc, char** argv){
 
     std::cout << "Diff: " << t.t() - t2.t() << std::endl;
     std::cout << "Xest: " << t2.t() << std::endl;
+    std::cout << "yaw: " << yaw << std::endl;
 
     return 1;
 }
