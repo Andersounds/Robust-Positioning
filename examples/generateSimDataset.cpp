@@ -35,12 +35,12 @@ std::cout << "Base scene coordinate system must be aligned with pixel coordinate
 std::cout << "The base scene will be resized to camera resolution proportions by padding with black pixles" << std::endl;
 
 robustPositioning::imageLogger imagebin;
-std::string pathToDir = "Generated-dataSets/Tests/5-okt/";
+std::string pathToDir = "Generated-dataSets/5-okt/";
 std::string newDir = "images";
 imagebin.init(pathToDir,newDir);
 
 //robustPositioning::dataStreamer getData("Generated-dataSets/5_jul/truePath.csv");
-robustPositioning::dataStreamer getData("Generated-dataSets/Tests/5-okt/path.csv");
+robustPositioning::dataStreamer getData("Generated-dataSets/5-okt/path.csv");
 
 
     //Initialize settings
@@ -92,7 +92,7 @@ std::vector<float> data;
         //stamp.get(timeStamp);
         timeStamp = (double)data[0];
         imagebin.dump(timeStamp,frame);
-        cv::waitKey(0);
+        //cv::waitKey(0);
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
     }
     //imagebin.rename(cv::String(pathToDir+newDir+"/"),cv::String("img_"));
