@@ -428,7 +428,7 @@ std::vector<std::string> set::settings::parseRow(std::string line){
 //This method reads all the internal values and constructs a struct where the properly
 //  formatted settings are available from another scope
 bool set::settings::constructSettingsStruct(void){
-    data.K = cv::Mat_<float>::ones(3,3);
+    data.K = cv::Mat_<float>::eye(3,3);
         data.K(0,0) = settingsF["K_MAT_fx"];
         data.K(1,1) = settingsF["K_MAT_fy"];
         data.K(0,2) = settingsF["K_MAT_cx"];
