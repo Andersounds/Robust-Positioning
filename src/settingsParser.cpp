@@ -286,7 +286,7 @@ int set::settings::setAllDefault(void){
     setDefault("ROLL_COLUMN", (int) 3," Specifies which column of csv file that contains roll data");
     setDefault("PITCH_COLUMN", (int) 2," Specifies which column of csv file that contains pitch data");
     setDefault("DIST_COLUMN", (int) 1," Specifies which column of csv file that contains distance (lidar) data");
-    setDefault("STREAM_IMAGES_BASEPATH", "some_dir/","Base path from program working directory to image directory ending with /");
+    setDefault("STREAM_IMAGES_BASEPATH", "","Path from base path -p to image directory that also contains images info file. ending with /");
     setDefault("STREAM_IMAGES_INFO_FILE", "some_image_info_file.csv","File (located in IMAGES_BASEPATH with image data. (timestamps image name))");
     setDefault("STREAM_DATA_FILE", "some_data_file.csv","Path to csv file to be streamed");
 
