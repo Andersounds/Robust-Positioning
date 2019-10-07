@@ -47,6 +47,7 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             cv::Mat_<float>& position,
             float& yaw,
             float roll,float pitch){
+  std::cout << "az::azipe: GIVE YAW,ROLL,PITCH AS zrot,yrot,xrot INSTEAD (in that order)" << std::endl;
         //Define some per-position-constant quantities
         float phi = -roll; //Note the sign on this!
         float theta = -pitch;
@@ -240,12 +241,53 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
         return az::AZIPE_FAIL; //Should never reach this
 
     }
+
+
 /*
-    This functions is here to limit yaw range. In experimetn with the 5-okt dataset
-    it showed that it limited between 0 and pi. Without it it is already limited to 0 to 2pi.
-    The function calls are kept in code to reduce risk of some uncareful tampering error, but the function
-    does not do anything except mirror the argument.
+AIPE algorithm
+  Angle Increments and Position Estimation
+  Implemented from same paper as AZIPE
+
+Inputs:
+vector<Mat> v   A set of unit-Line-of-Sight vectors in the vehicle frame (measured) to each of the visible anchors
+vector<Mat> q   A corresponding set of 3d-coordinates of each anchor in the global frame
+Mat  position   An inputoutput array of the initial estimation of vehicle position. Should be close to true (use output of AZIPE)
+float    zrot   An inputoutput value with initial estimation of z rotation ( yaw ) [rad]
+float    yrot   An inputoutput value with initial estimation of y rotation (pitch) [rad]
+float    xrot   An inputoutput value with initial estimation of x rotation (roll ) [rad]
+float  thresh   Stop condition of iteration. Function returns if error if iteration step is less than thresh. (or reaches max iter)
+
+Outputs:
+Mat  position   Updated optimal position estimate
+float    zrot   Updated optimal z rotation ( yaw ) [rad]
+float    yrot   Updated optimal y rotation (pitch) [rad]
+float    xrot   Updated optimal x rotation (roll ) [rad]
+bool  RETURN    A success-value indicating successful or failed localization
+Notes:
+Roll and pitch are to be expressed as Euler angles from the rotational sequence yaw-pitch-roll, where yaw is unknown
+yaw     - rotation about the z-axis.    (=Azimuth angle)
+pitch   - rotation about the y-axis.
+roll    - rotation about the x-axis.
+
+
+ORIENTATION:
+q shall be given in global coordinate frame
+v,zrot,yrot,xrot shall share frame. I.e they can either be given in the camera frame or UAV frame. Just keep track of which one...
+
 */
+int az::aipe(const std::vector<cv::Mat_<float>>& v,
+                const std::vector<cv::Mat_<float>>& q,
+                cv::Mat_<float>& position, float& zrot, float&yrot, float& xrot,
+                float thresh){
+
+
+
+
+
+
+}
+
+
 float az::limitYawRange(float yawCandidate){
     return yawCandidate;
     float div = yawCandidate/az::PI;
