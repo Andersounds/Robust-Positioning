@@ -86,8 +86,8 @@ float rad2Grad = 57.2958;
     while(getData.get(data)){
         timeStamp_data = data[0];
         float dist = data[S.data.distColumn];//This is used as a subst as actual height is not in dataset
-        float pitch = data[S.data.pitchColumn];
-        float roll = data[S.data.rollColumn];
+        float pitch = 0;//data[S.data.pitchColumn];
+        float roll = 0;//data[S.data.rollColumn];
 
         //####TEMP EDIT. give correct
 
@@ -96,9 +96,9 @@ float rad2Grad = 57.2958;
             VStreamer.getImage(frame);
             if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
 //            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,dist, roll, pitch, yaw, t);
-            int mode = P.process(pos::MODE_AZIPE,frame,dist, roll, pitch, yaw, t);
+            //int mode = P.process(pos::MODE_AZIPE,frame,dist, roll, pitch, yaw, t);
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-            //int mode = P.processAndIllustrate(pos::MODE_AZIPE_AND_VO,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t);
+            int mode = P.processAndIllustrate(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t);
             //Log data
             if(true){
                 std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),yaw};
