@@ -274,12 +274,69 @@ ORIENTATION:
 q shall be given in global coordinate frame
 v,zrot,yrot,xrot shall share frame. I.e they can either be given in the camera frame or UAV frame. Just keep track of which one...
 
+Procedure within each while-lap:
+Eq. 29.     Define all Q_i          (from given q and defined c1_1 - c9_3)
+Eq. 31.     Define all s_i          (from given q and defined c0)
+Eq. 6.      Define all Lambda_i     (from given q, given v, and current position estimation p)
+Eq. 14.1    Calculate F             (from Lambda_i (defined above), Q_i (defined above))
+Eq. 14.2    Calculate w             (from Lambda_i (defined above), s_i (defined above))
+Eq. 16.1    Calculate g             (from w (calculated above), s (defined above))
+Eq. 16.2    Calculate G             (from F (calulated above), Q (defined above))
+Eq. 33.1    Calculate M             (from G (calculated above), Lamda (defined above))
+Eq. 33.2    Calculate m             (from G (calculated above), Lambda (defined above), g (calculated above))
+Eq. 35.     Calculate e             (From M (calculated above), m (calculated above))
+Eq. 36.     Iterate angles
+Eq. 37.     Iterate position
 */
 int az::aipe(const std::vector<cv::Mat_<float>>& v,
                 const std::vector<cv::Mat_<float>>& q,
                 cv::Mat_<float>& position, float& zrot, float&yrot, float& xrot,
                 float thresh){
 
+    ---- e = thresh+1;
+    int counter = 0;
+    int maxIter = 10;
+    while(e>thresh && counter < maxIter){
+        //Save incremental Q_i, s_i, and A_mat_i in these vectors so that they need not be recalculated
+        std::vector<cv::Mat_<float>> Q_saved;
+        std::vector<cv::Mat_<float>> s_saved;
+        std::vector<cv::Mat_<float>> A_mat_saved; Lambda
+        for(int i=0;i<v.size();i++){
+            //Define some cos/sin values to be used below
+            float ct = cos(theta);
+            float st = sin(theta);
+            float cf = cos(fi);
+            float sf = sin(fi);
+            float cp = cos(psi);
+            float sp = sin(psi)
+            //Define c1_0 - c9_3 according to appendix C
+            float c1_0=ct*cp; float c1_1=0; float c1_2=-sf*cp; float c1_3=-ct*sp;
+            float c2_0=ct*sp; float c2_1=0; float c2_2=-st*sp; float c2_3=ct*cp;
+            float c3_0=-st;   float c3_1=0; float c3_2=-ct;    float c3_3=0;
+            float c4_0=sf*st*cp-cf*sp; float c4_1=cf*st*cp+sf*sp; float c4_2=sf*ct*cp; float c4_3=cf*cp-st*sf*sp;
+            float c5_0=sf*st*sp+cf*cp; float c5_1=cf*st*sp-sf*cp; float c5_2=sf*ct*sp; float c5_3=-(cf*sp+sf*st*cp);
+            float c6_0=sf*ct; float c6_1=cf*ct; float c6_2=-sf*st; float c6_3=0;
+            float c7_0=cf*st*cp+sf*sp; float c7_1=-sf*st*cp+cf*sp; float c7_2=cf*ct*cp; float c7_3=sf*cp-cf*st*sp;
+            float c8_0=cf*st*sp-sf*cp; float c8_1=-sf*st*sp-cf*cp; float c8_2=cf*ct*sp; float c8_3=sf*sp+cf*st*cp;
+            float c9_0=cf*ct; float c9_1=-sf*ct; float c9_2=-cf*st; float c9_3=0;
+            //Equation 29. Calculate Q_i
+            cv::Mat_<float> Q_i = cv::Mat_<float>::zeros(3,3);
+            float q_ix = q[i](0,0);
+            float q_iy = q[i](1,0);
+            float q_iz = q[i](2,0);
+            Q_i(0,0) = c1_1*q_ix + c2_1*q_iy + c3_1*q_iz;   Q_i(0,1) = c1_2*q_ix + c2_2*q_iy + c3_2*q_iz;   Q_i(0,2) = c1_3*q_ix + c2_3*q_iy + c3_3*q_iz;
+            Q_i(1,0) = c4_1*q_ix + c5_1*q_iy + c6_1*q_iz;   Q_i(1,1) = c4_2*q_ix + c5_2*q_iy + c6_2*q_iz;   Q_i(1,2) = c4_3*q_ix + c5_3*q_iy + c6_3*q_iz;
+            Q_i(2,0) = c7_1*q_ix + c8_1*q_iy + c9_1*q_iz;   Q_i(2,1) = c7_2*q_ix + c8_2*q_iy + c9_2*q_iz;   Q_i(2,2) = c7_3*q_ix + c8_3*q_iy + c9_3*q_iz;
+            //Equation 31. Calculate s_i
+            cv::Mat_<float> s_i = cv::Mat_<float>::zeros(3,1);
+            s_i(0,0) = c1_0*q_ix + c2_0*q_iy + c3_0*q_iz;
+            s_i(1,0) = c4_0*q_ix + c5_0*q_iy + c6_0*q_iz;
+            s_i(2,0) = c7_0*q_ix + c8_0*q_iy + c9_0*q_iz;
+            //Equation 6. Calculate Lambda_i
+            
+
+
+    }
 
 
 
