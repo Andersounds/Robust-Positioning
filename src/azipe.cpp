@@ -333,7 +333,9 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
             s_i(1,0) = c4_0*q_ix + c5_0*q_iy + c6_0*q_iz;
             s_i(2,0) = c7_0*q_ix + c8_0*q_iy + c9_0*q_iz;
             //Equation 6. Calculate Lambda_i
-            
+            //Equation 6
+            - beräkna V_i och d_i_sqrd
+            cv::Mat_<float> Lambda_i = (cv::Mat_<float>::eye(3,3)-V_i)/(d_i_sqrd(0,0));
 
 
     }
