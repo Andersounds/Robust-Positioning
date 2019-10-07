@@ -47,6 +47,7 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             cv::Mat_<float>& position,
             float& yaw,
             float roll,float pitch){
+  std::cout << "az::azipe: GIVE YAW,ROLL,PITCH AS zrot,yrot,xrot INSTEAD (in that order)" << std::endl;
         //Define some per-position-constant quantities
         float phi = -roll; //Note the sign on this!
         float theta = -pitch;
@@ -267,8 +268,24 @@ Roll and pitch are to be expressed as Euler angles from the rotational sequence 
 yaw     - rotation about the z-axis.    (=Azimuth angle)
 pitch   - rotation about the y-axis.
 roll    - rotation about the x-axis.
-*/
 
+
+ORIENTATION:
+q shall be given in global coordinate frame
+v,zrot,yrot,xrot shall share frame. I.e they can either be given in the camera frame or UAV frame. Just keep track of which one...
+
+*/
+int az::aipe(const std::vector<cv::Mat_<float>>& v,
+                const std::vector<cv::Mat_<float>>& q,
+                cv::Mat_<float>& position, float& zrot, float&yrot, float& xrot,
+                float thresh){
+
+
+
+
+
+
+}
 
 
 float az::limitYawRange(float yawCandidate){
