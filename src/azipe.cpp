@@ -287,7 +287,12 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
 
 }
 
-
+/*
+    This functions is here to limit yaw range. In experimetn with the 5-okt dataset
+    it showed that it limited between 0 and pi. Without it it is already limited to 0 to 2pi.
+    The function calls are kept in code to reduce risk of some uncareful tampering error, but the function
+    does not do anything except mirror the argument.
+*/
 float az::limitYawRange(float yawCandidate){
     return yawCandidate;
     float div = yawCandidate/az::PI;
