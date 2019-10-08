@@ -265,9 +265,9 @@ float    xrot   Updated optimal x rotation (roll ) [rad]
 bool  RETURN    A success-value indicating successful or failed localization
 Notes:
 Roll and pitch are to be expressed as Euler angles from the rotational sequence yaw-pitch-roll, where yaw is unknown
-yaw     - rotation about the z-axis.    (=Azimuth angle)
-pitch   - rotation about the y-axis.
-roll    - rotation about the x-axis.
+yaw     -  psi  - rotation about the z-axis.    (=Azimuth angle)
+pitch   - theta - rotation about the y-axis.
+roll    -  phi  - rotation about the x-axis.
 
 
 ORIENTATION:
@@ -297,10 +297,16 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
     int counter = 0;
     int maxIter = 10;
     while(e>thresh && counter < maxIter){
-        //Save incremental Q_i, s_i, and A_mat_i in these vectors so that they need not be recalculated
-        std::vector<cv::Mat_<float>> Q_saved;
-        std::vector<cv::Mat_<float>> s_saved;
-        std::vector<cv::Mat_<float>> A_mat_saved; Lambda
+        //Save incremental Q_i, s_i, and Lambda_i in these vectors so that they need not be recalculated
+        std::vector<cv::Mat_<float>> Q_i_saved; //Needed for equation 16.
+        std::vector<cv::Mat_<float>> s_i_saved; //Needed for equation 16.
+        std::vector<cv::Mat_<float>> Lambda_i_saved;//Needed for equation 33.
+
+
+        cv::Mat_<float> Lambda = cv::Mat_<float>::zeros(3,3);
+        cv::Mat_<float> Lambda_Q = cv::Mat_<float>::zeros(3,3);
+        cv::Mat_<float> Lambda_s = cv::Mat_<float>::zeros(3,1);
+
         for(int i=0;i<v.size();i++){
             //Define some cos/sin values to be used below
             float ct = cos(theta);
@@ -308,7 +314,7 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
             float cf = cos(fi);
             float sf = sin(fi);
             float cp = cos(psi);
-            float sp = sin(psi)
+            float sp = sin(psi);
             //Define c1_0 - c9_3 according to appendix C
             float c1_0=ct*cp; float c1_1=0; float c1_2=-sf*cp; float c1_3=-ct*sp;
             float c2_0=ct*sp; float c2_1=0; float c2_2=-st*sp; float c2_3=ct*cp;
@@ -327,23 +333,61 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
             Q_i(0,0) = c1_1*q_ix + c2_1*q_iy + c3_1*q_iz;   Q_i(0,1) = c1_2*q_ix + c2_2*q_iy + c3_2*q_iz;   Q_i(0,2) = c1_3*q_ix + c2_3*q_iy + c3_3*q_iz;
             Q_i(1,0) = c4_1*q_ix + c5_1*q_iy + c6_1*q_iz;   Q_i(1,1) = c4_2*q_ix + c5_2*q_iy + c6_2*q_iz;   Q_i(1,2) = c4_3*q_ix + c5_3*q_iy + c6_3*q_iz;
             Q_i(2,0) = c7_1*q_ix + c8_1*q_iy + c9_1*q_iz;   Q_i(2,1) = c7_2*q_ix + c8_2*q_iy + c9_2*q_iz;   Q_i(2,2) = c7_3*q_ix + c8_3*q_iy + c9_3*q_iz;
+            Q_i_saved.push_back(Q_i);//Save intermediate Q_i to be used in equation 16
             //Equation 31. Calculate s_i
             cv::Mat_<float> s_i = cv::Mat_<float>::zeros(3,1);
             s_i(0,0) = c1_0*q_ix + c2_0*q_iy + c3_0*q_iz;
             s_i(1,0) = c4_0*q_ix + c5_0*q_iy + c6_0*q_iz;
             s_i(2,0) = c7_0*q_ix + c8_0*q_iy + c9_0*q_iz;
+            a_i_saved.push_back(a_i);//Save intermediate a_i to be used in equation 16
             //Equation 6. Calculate Lambda_i
-            //Equation 6
-            - beräkna V_i och d_i_sqrd
-            cv::Mat_<float> Lambda_i = (cv::Mat_<float>::eye(3,3)-V_i)/(d_i_sqrd(0,0));
+            cv::Mat_<float> V_i = v[i]*(v[i].t());
+            cv::Mat_<float> delta = (position - q[i]);
+            cv::Mat_<float> d_i_sqrd = delta.t()*delta;//Distance squared
+            if(d_i_sqrd(0,0)<1e-5){ d_i_sqrd = 0.1;}
+            cv::Mat_<float> Lambda_i = (cv::Mat_<float>::eye(3,3)-V_i)/(d_i_sqrd(0,0));//Eq. 6
 
-
-    }
-
-
-
-
-
+            Lambda_i_saved.push_back(Lambda_i);//Save intermediate Lambdas for Equation 33.
+            //Equation 8
+            Lambda += Lambda_i;
+            //Sum-terms of expressions in equation 14
+            Lambda_Q += Lambda_i*Q_i;
+            Lambda_s += Lambda_i*s_i;
+        }
+        //Equation 14
+        cv::Mat_<float> Lambda_inv = Lambda.inv();
+        cv::Mat_<float> F = -Lambda_inv*Lambda_Q;
+        cv::Mat_<float> w = -Lambda_inv*Lambda_s;
+        //Equation 16 and 33
+        cv::Mat_<float> M = cv::Mat_<float>::zeros(3,3);
+        cv::Mat_<float> m = cv::Mat_<float>::zeros(3,1);
+        for(int i=0;i<v.size();i++){
+            //Eq. 16.
+            cv::Mat_<float> G_i = F + Q_i_saved[i];
+            cv::Mat_<float> g_i = w + s_i_saved[i];
+            //Eq. 33.
+            M += G_i.t()*Lambda_i_saved[i]*G_i;
+            m += G_i.t()*Lambda_i_saved[i]*g_i;
+        }
+        //Equation 35. Calculate optimal angle-deltas
+        cv::Mat_<float> e_op = -M.inv()*m;
+        //Equation 36. Update angles.
+        zrot += e_op(2,0);
+        yrot += e_op(1,0);
+        xrot += e_op(0,0);
+        //Equation 26. Define R mat
+        cv::Mat_<float> R = cv::Mat_<float>::zeros(3,3);
+        float ct = cos(theta);
+        float st = sin(theta);
+        float cf = cos(fi);
+        float sf = sin(fi);
+        float cp = cos(psi);
+        float sp = sin(psi);
+        R_pos(0,0) = ct*cp;             R_pos(0,1) = ct*sp;             R_pos(0,2) = -st;
+        R_pos(1,0) = -cf*sp+sf*st*cp;   R_pos(1,1) = cf*cp+sf*st*sp;    R_pos(1,2) = ct*sf;//CHEK?
+        R_pos(2,0) = sf*sp+cf*cp*st;    R_pos(2,1) = -cp*sf+st*sp*cf;   R_pos(2,2) = cf*ct;
+        //Equation 37. Update vehicle position
+        -R.t()*  Men vad är t_op??????????????
 }
 
 /*
