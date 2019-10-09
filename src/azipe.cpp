@@ -387,7 +387,10 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         R_pos(1,0) = -cf*sp+sf*st*cp;   R_pos(1,1) = cf*cp+sf*st*sp;    R_pos(1,2) = ct*sf;//CHEK?
         R_pos(2,0) = sf*sp+cf*cp*st;    R_pos(2,1) = -cp*sf+st*sp*cf;   R_pos(2,2) = cf*ct;
         //Equation 37. Update vehicle position
-        -R.t()*  Men vad är t_op??????????????
+        cv::Mat_<float> t_op = F*e+w;//Give t_op as argument to aipe? Or is t opt F*e+w according to Eq. 13?
+        position = -R.t()*t_op;
+    }
+    return 1;
 }
 
 /*
