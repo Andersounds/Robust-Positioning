@@ -290,13 +290,15 @@ Eq. 37.     Iterate position
 */
 int az::aipe(const std::vector<cv::Mat_<float>>& v,
                 const std::vector<cv::Mat_<float>>& q,
-                cv::Mat_<float>& position, float& zrot, float&yrot, float& xrot,
+                cv::Mat_<float>& position, float& psi, float&theta, float& fi,
                 float thresh){
 
-    ---- e = thresh+1;
+    std::cout << "aipe: initialize e to more than thresh" << std::endl;
     int counter = 0;
-    int maxIter = 10;
-    while(e>thresh && counter < maxIter){
+    int maxIter = 3;
+    //Add threshold
+    while(counter < maxIter){
+        counter++;
         //Save incremental Q_i, s_i, and Lambda_i in these vectors so that they need not be recalculated
         std::vector<cv::Mat_<float>> Q_i_saved; //Needed for equation 16.
         std::vector<cv::Mat_<float>> s_i_saved; //Needed for equation 16.
@@ -339,7 +341,7 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
             s_i(0,0) = c1_0*q_ix + c2_0*q_iy + c3_0*q_iz;
             s_i(1,0) = c4_0*q_ix + c5_0*q_iy + c6_0*q_iz;
             s_i(2,0) = c7_0*q_ix + c8_0*q_iy + c9_0*q_iz;
-            a_i_saved.push_back(a_i);//Save intermediate a_i to be used in equation 16
+            s_i_saved.push_back(s_i);//Save intermediate a_i to be used in equation 16
             //Equation 6. Calculate Lambda_i
             cv::Mat_<float> V_i = v[i]*(v[i].t());
             cv::Mat_<float> delta = (position - q[i]);
@@ -372,9 +374,9 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         //Equation 35. Calculate optimal angle-deltas
         cv::Mat_<float> e_op = -M.inv()*m;
         //Equation 36. Update angles.
-        zrot += e_op(2,0);
-        yrot += e_op(1,0);
-        xrot += e_op(0,0);
+        psi += e_op(2,0);
+        theta += e_op(1,0);
+        fi += e_op(0,0);
         //Equation 26. Define R mat
         cv::Mat_<float> R = cv::Mat_<float>::zeros(3,3);
         float ct = cos(theta);
@@ -383,11 +385,11 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         float sf = sin(fi);
         float cp = cos(psi);
         float sp = sin(psi);
-        R_pos(0,0) = ct*cp;             R_pos(0,1) = ct*sp;             R_pos(0,2) = -st;
-        R_pos(1,0) = -cf*sp+sf*st*cp;   R_pos(1,1) = cf*cp+sf*st*sp;    R_pos(1,2) = ct*sf;//CHEK?
-        R_pos(2,0) = sf*sp+cf*cp*st;    R_pos(2,1) = -cp*sf+st*sp*cf;   R_pos(2,2) = cf*ct;
+        R(0,0) = ct*cp;             R(0,1) = ct*sp;             R(0,2) = -st;
+        R(1,0) = -cf*sp+sf*st*cp;   R(1,1) = cf*cp+sf*st*sp;    R(1,2) = ct*sf;//CHEK?
+        R(2,0) = sf*sp+cf*cp*st;    R(2,1) = -cp*sf+st*sp*cf;   R(2,2) = cf*ct;
         //Equation 37. Update vehicle position
-        cv::Mat_<float> t_op = F*e+w;//Give t_op as argument to aipe? Or is t opt F*e+w according to Eq. 13?
+        cv::Mat_<float> t_op = F*e_op+w;//Give t_op as argument to aipe? Or is t opt F*e+w according to Eq. 13?
         position = -R.t()*t_op;
     }
     return 1;
