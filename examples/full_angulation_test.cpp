@@ -19,7 +19,7 @@ int main(int argc, char** argv){
     //Initialize settings
     set::settings S(argc,argv);
     if(!S.success()){return 0;}
-
+    std::cout << "Example dataset in Generated-datasets/Tests/13-okt" << std::endl;
 
     // Read image
 
@@ -42,8 +42,9 @@ int main(int argc, char** argv){
     t(1,0) = S.data.y0;
     t(2,0) = S.data.z0;
     float yaw = S.data.yaw0;
+    float yaw2 = yaw;
 
-    std::cout << "K matrix: " << K.inv() << std::endl;
+
     cv::Mat_<float> t2;
     t.copyTo(t2);
     float dist = 1.5;
@@ -52,15 +53,17 @@ int main(int argc, char** argv){
     //int mode = P.process(pos::MODE_AZIPE,frame,dist, roll, pitch, yaw, t2);
     cv::Mat colorFrame;
     cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-    int mode = P.processAndIllustrate(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t2);
+    int mode = P.processAndIllustrate(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw2,t2);
     cv::imshow("processing",colorFrame);
     cv::waitKey(0);
 
 
 
-    std::cout << "Diff: " << t.t() - t2.t() << std::endl;
+    std::cout << "True: " << t.t() << std::endl;
     std::cout << "Xest: " << t2.t() << std::endl;
-    std::cout << "yaw: " << yaw << std::endl;
+    std::cout << "Diff: " << t.t() - t2.t() << std::endl;
+    std::cout << "yaw true: " << yaw << std::endl;
+    std::cout << "yaw est:  " << yaw2 << std::endl;
 
     return 1;
 }
