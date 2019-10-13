@@ -46,8 +46,13 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             const std::vector<cv::Mat_<float>>& q,
             cv::Mat_<float>& position,
             float& yaw,
-            float roll,float pitch){
+            float pitch,float roll,
+            cv::Mat_<float>& t_opt){
   std::cout << "az::azipe: GIVE YAW,ROLL,PITCH AS zrot,yrot,xrot INSTEAD (in that order). Also angle??" << std::endl;
+            //Yaw - psi
+            //pitch - theta
+            //roll - phi
+
         //Define some per-position-constant quantities
         float phi = -roll; //Note the sign on this!
         float theta = -pitch;
@@ -205,20 +210,24 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             if(!isnan(delta_neg)){
                 if(delta_pos < delta_neg){
                     P_vehicle_pos.copyTo(position);
+                    t_opt_pos.copyTo(t_opt);
                     yaw = limitYawRange(azimuth_pos);
                     return az::AZIPE_SUCCESS;
                 }else{
                     P_vehicle_neg.copyTo(position);
+                    t_opt_neg.copyTo(t_opt);
                     yaw = limitYawRange(azimuth_neg);
                     return az::AZIPE_SUCCESS;
                 }
             }else{
                 P_vehicle_pos.copyTo(position);
+                t_opt_pos.copyTo(t_opt);
                 yaw = limitYawRange(azimuth_pos);
                 return az::AZIPE_SUCCESS;
             }
         }else if(!isnan(delta_neg)){
             P_vehicle_neg.copyTo(position);
+            t_opt_neg.copyTo(t_opt);
             yaw = limitYawRange(azimuth_neg);
             return az::AZIPE_SUCCESS;
         }
@@ -291,13 +300,18 @@ Eq. 37.     Iterate position
 int az::aipe(const std::vector<cv::Mat_<float>>& v,
                 const std::vector<cv::Mat_<float>>& q,
                 cv::Mat_<float>& position, float& psi, float&theta, float& fi,
-                float thresh){
+                float thresh,
+                const cv::Mat_<float>& t_opt){
+
+        //theta*=-1;
+        //fi*=-1;
+
 
     cv::Mat_<float> err = cv::Mat_<float>::ones(1,1)*(thresh+1);
     int counter = 0;
-    int maxIter = 10;
+    int maxIter = 2;
     //Add threshold
-    while(counter < maxIter){
+    while(counter < maxIter ){//&& err(0,0)>1){
         counter++;
         //Save incremental Q_i, s_i, and Lambda_i in these vectors so that they need not be recalculated
         std::vector<cv::Mat_<float>> Q_i_saved; //Needed for equation 16.
@@ -387,10 +401,12 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         float cp = cos(psi);
         float sp = sin(psi);
         R(0,0) = ct*cp;             R(0,1) = ct*sp;             R(0,2) = -st;
-        R(1,0) = -cf*sp+sf*st*cp;   R(1,1) = cf*cp+sf*st*sp;    R(1,2) = ct*sf;//CHEK?
+        R(1,0) = -cf*sp+sf*st*cp;   R(1,1) = cf*cp+sf*st*sp;    R(1,2) = ct*sf;
         R(2,0) = sf*sp+cf*cp*st;    R(2,1) = -cp*sf+st*sp*cf;   R(2,2) = cf*ct;
         //Equation 37. Update vehicle position
         cv::Mat_<float> t_op = F*e_op+w;//Give t_op as argument to aipe? Or is t opt F*e+w according to Eq. 13?
+        //cv::Mat_<float> t_op; //t_op given as argument instead
+        //t_opt.copyTo(t_op); //t_op given as argument instead
         position = -R.t()*t_op;
         err = e_op.t()*e_op;
         std::cout << "Err " << counter << ": " << err(0,0) << std::endl;
