@@ -21,11 +21,12 @@ namespace az{
     int azipe(const std::vector<cv::Mat_<float>>&,
                 const std::vector<cv::Mat_<float>>&,
                 cv::Mat_<float>&, float&,
-                float,float);
+                float,float,cv::Mat_<float>&);
     int aipe(const std::vector<cv::Mat_<float>>&,
                 const std::vector<cv::Mat_<float>>&,
                 cv::Mat_<float>&, float&, float&, float&,
-                float);
+                float,
+                const cv::Mat_<float>&);
 
     float limitYawRange(float);
 
