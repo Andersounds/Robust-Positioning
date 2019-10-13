@@ -35,12 +35,12 @@ std::cout << "Base scene coordinate system must be aligned with pixel coordinate
 std::cout << "The base scene will be resized to camera resolution proportions by padding with black pixles" << std::endl;
 
 robustPositioning::imageLogger imagebin;
-std::string pathToDir = "Generated-dataSets/5-okt/";
+std::string pathToDir = "Generated-dataSets/13-okt/";
 std::string newDir = "images";
 imagebin.init(pathToDir,newDir);
 
 //robustPositioning::dataStreamer getData("Generated-dataSets/5_jul/truePath.csv");
-robustPositioning::dataStreamer getData("Generated-dataSets/5-okt/path.csv");
+robustPositioning::dataStreamer getData("Generated-dataSets/13-okt/path.csv");
 
 
     //Initialize settings
