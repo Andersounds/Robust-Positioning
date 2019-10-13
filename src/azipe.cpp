@@ -47,7 +47,7 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             cv::Mat_<float>& position,
             float& yaw,
             float roll,float pitch){
-  std::cout << "az::azipe: GIVE YAW,ROLL,PITCH AS zrot,yrot,xrot INSTEAD (in that order)" << std::endl;
+  std::cout << "az::azipe: GIVE YAW,ROLL,PITCH AS zrot,yrot,xrot INSTEAD (in that order). Also angle??" << std::endl;
         //Define some per-position-constant quantities
         float phi = -roll; //Note the sign on this!
         float theta = -pitch;
@@ -293,9 +293,9 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
                 cv::Mat_<float>& position, float& psi, float&theta, float& fi,
                 float thresh){
 
-    std::cout << "aipe: initialize e to more than thresh" << std::endl;
+    cv::Mat_<float> err = cv::Mat_<float>::ones(1,1)*(thresh+1);
     int counter = 0;
-    int maxIter = 3;
+    int maxIter = 10;
     //Add threshold
     while(counter < maxIter){
         counter++;
@@ -373,6 +373,7 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         }
         //Equation 35. Calculate optimal angle-deltas
         cv::Mat_<float> e_op = -M.inv()*m;
+        //std::cout << "e_op: " << e_op.t() << std::endl;
         //Equation 36. Update angles.
         psi += e_op(2,0);
         theta += e_op(1,0);
@@ -391,6 +392,8 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         //Equation 37. Update vehicle position
         cv::Mat_<float> t_op = F*e_op+w;//Give t_op as argument to aipe? Or is t opt F*e+w according to Eq. 13?
         position = -R.t()*t_op;
+        err = e_op.t()*e_op;
+        std::cout << "Err " << counter << ": " << err(0,0) << std::endl;
     }
     return 1;
 }
