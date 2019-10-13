@@ -111,7 +111,17 @@ int ang::angulation::calculate(std::vector<cv::Mat_<float>>& q, std::vector<cv::
         it_q++;
         it_mask++;
     }
-    return az::azipe(v_m,q_m,pos,yaw,roll,pitch);
+    cv::Mat_<float> t_opt;
+    //return az::azipe(v_m,q_m,pos,yaw,roll,pitch,t_opt);//Gammal ordning på vinklar
+    az::azipe(v_m,q_m,pos,yaw,pitch,roll,t_opt);
+    if(v_m.size()>2){
+        int r = az::aipe(v_m,q_m,pos,yaw,pitch,roll,1,t_opt);
+            std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
+        return r;
+    }
+    std::cout << "<3 anchors" << std::endl;
+    return 0;
+
 }
 
 /*Converts a vector of camera pixel coordinates to a vector of uLOS vectors expressed as Mat_<float>
