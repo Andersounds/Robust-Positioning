@@ -48,7 +48,7 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             float& yaw,
             float pitch,float roll,
             cv::Mat_<float>& t_opt){
-  std::cout << "az::azipe: GIVE YAW,ROLL,PITCH AS zrot,yrot,xrot INSTEAD (in that order). Also angle??" << std::endl;
+  std::cout << "TODO: Test fullangulation and give known pitch roll." << std::endl;
             //Yaw - psi
             //pitch - theta
             //roll - phi
