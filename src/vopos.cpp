@@ -116,7 +116,7 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
 Process the given data and update position and yaw. Also illustrate by drawing on the outputFrame mat
 dist - Distance from camera to the flow field plane.
 */
-int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float dist,float roll, float pitch,float& yaw, cv::Mat_<float>& pos){
+int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float dist,float roll, float pitch,float& yaw, cv::Mat_<float>& pos,float& noOfAnchors){
     static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
     //Aruco detect
     std::vector<int> ids;
@@ -130,12 +130,15 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     std::vector<cv::Mat_<float>> q;
     std::vector<bool> mask;
     int knownAnchors = dataBase2q(ids,q,mask);
+    noOfAnchors = (float)knownAnchors;
     //std::cout << knownAnchors <<  ";" <<std::endl;
     // Draw detected markers and identify known markers
     drawMarkers(outputFrame,corners,ids,mask);
     if(knownAnchors == 0){
+        std::cout << "No anchors" << std::endl;
         returnMode = pos::RETURN_MODE_VO;
     }else if(knownAnchors < minAnchors){
+        std::cout << "too few anchors" << std::endl;
         returnMode = pos::RETURN_MODE_PROJ;
     } else{
         returnMode = pos::RETURN_MODE_AZIPE;
@@ -173,6 +176,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
         case pos::RETURN_MODE_AZIPE:{
             std::vector<cv::Mat_<float>> v;
             pix2uLOS(corners,v);
+            std::cout << "ANCHORS:    " << v.size() << std::endl;
             ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
             //calculate(q,v,mask,pos,yaw,roll,pitch);
             break;
