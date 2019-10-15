@@ -116,7 +116,7 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
 Process the given data and update position and yaw. Also illustrate by drawing on the outputFrame mat
 dist - Distance from camera to the flow field plane.
 */
-int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float dist,float roll, float pitch,float& yaw, cv::Mat_<float>& pos,float& noOfAnchors){
+int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float dist,float& roll, float& pitch,float& yaw, cv::Mat_<float>& pos,float& noOfAnchors){
     static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
     //Aruco detect
     std::vector<int> ids;
