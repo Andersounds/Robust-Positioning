@@ -295,8 +295,7 @@ Eq. 37.     Iterate position
 int az::aipe(const std::vector<cv::Mat_<float>>& v,
                 const std::vector<cv::Mat_<float>>& q,
                 cv::Mat_<float>& position, float& psi, float&theta, float& fi,
-                float thresh,
-                const cv::Mat_<float>& t_opt){
+                float thresh){
 
         //theta*=-1;
         //fi*=-1;
@@ -400,8 +399,6 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         R(2,0) = sf*sp+cf*cp*st;    R(2,1) = -cp*sf+st*sp*cf;   R(2,2) = cf*ct;
         //Equation 37. Update vehicle position
         cv::Mat_<float> t_op = F*e_op+w;//Give t_op as argument to aipe? Or is t opt F*e+w according to Eq. 13?
-        //cv::Mat_<float> t_op; //t_op given as argument instead
-        //t_opt.copyTo(t_op); //t_op given as argument instead
         position = -R.t()*t_op;
         err = e_op.t()*e_op;
         //std::cout << "Err " << counter << ": " << err(0,0) << std::endl;
