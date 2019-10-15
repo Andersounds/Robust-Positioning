@@ -114,12 +114,11 @@ int ang::angulation::calculate(std::vector<cv::Mat_<float>>& q, std::vector<cv::
     cv::Mat_<float> t_opt;
     //return az::azipe(v_m,q_m,pos,yaw,roll,pitch,t_opt);//Gammal ordning på vinklar
     az::azipe(v_m,q_m,pos,yaw,pitch,roll,t_opt);
-    if(v_m.size()>2){
+    if(v_m.size()>2 && false){
         int r = az::aipe(v_m,q_m,pos,yaw,pitch,roll,1,t_opt);
-            std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
+            //std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
         return r;
     }
-    std::cout << "<3 anchors" << std::endl;
     return 0;
 
 }
