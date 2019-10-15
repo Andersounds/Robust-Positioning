@@ -409,7 +409,7 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         //t_opt.copyTo(t_op); //t_op given as argument instead
         position = -R.t()*t_op;
         err = e_op.t()*e_op;
-        std::cout << "Err " << counter << ": " << err(0,0) << std::endl;
+        //std::cout << "Err " << counter << ": " << err(0,0) << std::endl;
     }
     return 1;
 }
