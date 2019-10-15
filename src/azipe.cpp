@@ -46,8 +46,7 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             const std::vector<cv::Mat_<float>>& q,
             cv::Mat_<float>& position,
             float& yaw,
-            float pitch,float roll,
-            cv::Mat_<float>& t_opt){
+            float pitch,float roll){
   std::cout << "TODO: Test fullangulation and give known pitch roll." << std::endl;
             //Yaw - psi
             //pitch - theta
@@ -210,24 +209,20 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             if(!isnan(delta_neg)){
                 if(delta_pos < delta_neg){
                     P_vehicle_pos.copyTo(position);
-                    t_opt_pos.copyTo(t_opt);
                     yaw = limitYawRange(azimuth_pos);
                     return az::AZIPE_SUCCESS;
                 }else{
                     P_vehicle_neg.copyTo(position);
-                    t_opt_neg.copyTo(t_opt);
                     yaw = limitYawRange(azimuth_neg);
                     return az::AZIPE_SUCCESS;
                 }
             }else{
                 P_vehicle_pos.copyTo(position);
-                t_opt_pos.copyTo(t_opt);
                 yaw = limitYawRange(azimuth_pos);
                 return az::AZIPE_SUCCESS;
             }
         }else if(!isnan(delta_neg)){
             P_vehicle_neg.copyTo(position);
-            t_opt_neg.copyTo(t_opt);
             yaw = limitYawRange(azimuth_neg);
             return az::AZIPE_SUCCESS;
         }
