@@ -62,6 +62,7 @@ namespace pos{
         int process(int,cv::Mat&,float,float,float,float&,cv::Mat_<float>&);//Perform processing. return value indicates what kind of estimation is done
         //Illustration processing. Second mat argument is drawn upon.
         int processAndIllustrate(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Perform processing, but also illustrate by drawing on the second argument matrix
+        int processAz(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Only azipe aipe
     private:
         void drawLines(cv::Mat&,std::vector<cv::Point2f>,cv::Point2f);
         void drawMarkers(cv::Mat&,std::vector<std::vector<cv::Point2f>>,std::vector<int>,std::vector<bool>);

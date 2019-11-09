@@ -218,6 +218,38 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
     return returnMode;
 }
+int pos::positioning::processAz(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float dist,float& roll, float& pitch,float& yaw, cv::Mat_<float>& pos,float& noOfAnchors){
+    static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
+    //Aruco detect
+    std::vector<int> ids;
+    std::vector<std::vector<cv::Point2f> > corners;
+    cv::aruco::detectMarkers(frame, dictionary, corners, ids);
+
+    //Only do angulation if at least two known anchors are visible
+    int status = 0;
+    int returnMode = pos::RETURN_MODE_AZIPE;
+    //Convert IDs to q-coordinates and count number of known anchors from database
+    std::vector<cv::Mat_<float>> q;
+    std::vector<bool> mask;
+    int knownAnchors = dataBase2q(ids,q,mask);
+    noOfAnchors = (float)knownAnchors;
+    //std::cout << knownAnchors <<  ";" <<std::endl;
+    // Draw detected markers and identify known markers
+    drawMarkers(outputFrame,corners,ids,mask);
+
+    bool vo_success = false;
+
+
+    std::vector<cv::Mat_<float>> v;
+    pix2uLOS(corners,v);
+    //std::cout << "ANCHORS:    " << v.size() << std::endl;
+    if(v.size()>3){
+        ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+    }
+    frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
+    return returnMode;
+}
+
 /* Draws a closed loop between all given points
  */
 void pos::positioning::drawLines(cv::Mat& img,std::vector<cv::Point2f> points,cv::Point2f offset){
