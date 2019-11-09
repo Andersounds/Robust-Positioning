@@ -99,7 +99,8 @@ float rad2Grad = 57.2958;
 //            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,dist, roll, pitch, yaw, t);
             //int mode = P.process(pos::MODE_AZIPE,frame,dist, roll, pitch, yaw, t);
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-            int mode = P.processAndIllustrate(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
+            //int mode = P.processAndIllustrate(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
+            int mode = P.processAz(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
             //Log data
             if(true){
                 std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),roll,pitch,yaw,nmbrOfAnchors};
