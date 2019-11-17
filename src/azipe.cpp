@@ -299,6 +299,8 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
 
         //theta*=-1;
         //fi*=-1;
+    //Start with checking criteria. If these are not fulfilled then function will return trash data
+    if(!az::aipe_solvable(q,0.04)){return -1;};
 
 
     cv::Mat_<float> err = cv::Mat_<float>::ones(1,1)*(thresh+1);
@@ -405,6 +407,53 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
     }
     return 1;
 }
+
+/*
+    This function checks if the problem is solvable using aipe.
+    The reason for using it is that if the number of anchors are less than 4, the geometrical problem is not solvable
+    The aipe algorithm will in this case return trash result
+    Another important reason is that the problem is also not solvable if all anchors are located on a line, they need to span at least a 2d plane
+
+    q: a vector of coordinates of known anchors
+    sqrdlim: a limit the squared distance between anchors in the coordinate system they are represented
+
+    Algorithm:
+    1. Check amount L of known anchors.
+        -If <4 then return false
+    2. For each anchor pair i, i+1 within 0<=i<(L-1) until true
+        -Make vector from i to i+1
+        -check that distance (length of vector) is above lim
+    3. For each of the other anchors
+        -define vector from i to current anchor
+        -calculate distance between current anchor and line that contains the first vector (Via projection)
+        -Check against limit. If any anchor gives distance above limit-> return true
+*/
+bool az::aipe_solvable(const std::vector<cv::Mat_<float>>& q, float sqrdLim){
+    int nmbr = q.size();
+    if(nmbr<4){return false;}//Criteria 1 to allow aipe
+    cv::Mat_<float> refpoint = q[0];//Take first anchor as reference point
+    cv::Mat_<float> vec1;
+    float vec1_len;
+    int index=0;
+    for(int i=1;i<nmbr;i++){
+        vec1 = refpoint - q[i];//Reference vector.
+        cv::Mat_<float> vec1_len_ = vec1.t()*vec1;
+        vec1_len = vec1_len_(0,0);
+        if(vec1_len>sqrdLim){
+            index = i;
+            break;
+        }//An anchor pair with distance above limit is found
+    }
+    if(index==0){return false;}//If no distance was above limit. (NOTE This is not watertight as it will be false if distance from a to b and a to c is less than limit even if distance from b to c is above limit)
+    for(int i=1;i<nmbr;i++){
+        cv::Mat_<float> vec2 = q[i] - q[0];//Comparision vector
+        cv::Mat_<float> dotProduct_ = vec1.t()*vec2;
+        float dist = dotProduct_(0,0)*dotProduct_(0,0)/vec1_len;//This is squared distance between tip of vec2 and reference line
+        if(dist>sqrdLim){return true;}//If any acceptable distance, return true
+    }
+    return false;//If no acceptable distance was found
+}
+
 
 /*
     This functions is here to limit yaw range. In experimetn with the 5-okt dataset
