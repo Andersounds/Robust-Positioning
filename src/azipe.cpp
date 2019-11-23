@@ -47,7 +47,7 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             cv::Mat_<float>& position,
             float& yaw,
             float pitch,float roll){
-  std::cout << "TODO: Test fullangulation and give known pitch roll." << std::endl;
+
             //Yaw - psi
             //pitch - theta
             //roll - phi
@@ -300,7 +300,12 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         //theta*=-1;
         //fi*=-1;
     //Start with checking criteria. If these are not fulfilled then function will return trash data
-    if(!az::aipe_solvable(q,0.04)){return -1;};
+    if(!az::aipe_solvable(q,0.1)){
+        std::cout << "AIPE NOT SOLVABLE "<< std::endl;
+        for(int i=0;i<q.size();i++){
+            std::cout << q[i].t() << std::endl;
+        }
+        return -1;};
 
 
     cv::Mat_<float> err = cv::Mat_<float>::ones(1,1)*(thresh+1);
@@ -433,24 +438,32 @@ bool az::aipe_solvable(const std::vector<cv::Mat_<float>>& q, float sqrdLim){
     if(nmbr<4){return false;}//Criteria 1 to allow aipe
     cv::Mat_<float> refpoint = q[0];//Take first anchor as reference point
     cv::Mat_<float> vec1;
+    cv::Mat_<float> vec1_norm;
     float vec1_len;
     int index=0;
     for(int i=1;i<nmbr;i++){
         vec1 = refpoint - q[i];//Reference vector.
-        cv::Mat_<float> vec1_len_ = vec1.t()*vec1;
-        vec1_len = vec1_len_(0,0);
-        if(vec1_len>sqrdLim){
+        //cv::Mat_<float> vec1_len_ = vec1.t()*vec1;
+        vec1_len = cv::norm(vec1);//std::sqrt(vec1_len_(0,0));
+        if((vec1_len*vec1_len)>sqrdLim){
+            vec1_norm = vec1/vec1_len;
             index = i;
             break;
         }//An anchor pair with distance above limit is found
     }
     if(index==0){return false;}//If no distance was above limit. (NOTE This is not watertight as it will be false if distance from a to b and a to c is less than limit even if distance from b to c is above limit)
     for(int i=1;i<nmbr;i++){
-        cv::Mat_<float> vec2 = q[i] - q[0];//Comparision vector
-        cv::Mat_<float> dotProduct_ = vec1.t()*vec2;
-        float dist = dotProduct_(0,0)*dotProduct_(0,0)/vec1_len;//This is squared distance between tip of vec2 and reference line
-        if(dist>sqrdLim){return true;}//If any acceptable distance, return true
+        cv::Mat_<float> a = q[i] - q[0];//Comparision vector
+        cv::Mat_<float> a1 = vec1_norm * (a.t()*vec1_norm);
+        cv::Mat_<float> a2 = a-a1;
+        cv::Mat_<float> dist_ = a2.t()*a2;
+        std::cout << "dist:" << dist_(0,0) << std::endl;
+        if(dist_(0,0)>sqrdLim){
+            std::cout << "---"<< std::endl;
+            return true;
+        }//If any acceptable distance, return true
     }
+    std::cout << "Not accepted. "<< std::endl;
     return false;//If no acceptable distance was found
 }
 
