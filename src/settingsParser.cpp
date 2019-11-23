@@ -220,16 +220,16 @@ int set::settings::readArguments(int argc, char** argv){
     return 1;
 }
 int set::settings::initFlags(void){
+    flags.insert ( std::pair<std::string,std::string>("-p",         "<Path to settings file 'settings.csv'> Path to settings file. If -d is set, default file is written, otherwise read") );
     flags.insert ( std::pair<std::string,std::string>("-d",         "<No argument>  Use default settings and write file to settings.txt at path -p if given") );
-    flags.insert ( std::pair<std::string,std::string>("-p",         "<Path to file> Path to settings file. If -d is set, file is written, otherwise read") );
-    flags.insert ( std::pair<std::string,std::string>("-s",         "<Settings file name>  Settings file name at path -p or pwd if -p not set") );
+    //flags.insert ( std::pair<std::string,std::string>("-s",         "<Settings file name>  Settings file name at path -p or pwd if -p not set") );
 
 //Are these necessary? Should we maybe have one example with dataset and one example with rpi stream?
-    flags.insert ( std::pair<std::string,std::string>("-rpi",       "<No argument>  Use rpi cam and i2c as input") );
-    flags.insert ( std::pair<std::string,std::string>("-dset",      "<Path to set>  Use dataset as input") );
-    flags.insert ( std::pair<std::string,std::string>("-usb",       "<No argument>  Use usb cam 0 as input. No acc/gyro data.") );
-    flags.insert ( std::pair<std::string,std::string>("-log",       "<Path to dir>  Log collected data") );
-    flags.insert ( std::pair<std::string,std::string>("-out",       "<Path file/dir>Output file. Path to dir to auto name, path to file to set name") );
+    //maybe keep this one? flags.insert ( std::pair<std::string,std::string>("-rpi",       "<No argument>  Use rpi cam and i2c as input") );
+    //flags.insert ( std::pair<std::string,std::string>("-dset",      "<Path to set>  Use dataset as input") );
+    //flags.insert ( std::pair<std::string,std::string>("-usb",       "<No argument>  Use usb cam 0 as input. No acc/gyro data.") );
+    //  Log by default to settings file directory. have setting in settings.csv instead flags.insert ( std::pair<std::string,std::string>("-log",       "<Path to dir>  Log collected data") );
+    //flags.insert ( std::pair<std::string,std::string>("-out",       "<Path file/dir>Output file. Path to dir to auto name, path to file to set name") );
 
     return 1;
 }
