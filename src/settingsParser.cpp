@@ -22,9 +22,9 @@ namespace set{
     Use a struct like this to access all settings later?
 */
 struct dataStruct{
-    cv::Mat_<float> K;
-    cv::Mat_<float> T;
-    std::string anchorPath;
+    cv::Mat_<float> K;              //K matrix of collected images
+    cv::Mat_<float> T;              //T matrix to relate UAV rotation with image coordinate system (rot around z axis.)
+    std::string anchorPath;         //Path to csv file containing anchor locations
     float x0;
     float y0;
     float z0;
@@ -36,14 +36,15 @@ struct dataStruct{
     float dist_k1;//Distortion coefficients for radial distortion
     float dist_k2;
     float dist_k3;
-    cv::Rect2f ROI;
-    int optical_flow_grid;
-    int distColumn;
+    cv::Rect2f ROI;         //cv::Rect describing location and size of ROI to be used by VO
+    int optical_flow_grid;  //Number representing side length of optical flow grid
+    int distColumn;         //Numbers representing ordering of data in streamed csv file
     int pitchColumn;
     int rollColumn;
-    int MODE_OpticalFlow;
+    int MODE_OpticalFlow;       //Mode settings
     int MODE_VisualOdometry;
     int MODE_Positioning;
+    int MODE_LOG;               //0-no log, 1-log data, 2-log images. for example. not defined clearly yet
 };
 /* This is a class containing all necessary settings and their default values.
 */
@@ -250,6 +251,7 @@ int set::settings::setAllDefault(void){
     setDefault("LOG_MODE", (int) 0,"Log position estimation, pos est and video");
     setDefault("FRAME_RESOLUTION_X", (int) 640,"In pixles. Used to specify RPI video input res. Specify here or hardcode?");
     setDefault("FRAME_RESOLUTION_Y", (int) 480," ");
+    setDefault("LOG_MODE", (int) 0,"If implemented this number can be used to change log mode of program at runtime. (ex 0 for no log)");
 
     //Below are settings needed for positioning
     setDefault("OPTICAL_FLOW_MODE", (int) 0," KLT (1) or correlation (2) based optical flow");
@@ -468,6 +470,7 @@ bool set::settings::constructSettingsStruct(void){
     data.MODE_OpticalFlow = settingsI["OPTICAL_FLOW_MODE"];
     data.MODE_VisualOdometry = settingsI["VISUAL_ODOMETRY_MODE"];
     data.MODE_Positioning = settingsI["POS_EST_MODE"];
+    data.MODE_LOG = settingsI["LOG_MODE"];
 
     // Misc
     data.testImageRelPath = basePath + settingsS["TEST_IMAGE"];
