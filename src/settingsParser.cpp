@@ -272,13 +272,13 @@ int set::settings::setAllDefault(void){
     setDefault("DIST_COEFF_K2", (float) -1.452670730319596,"Barrel distortion coefficient k2");
     setDefault("DIST_COEFF_K3", (float) 2.638858641887943,"Barrel distortion coefficient k3");
     setDefault("PATH_TO_ARUCO_DATABASE", "database.txt" ," ");
-    setDefault("ARUCO_DICT_TYPE", (int) 0," ");
+    setDefault("ARUCO_DICT_TYPE", (int) 0,"Not used. hardcode if other than default type");
     setDefault("MAX_ID_ARUCO", (int) 50,"Database size. must be able to contain all IDs in ARUCO_DICT_TYPE");
     setDefault("ROI_SIZE", (int) 150,"Specify the size in pixles of the side of the centered ROI that is considered in VO. Used to edit K mat of VO alg.");
-    setDefault("INITIAL_X", (float) 0," ");
-    setDefault("INITIAL_Y", (float) 0," ");
-    setDefault("INITIAL_Z", (float) -1," ");
-    setDefault("INITIAL_YAW", (float) 0," ");
+    setDefault("INITIAL_X", (float) 0,"Initial position estimate X");
+    setDefault("INITIAL_Y", (float) 0,"Initial position estimate Y");
+    setDefault("INITIAL_Z", (float) -1,"Initial position estimate Z");
+    setDefault("INITIAL_YAW", (float) 0,"Initial position estimate Yaw");
 
 
 
@@ -286,9 +286,9 @@ int set::settings::setAllDefault(void){
     setDefault("ROLL_COLUMN", (int) 3," Specifies which column of csv file that contains roll data");
     setDefault("PITCH_COLUMN", (int) 2," Specifies which column of csv file that contains pitch data");
     setDefault("DIST_COLUMN", (int) 1," Specifies which column of csv file that contains distance (lidar) data");
-    setDefault("STREAM_IMAGES_BASEPATH", "","Path from base path -p to image directory that also contains images info file. ending with /");
-    setDefault("STREAM_IMAGES_INFO_FILE", "some_image_info_file.csv","File (located in IMAGES_BASEPATH with image data. (timestamps image name))");
-    setDefault("STREAM_DATA_FILE", "some_data_file.csv","Path to csv file to be streamed");
+    setDefault("STREAM_IMAGES_BASEPATH", "images/","Path from base path -p to image directory that also contains images info file. ending with /");
+    setDefault("STREAM_IMAGES_INFO_FILE", "imageData.csv","File (located in IMAGES_BASEPATH with image data. (timestamps image name))");
+    setDefault("STREAM_DATA_FILE", "imudata.csv","Path to csv file to be streamed");
 
     // Below are needed for test
     setDefault("TEST_IMAGE", "image.bmp","Relative path from settings file to single image for testing purposes");
@@ -357,7 +357,7 @@ int set::settings::set(std::string key, std::string value){
 /* Reads all default settings and writes them into a file settings.txt
  */
 int set::settings::writeDefaultSettingsFile(std::string basePath){
-    std::string path = basePath+"settings.txt";
+    std::string path = basePath+"settings.csv";
     std::ofstream settingsFile;
     settingsFile.open(path, std::ofstream::out | std::ofstream::trunc);//Trunc option clears the file before anything is written
     std::map<std::string, int>::iterator it;
@@ -428,37 +428,47 @@ std::vector<std::string> set::settings::parseRow(std::string line){
 //This method reads all the internal values and constructs a struct where the properly
 //  formatted settings are available from another scope
 bool set::settings::constructSettingsStruct(void){
+    // Define K matrix
     data.K = cv::Mat_<float>::eye(3,3);
         data.K(0,0) = settingsF["K_MAT_fx"];
         data.K(1,1) = settingsF["K_MAT_fy"];
         data.K(0,2) = settingsF["K_MAT_cx"];
         data.K(1,2) = settingsF["K_MAT_cy"];
+    // Define T matrix
     data.T = cv::Mat_<float>::zeros(3,3);
         data.T(0,0) = settingsF["T_MAT_1_1"];   data.T(0,1) = settingsF["T_MAT_1_2"];   data.T(0,2) = settingsF["T_MAT_1_3"];
         data.T(1,0) = settingsF["T_MAT_2_1"];   data.T(1,1) = settingsF["T_MAT_2_2"];   data.T(1,2) = settingsF["T_MAT_2_3"];
         data.T(2,0) = settingsF["T_MAT_3_1"];   data.T(2,1) = settingsF["T_MAT_3_2"];   data.T(2,2) = settingsF["T_MAT_3_3"];
+    // Set initial position estimation
     data.x0 = settingsF["INITIAL_X"];
     data.y0 = settingsF["INITIAL_Y"];
     data.z0 = settingsF["INITIAL_Z"];
     data.yaw0 = settingsF["INITIAL_YAW"];
+    // Set file structure paths
     data.imageStreamBasePath = basePath + settingsS["STREAM_IMAGES_BASEPATH"];
     data.imageStreamInfoFile = basePath + settingsS["STREAM_IMAGES_INFO_FILE"];
     data.anchorPath = basePath + settingsS["PATH_TO_ARUCO_DATABASE"];
     data.dataStreamFile = basePath + settingsS["STREAM_DATA_FILE"];
+    // Set distortion coefficients
     data.dist_k1 = settingsF["DIST_COEFF_K1"];
     data.dist_k2 = settingsF["DIST_COEFF_K2"];
     data.dist_k3 = settingsF["DIST_COEFF_K3"];
+    // Set VO parameters
     float roi_side = (float)settingsI["ROI_SIZE"];
     float roi_x = ((float)settingsI["FRAME_RESOLUTION_X"]-roi_side)/2;
     float roi_y = ((float)settingsI["FRAME_RESOLUTION_Y"]-roi_side)/2;
     data.ROI = cv::Rect2f(roi_x,roi_y,roi_side,roi_side);
     data.optical_flow_grid = settingsI["OPTICAL_FLOW_GRID"];
+    // Set parameters for streaming data
     data.distColumn = settingsI["DIST_COLUMN"];
     data.pitchColumn = settingsI["PITCH_COLUMN"];
     data.rollColumn = settingsI["ROLL_COLUMN"];
+    // Set mode
     data.MODE_OpticalFlow = settingsI["OPTICAL_FLOW_MODE"];
     data.MODE_VisualOdometry = settingsI["VISUAL_ODOMETRY_MODE"];
     data.MODE_Positioning = settingsI["POS_EST_MODE"];
+
+    // Misc
     data.testImageRelPath = basePath + settingsS["TEST_IMAGE"];
     return true;
 }
