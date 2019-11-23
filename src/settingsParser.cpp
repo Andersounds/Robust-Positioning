@@ -96,14 +96,15 @@ set::settings::settings(int argc, char** argv){
     success_ = true;
     /*DEFAULT SETTINGS*/
     basePath = "";
-    setAllDefault();
+    settingsFile = "settings.csv";
+    setAllDefault(); //Set all settings in settings file to default
     initFlags();
     /*Check input*/
     readArguments(argc,argv);
     if(useDefaultSettings == false){
         if(settingsPathGiven == true){
             std::string pathToSettingsFile = basePath + settingsFile;
-            std::cout << "Reading settings file from \"" << pathToSettingsFile << "\"... " << std::endl;
+            std::cout << "Searching for settings file \"" << settingsFile << "\" in \"" << pathToSettingsFile << "\"... " << std::endl;
             //if(!readSettingsFile(argv[1])){
             if(!readSettingsFile(pathToSettingsFile)){
                 success_=false;
@@ -147,7 +148,7 @@ int set::settings::readArguments(int argc, char** argv){
         std::cout << "Usage:" << std::endl;
         std::cout <<  "-flag\t<argument>     Decription\n--------------------------------" << std::endl;
         std::map<std::string, std::string>::iterator it;
-        for ( it = flags.begin(); it != flags.end(); it++ )
+        for ( it = flags.begin(); it != flags.end(); it++ ) //Display all available flags
         {
             std::cout << it->first <<"\t" << it->second << std::endl;
         }
@@ -174,7 +175,7 @@ int set::settings::readArguments(int argc, char** argv){
                 if((i+1)<argc && !std::regex_match(arg,std::regex("(-)(.*)")) && ( std::regex_match(arg,std::regex("(.*)(.txt)")) || std::regex_match(arg,std::regex("(.*)(.csv)")) ) ){
                     settingsFile = arg;
                 }
-            } else if(flag == "-rpi"){
+            } /*else if(flag == "-rpi"){
                 streamMode = 2;
             } else if(flag == "-dset"){
                 if((i+1)<argc && !std::regex_match(arg,std::regex("(-)(.*)")) && std::regex_match(arg,std::regex("(.*)(.csv)"))){ //if there is another argument, that does not begin with "-" and that ends with .txt
@@ -188,7 +189,7 @@ int set::settings::readArguments(int argc, char** argv){
             } else if(flag == "-usb"){
                 streamMode = 1;
 
-            } else if(flag == "-log"){
+            } */else if(flag == "-log"){
                 if((i+1)<argc && !std::regex_match(arg,std::regex("(-)(.*)")) && std::regex_match(arg,std::regex("(.*)(/)"))){ //if there is another argument, that does not begin with "-" and that ends with /
                     pathTologDirectory = arg;
                     i++;
@@ -220,9 +221,9 @@ int set::settings::readArguments(int argc, char** argv){
     return 1;
 }
 int set::settings::initFlags(void){
-    flags.insert ( std::pair<std::string,std::string>("-p",         "<Path to settings file 'settings.csv'> Path to settings file. If -d is set, default file is written, otherwise read") );
-    flags.insert ( std::pair<std::string,std::string>("-d",         "<No argument>  Use default settings and write file to settings.txt at path -p if given") );
-    //flags.insert ( std::pair<std::string,std::string>("-s",         "<Settings file name>  Settings file name at path -p or pwd if -p not set") );
+    flags.insert ( std::pair<std::string,std::string>("-p",         "<Path to settings file> Path to settings file. If -d is set, default file is written, otherwise read (required)") );
+    flags.insert ( std::pair<std::string,std::string>("-d",         "<No argument>  Use default settings and write file to settings.txt at path -p if given (optional)") );
+    flags.insert ( std::pair<std::string,std::string>("-s",         "<Settings file name>  Settings file name if not 'settings.csv' (optional)") );
 
 //Are these necessary? Should we maybe have one example with dataset and one example with rpi stream?
     //maybe keep this one? flags.insert ( std::pair<std::string,std::string>("-rpi",       "<No argument>  Use rpi cam and i2c as input") );
@@ -446,7 +447,7 @@ bool set::settings::constructSettingsStruct(void){
     data.yaw0 = settingsF["INITIAL_YAW"];
     // Set file structure paths
     data.imageStreamBasePath = basePath + settingsS["STREAM_IMAGES_BASEPATH"];
-    data.imageStreamInfoFile = basePath + settingsS["STREAM_IMAGES_INFO_FILE"];
+    data.imageStreamInfoFile = data.imageStreamBasePath + settingsS["STREAM_IMAGES_INFO_FILE"];//basePath + settingsS["STREAM_IMAGES_INFO_FILE"];
     data.anchorPath = basePath + settingsS["PATH_TO_ARUCO_DATABASE"];
     data.dataStreamFile = basePath + settingsS["STREAM_DATA_FILE"];
     // Set distortion coefficients
