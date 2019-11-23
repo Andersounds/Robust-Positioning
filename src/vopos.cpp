@@ -219,7 +219,13 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     return returnMode;
 }
 int pos::positioning::processAz(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float dist,float& roll, float& pitch,float& yaw, cv::Mat_<float>& pos,float& noOfAnchors){
+    static bool init = false;
     static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
+    static cv::Mat_<float> pos_init_est;// Variable that is passed to azipe as initial position guess
+    if(!init){
+        pos.copyTo(pos_init_est);
+        init = true;
+    }
     //Aruco detect
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
@@ -232,7 +238,7 @@ int pos::positioning::processAz(int mode,cv::Mat& frame, cv::Mat& outputFrame,in
     std::vector<cv::Mat_<float>> q;
     std::vector<bool> mask;
     int knownAnchors = dataBase2q(ids,q,mask);
-    noOfAnchors = (float)knownAnchors;
+    //noOfAnchors = (float)knownAnchors;
     //std::cout << knownAnchors <<  ";" <<std::endl;
     // Draw detected markers and identify known markers
     drawMarkers(outputFrame,corners,ids,mask);
@@ -242,9 +248,24 @@ int pos::positioning::processAz(int mode,cv::Mat& frame, cv::Mat& outputFrame,in
 
     std::vector<cv::Mat_<float>> v;
     pix2uLOS(corners,v);
+    noOfAnchors = (float)v.size();
     //std::cout << "ANCHORS:    " << v.size() << std::endl;
-    if(v.size()>3){
+    if(noOfAnchors>3){
+        pos_init_est.copyTo(pos);// Set initial position guess
         ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+
+        /*cv::Mat_<float> diff = pos-pos_init_est;
+        float norm2 = diff(0,0)*diff(0,0) + diff(1,0)*diff(1,0) + diff(2,0)*diff(2,0);
+        if(norm2<20){
+            pos_init_est*=0.95;     //slow down movement of pos_init_est
+            pos_init_est+=(pos*0.05);
+        }else{
+            pos_init_est.copyTo(pos);
+        }*/
+        pos_init_est*=0.95;     //slow down movement of pos_init_est
+        pos_init_est+=(pos*0.05);
+
+
     }
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
     return returnMode;
