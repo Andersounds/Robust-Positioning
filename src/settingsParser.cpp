@@ -274,7 +274,7 @@ int set::settings::setAllDefault(void){
     setDefault("DIST_COEFF_K1", (float) 0.2486857357354474,"Barrel distortion coefficient k1");
     setDefault("DIST_COEFF_K2", (float) -1.452670730319596,"Barrel distortion coefficient k2");
     setDefault("DIST_COEFF_K3", (float) 2.638858641887943,"Barrel distortion coefficient k3");
-    setDefault("PATH_TO_ARUCO_DATABASE", "database.txt" ," ");
+    setDefault("PATH_TO_ARUCO_DATABASE", "anchors.csv" ," ");
     setDefault("ARUCO_DICT_TYPE", (int) 0,"Not used. hardcode if other than default type");
     setDefault("MAX_ID_ARUCO", (int) 50,"Database size. must be able to contain all IDs in ARUCO_DICT_TYPE");
     setDefault("ROI_SIZE", (int) 150,"Specify the size in pixles of the side of the centered ROI that is considered in VO. Used to edit K mat of VO alg.");
@@ -361,6 +361,7 @@ int set::settings::set(std::string key, std::string value){
  */
 int set::settings::writeDefaultSettingsFile(std::string basePath){
     std::string path = basePath+"settings.csv";
+    std::cout << "Writing default settings file to " << path << std::endl;
     std::ofstream settingsFile;
     settingsFile.open(path, std::ofstream::out | std::ofstream::trunc);//Trunc option clears the file before anything is written
     std::map<std::string, int>::iterator it;
