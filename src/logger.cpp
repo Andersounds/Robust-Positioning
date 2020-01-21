@@ -171,8 +171,8 @@ int robustPositioning::imageLogger::init(std::string dumpDir,std::string newDir)
      //Initialize datalogger to save a data file
      dataLogger fileWriter;
      std::string path_std = path.c_str();
-     if(!fileWriter.init(path_std+"data.csv",std::vector<std::string>{"Timestamp [ms]","File name"})){
-         std::cout << "Could not initialize data file " <<path_rename << "data.csv"<< std::endl;
+     if(!fileWriter.init(path_std+"imageData.csv",std::vector<std::string>{"Timestamp [ms]","File name"})){
+         std::cout << "Could not initialize data file " <<path_rename << "imageData.csv"<< std::endl;
          return 0;
      }
      int num_of_files = results_std.size();
