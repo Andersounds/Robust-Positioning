@@ -28,6 +28,7 @@ ang::angulation::angulation(int maxId_,std::string path){
     if(!readToDataBase(path,ids,coordinates)){
         std::cout << "Could not read anchor database" << std::endl;
     }else{
+        std::cout << "Read " << ids.size() << " anchors to aruco database."<< std::endl;
         int index = 0;
         for(int id:ids){
             coordinates[index].copyTo(dataBase[id]);//Assign coordinates to the right anchor ID
@@ -41,6 +42,7 @@ ang::angulation::angulation(int maxId_,std::string path){
  * Each anchor shall be specified as id,x,y,z\n (Whit optional whitespaces after any comma)
  */
 int ang::angulation::readToDataBase(std::string path,std::vector<int>& IDs, std::vector<cv::Mat_<float>>& coordinates){
+    std::cout << "Reading aruco database from " << path << " ...";
     std::string line;
     std::string delim = ",";
     std::ifstream file;
@@ -63,6 +65,7 @@ int ang::angulation::readToDataBase(std::string path,std::vector<int>& IDs, std:
          }
     }else{return 0;}
     file.close();
+    std::cout << "Done." << std::endl;
     return 1;
 }
 
@@ -114,7 +117,8 @@ int ang::angulation::calculate(std::vector<cv::Mat_<float>>& q, std::vector<cv::
     cv::Mat_<float> t_opt;
     //return az::azipe(v_m,q_m,pos,yaw,roll,pitch,t_opt);//Gammal ordning på vinklar
     az::azipe(v_m,q_m,pos,yaw,pitch,roll);
-    if(v_m.size()>2){
+    if(v_m.size()>2 && false){
+        std::cout << "angulation, row 118"<< std::endl;
         int r = az::aipe(v_m,q_m,pos,yaw,pitch,roll,1);
             //std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
         return r;
