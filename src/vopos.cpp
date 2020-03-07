@@ -40,23 +40,26 @@ pos::positioning::positioning(int opticalFlow_mode,
 Process the given data and update the position and yaw
 */
 int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, float pitch,float& yaw, cv::Mat_<float>& pos){
+    static bool init = false;
     static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
+    static cv::Mat_<float> pos_init_est;// Variable that is passed to azipe as initial position guess
+    if(!init){
+        pos.copyTo(pos_init_est);
+        init = true;
+    }
     //Vectors containing detected Aruco info
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
     int returnMode;//Return integer showing what algorithm was used to calculate new position
     switch (mode){
         case pos::MODE_AZIPE:{
+            // Detect markers, extract the known ones using the database
             cv::aruco::detectMarkers(frame, dictionary, corners, ids);
-            //Convert IDs to q-coordinates and count number of known anchors from database
             std::vector<cv::Mat_<float>> q;
             std::vector<cv::Mat_<float>> v;
             std::vector<bool> mask;
             int knownAnchors = dataBase2q(ids,q,mask);//Count how many known anchors are found and return their coordinates from database (in q)
             if(knownAnchors < minAnchors){
-                //robustPositioning::martonRobust::pix2angles(corners,angles) angles defined above. this line extracts the alpha beta gamma angles from the first known anchor
-                //robustPositioning::martonRobust::process(q,mask,pos,yaw,roll,pitch) //Perform estimation
-
                 returnMode = pos::RETURN_MODE_AZIPE_FAILED;
             } else{
                 pix2uLOS(corners,v);
@@ -218,6 +221,10 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
     return returnMode;
 }
+
+/*
+    A stub function used to eliminate everything except azipe
+*/
 int pos::positioning::processAz(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float dist,float& roll, float& pitch,float& yaw, cv::Mat_<float>& pos,float& noOfAnchors){
     static bool init = false;
     static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
@@ -230,16 +237,17 @@ int pos::positioning::processAz(int mode,cv::Mat& frame, cv::Mat& outputFrame,in
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
     cv::aruco::detectMarkers(frame, dictionary, corners, ids);
-
+std::cout << ids.size() << std::endl;
     //Only do angulation if at least two known anchors are visible
     int status = 0;
     int returnMode = pos::RETURN_MODE_AZIPE;
     //Convert IDs to q-coordinates and count number of known anchors from database
     std::vector<cv::Mat_<float>> q;
     std::vector<bool> mask;
+
     int knownAnchors = dataBase2q(ids,q,mask);
-    //noOfAnchors = (float)knownAnchors;
-    //std::cout << knownAnchors <<  ";" <<std::endl;
+    noOfAnchors = (float)knownAnchors;
+
     // Draw detected markers and identify known markers
     drawMarkers(outputFrame,corners,ids,mask);
 
@@ -248,23 +256,14 @@ int pos::positioning::processAz(int mode,cv::Mat& frame, cv::Mat& outputFrame,in
 
     std::vector<cv::Mat_<float>> v;
     pix2uLOS(corners,v);
-    noOfAnchors = (float)v.size();
-    //std::cout << "ANCHORS:    " << v.size() << std::endl;
-    if(noOfAnchors>3){
-        pos_init_est.copyTo(pos);// Set initial position guess
+    //std::cout << "ANCHORS:    " << knownAnchors<< std::endl;
+    if(knownAnchors>3){
+        //pos_init_est.copyTo(pos);// Set initial position guess va? varför?
         ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
-
-        /*cv::Mat_<float> diff = pos-pos_init_est;
-        float norm2 = diff(0,0)*diff(0,0) + diff(1,0)*diff(1,0) + diff(2,0)*diff(2,0);
-        if(norm2<20){
-            pos_init_est*=0.95;     //slow down movement of pos_init_est
-            pos_init_est+=(pos*0.05);
-        }else{
-            pos_init_est.copyTo(pos);
-        }*/
-        pos_init_est*=0.95;     //slow down movement of pos_init_est
-        pos_init_est+=(pos*0.05);
-
+        std::cout << "k" << std::endl;
+//        pos_init_est*=0.95;     //slow down movement of pos_init_est
+//        pos_init_est+=(pos*0.05);//Used to prevent estimations in wrong sign z from causing panic
+        pos_init_est = pos;
 
     }
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
@@ -302,6 +301,11 @@ void pos::positioning::drawLines(cv::Mat& img,std::vector<cv::Point2f> points,cv
      cv::aruco::drawDetectedMarkers(outputFrame, knownCorners, knownIds, CV_RGB(0,250,0));
      cv::aruco::drawDetectedMarkers(outputFrame, unKnownCorners, unKnownIds, CV_RGB(250,0,0));
  }
+
+
+
+
+
 /* Fuses the VO position estimation with incomplete angulation measurement (Angular measurement to single anchor)
  * This is done by obtaining an expression for a possible 3D line where the vehicle can be positioned, assuming known pose, anchor position and angular measurement to anchor
  * (Pose obtained from IMU (Roll, Pitch), VO-algorithm (Yaw))
