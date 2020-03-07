@@ -1,6 +1,7 @@
 # Executables and compile files
 *.out
 *.dSYM
+bin/*
 
 # Output files
 settings.txt
