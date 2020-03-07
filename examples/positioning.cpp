@@ -35,12 +35,11 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
 */
 
 
-
     //Initialize settings
     set::settings S(argc,argv);
     if(!S.success()){return 0;}
 
-
+  std::cout << "TODO: Test fullangulation and give known pitch roll." << std::endl;
     //Initialize video stream
     std::string basePath = S.data.imageStreamBasePath;
     std::string imageInfo = S.data.imageStreamInfoFile;
@@ -53,6 +52,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     std::vector<float> data;
     //Initialize data logger
     robustPositioning::dataLogger databin_LOG;
+    std::cout << "Writing output file to log.csv" << std::endl;
     if(!databin_LOG.init("log.csv",std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []"})) return 0;
 
 
@@ -87,8 +87,8 @@ float rad2Grad = 57.2958;
     while(getData.get(data)){
         timeStamp_data = data[0];
         float dist = data[S.data.distColumn];//This is used as a subst as actual height is not in dataset
-        float pitch = 0;//data[S.data.pitchColumn];
-        float roll = 0;//data[S.data.rollColumn];
+        float pitch = data[S.data.pitchColumn];
+        float roll = data[S.data.rollColumn];
 
         //####TEMP EDIT. give correct
 
@@ -96,22 +96,24 @@ float rad2Grad = 57.2958;
         if(VStreamer.peek()<=timeStamp_data){
             VStreamer.getImage(frame);
             if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
-//            int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,dist, roll, pitch, yaw, t);
-            //int mode = P.process(pos::MODE_AZIPE,frame,dist, roll, pitch, yaw, t);
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-            //int mode = P.processAndIllustrate(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
+            //int mode = P.process(pos::MODE_VO,frame,dist, roll, pitch, yaw, t);
+            //int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,dist, roll, pitch, yaw, t);
+//            int mode = P.process(pos::MODE_AZIPE,frame,dist, roll, pitch, yaw, t);
+//            int mode = P.processAndIllustrate(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
+        //int mode = P.process(pos::MODE_VO,frame,dist, roll, pitch, yaw, t);
             int mode = P.processAz(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
             //Log data
             if(true){
                 std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),roll,pitch,yaw,nmbrOfAnchors};
                 databin_LOG.dump(logData);
             }
-            //std::cout << "X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll*rad2Grad<<", pitch: " << pitch*rad2Grad << "yaw: " << yaw<< std::endl;
+            std::cout << "X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll*rad2Grad<<", pitch: " << pitch*rad2Grad << "yaw: " << yaw<< std::endl;
             cv::imshow("showit",colorFrame);
             //cv::waitKey(0);
             if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
-            std::cout << "Lap " << counter << std::endl;
+            std::cout << "Lap " << counter  << ", time: " << timeStamp_data/1000<< std::endl;
             counter++;
       }
 
