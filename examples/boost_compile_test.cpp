@@ -4,9 +4,10 @@
 //#include <iterator>
 //#include <algorithm>
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 //#include <iostream>
 //#include <fstream> //Input stream from file
-//#include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 
 
@@ -54,18 +55,73 @@
     Possibly overload this with int versions
 */
 
-int string2Mat(std::string,cv::Mat_<float>&){
+//int string2CVMat(std::string str0,cv::Mat_<float>& cvMat){
+int string2CVMat(std::string str0){
+        std::cout << "raw:  " << str0 << std::endl;
+    boost::trim_if(str0,boost::is_any_of("[]"));//Trim brackets
+        std::cout << "trim: " << str0 << std::endl;
+    std::vector<std::string> SplitVec;
+    boost::split(SplitVec, str0, boost::is_any_of(";"));//Split into rows
+    int rows = SplitVec.size();
+    std::cout << "Rows: " << rows << std::endl;
+        std::cout << "split: ";
+        for(std::string i:SplitVec){
+            std::cout << i << std::endl;
+        }
+        /*int cols = -1;
+
+    for(std::string i:SplitVec){
+        std::vector<std::string> rowStr;
+        boost::split(rowStr, i, boost::is_any_of(","));//Must have ',' as column delimiter
+        cols = row.size();
+
+
+
+
+}
+cv::Mat_<float> A = cv::Mat(rows, cols, CV_32FC1,cv::Scalar::all(0));*/
+
+std::cout << "This is NICE mthod! define as vector with push back and then reshape to matrix" << std::endl;
+    std::vector<float> V = {1,2,3,4,5,6};
+    cv::Mat V2 = cv::Mat(V).reshape(3);
+    std::cout << V2 << std::endl;
+
+
+
+    // split first row into elements and create cv mat
+    std::vector<std::string> row;
+    boost::split(row, SplitVec[0], boost::is_any_of(","));//Must have ',' as column delimiter
+    int cols = row.size();
+    std::cout << "columns: " << cols << std::endl;
+    cv::Mat_<float> A = cv::Mat(rows, cols, CV_32FC1,cv::Scalar::all(0));
+    for(int i=0;i<cols;i++){
+        std::string elementStr = boost::trim_copy(row[i]);//remove whitespaces
+        float element = std::stof(elementStr);
+        A(0,i) = element;
+    }
+    std::cout << "Matrix: " << A << std::endl;
+    for(int i=1;i<rows;i++){//Continue with additional rows if there are any
+
+        std::cout << "" << std::endl;
+    }
+    for(std::string i:row){
+        std::cout << i << std::endl;
+    }
+    //boost::trim(str0); //Remove any leading and trailing whitespaces (unnecessary?)
+    //boost::trim_right_if()
+    //iends_with(filename, ".exe")
+//boost::trim_left_if(str0,boost::is_any_of("["));
 /*
-    - Remove brackets [] throw error if not there
+    - Remove brackets [] throw error if not there boost::trimming för whitespace
     - Split into rows using ';' as delimiter
     - Split into elements using either whitespace or ',' as delimiter
-     - If ',' are used, remove leading and trailing whitespaces as well
+     - If ',' are used, remove leading and trailing whitespaces as well - boost::trimming
     - Add elements to matrix.
     - copy over to inputoutput matrix
 */
 
-    std::vector<std::string> rows;
-
+    //std::vector<std::string> rows;
+return 1;
 }
 
 
@@ -141,6 +197,8 @@ int main(int argc, char** argv)
     }
     if (vm.count("OUT")) { //Funkar
         std::cout << "output file: " << vm["OUT"].as<std::string>() << std::endl;
+
+        string2CVMat(vm["OUT"].as<std::string>());
     }else{
         std::cout << "OUT was not set.\n";
     }
