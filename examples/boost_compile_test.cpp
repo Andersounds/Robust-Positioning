@@ -8,7 +8,23 @@
 //#include <iostream>
 //#include <fstream> //Input stream from file
 #include <opencv2/opencv.hpp>
+/*
+ PARSE COMMAND LINE:
+    (First define all options. As well as the config file name)
+    - read argc argv
+    - is config file option given?
+        - Then pare config file
+    - Then read rest of command line.
 
+    When variable are defined from value map. If needed then include conversion function
+
+
+    - How to write default ini file?
+    - How to let command line override ini file?
+        MULTIPLE SOURCES: https://www.boost.org/doc/libs/1_72_0/doc/html/program_options/tutorial.html
+        DONE.
+    - Sectioning. See abit in link above
+*/
 
 
 /*
@@ -49,6 +65,18 @@
 */
 
 
+/*
+    New comments regarding function of settings parser
+        - Every program should probably define options in the main function itself. That way relevance is kept
+        - No multitoken works due to ini file. But I can write a separate set of overloaded functions that parse strings of matlab style to either float or int mat or vector
+        - Should maybe write a class that contains all boost program options including 2 additional methods:
+            - conversion methors as stated above
+            - function to write default ini file including sections and comments
+
+
+*/
+
+
 
 /*
     Method that takes a string, and converts it to a opencv mat_<float>
@@ -75,7 +103,6 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
     cv::Mat_<float> V2;
     try{
         V2 = cv::Mat(V).reshape(cols);
-        std::cout << "Matrix: " << V2 << std::endl;
     }catch(...){
         std::cerr << "ERROR: Specified matrix does not have consistent number of columns" << std::endl;
         std::cerr << "In string2CVMat" << std::endl;
@@ -89,20 +116,23 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
         std::cerr << "In string2CVMat" << std::endl;
         throw(1);
     }
-/*
-    First idea:
-    - Remove brackets [] throw error if not there boost::trimming för whitespace
-    - Split into rows using ';' as delimiter
-    - Split into elements using either whitespace or ',' as delimiter
-     - If ',' are used, remove leading and trailing whitespaces as well - boost::trimming
-    - Add elements to matrix.
-    - copy over to inputoutput matrix
-*/
-
 return 1;
 }
 
 
+
+int printDefaultConfigFile(const boost::program_options::options_description& descr){
+
+/*
+Is this even necessary? We have the help option that also shows default values as defined in the program
+I think we can skip
+
+In help message, just show how to write config file. (as an ini file)
+*/
+
+
+    return 0;
+}
 
 /*
 INI file of following syntax
@@ -123,26 +153,48 @@ K_MAT = [1,2,3;1,2,4;1,2.5,3]
 int main(int argc, char** argv)
 {
     namespace po = boost::program_options;
-    po::options_description parameters("Options");
+
+    // Declare a group of options that will be
+    // allowed only on command line
+    po::options_description generic("Generic options");
+    generic.add_options()
+            ("help,h", "produce help message")
+            ("f","configuration file")
+            ("d","write default configuration file")
+            // Also path to output file. But this may be stated both on cmnd line and ini file
+    ;
+
+    std::cout << generic << std::endl;
+
+    po::options_description parameters("Parameters");
     parameters.add_options()
-        ("help,h",  "Print help messages")
-        ("OUT,o",   po::value<std::string>(), "Write output data to specified file. No output is not set")// Single string argument
+        ("OUT,o",   po::value<std::string>()->default_value("[9,9,9]"), "Write output data to specified file. No output is not set")// Single string argument
         //Parameters
-        ("RES_XY",  po::value<std::vector<int> >()->multitoken(), "Camera resolution in X and Y direction")
-        ("K_MAT",   po::value<std::vector<float> >()->multitoken(), "Camera K matrix specified as float numbers row by row separated by whitespace") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
-        ("T_MAT",   po::value<std::vector<float> >()->multitoken(), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
-        ("CAMERA_BARREL_DISTORTION",    po::value<std::vector<float> >()->multitoken(), "Barrel distortion coefficients K1, K2, K3 as floats")
+        ("RES_XY",  po::value<std::vector<int> >(), "Camera resolution in X and Y direction")
+        ("RES_X",  po::value<int>(), "Camera resolution in X direction")
+        ("RES_Y",  po::value<int>(), "Camera resolution in X direction")
+        ("K_MAT",   po::value<std::vector<float> >(), "Camera K matrix specified as float numbers row by row separated by whitespace") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
+        ("T_MAT",   po::value<std::vector<float> >(), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
+        ("CAMERA_BARREL_DISTORTION",    po::value<std::vector<float> >(), "Barrel distortion coefficients K1, K2, K3 as floats")
         ("OPTICAL_FLOW_GRID",           po::value<int>(),"Sqrt of number of optical flow vectors")//Single int
-        ("XYZ_INIT",                    po::value<std::vector<float> >()->multitoken(), "Initial position expressed as X Y Z coordinate floats")
+        ("XYZ_INIT",                    po::value<std::vector<float> >(), "Initial position expressed as X Y Z coordinate floats")
         ("ROLL_INIT", po::value<float>(),"Initial roll of UAV, radians")
+        ("optimization", po::value<int>()->default_value(10), "optimization level")
+        ;
+
+            std::cout << parameters << std::endl;
+    po::options_description initValues("Initial values");
+    initValues.add_options()
 //        ("PITCH_INIT", po::value<float>(),"Initial pitch of UAV, radians")
 //        ("YAW_INIT", po::value<float>(),"Initial yaw of UAV, radians")
         ("ROLL_COLUMN", po::value<int>(),"Specifies which column of csv file that contains roll data (0-indexed)")
 //        ("PITCH_COLUMN", po::value<int>(),"Specifies which column of csv file that contains roll data (0-indexed)")
 //        ("YAW_COLUMN", po::value<int>(),"Specifies which column of csv file that contains roll data (0-indexed)")
         ;
-
-
+    po::options_description moreValues("Something else");
+    moreValues.add_options()
+        ("RES_XY",  po::value<std::vector<int> >(), "Camera resolution in X and Y direction")
+        ;
 
 
 
@@ -160,7 +212,6 @@ int main(int argc, char** argv)
     //What are arguments to parse config file?
     po::store(po::parse_config_file(ini_file, parameters, true), vm);
     po::notify(vm);
-
     if (vm.count("help")) {
         std::cout << parameters << "\n";
         std::cout << "HELP" << std::endl;
@@ -196,7 +247,9 @@ int main(int argc, char** argv)
     }else{
         std::cout << "res int vector not set.\n";
     }
-
+    if(vm.count("optimization")){
+        std::cout << "Optimization: " << vm["optimization"].as<int>() << std::endl;
+    }
 
 }
 
