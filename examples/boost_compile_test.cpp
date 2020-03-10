@@ -56,62 +56,41 @@
 */
 
 //int string2CVMat(std::string str0,cv::Mat_<float>& cvMat){
-int string2CVMat(std::string str0){
-        std::cout << "raw:  " << str0 << std::endl;
+int string2CVMat(std::string str0, cv::Mat_<float>& M){
     boost::trim_if(str0,boost::is_any_of("[]"));//Trim brackets
-        std::cout << "trim: " << str0 << std::endl;
     std::vector<std::string> SplitVec;
     boost::split(SplitVec, str0, boost::is_any_of(";"));//Split into rows
     int rows = SplitVec.size();
-    std::cout << "Rows: " << rows << std::endl;
-        std::cout << "split: ";
-        for(std::string i:SplitVec){
-            std::cout << i << std::endl;
+
+    std::vector<float> V;
+    int cols = -1;
+    for(std::string rowStr:SplitVec){//
+        std::vector<std::string> row;//Split row string to string elements
+        boost::split(row, rowStr, boost::is_any_of(","));//Must have ',' as column delimiter
+        cols = row.size();//Will be redefined for every row but must always be same so whatever
+        for(std::string i:row){
+            V.push_back(std::stof(boost::trim_copy(i)));//remove whitespaces, convert to float and push back
         }
-        /*int cols = -1;
-
-    for(std::string i:SplitVec){
-        std::vector<std::string> rowStr;
-        boost::split(rowStr, i, boost::is_any_of(","));//Must have ',' as column delimiter
-        cols = row.size();
-
-
-
-
-}
-cv::Mat_<float> A = cv::Mat(rows, cols, CV_32FC1,cv::Scalar::all(0));*/
-
-std::cout << "This is NICE mthod! define as vector with push back and then reshape to matrix" << std::endl;
-    std::vector<float> V = {1,2,3,4,5,6};
-    cv::Mat V2 = cv::Mat(V).reshape(3);
-    std::cout << V2 << std::endl;
-
-
-
-    // split first row into elements and create cv mat
-    std::vector<std::string> row;
-    boost::split(row, SplitVec[0], boost::is_any_of(","));//Must have ',' as column delimiter
-    int cols = row.size();
-    std::cout << "columns: " << cols << std::endl;
-    cv::Mat_<float> A = cv::Mat(rows, cols, CV_32FC1,cv::Scalar::all(0));
-    for(int i=0;i<cols;i++){
-        std::string elementStr = boost::trim_copy(row[i]);//remove whitespaces
-        float element = std::stof(elementStr);
-        A(0,i) = element;
     }
-    std::cout << "Matrix: " << A << std::endl;
-    for(int i=1;i<rows;i++){//Continue with additional rows if there are any
-
-        std::cout << "" << std::endl;
+    cv::Mat_<float> V2;
+    try{
+        V2 = cv::Mat(V).reshape(cols);
+        std::cout << "Matrix: " << V2 << std::endl;
+    }catch(...){
+        std::cerr << "ERROR: Specified matrix does not have consistent number of columns" << std::endl;
+        std::cerr << "In string2CVMat" << std::endl;
+        throw(1);
     }
-    for(std::string i:row){
-        std::cout << i << std::endl;
+    try{
+        V2.copyTo(M); //Do this inside another try block to catch specific error
+        return 0;
+    }catch(...){
+        std::cerr << "ERROR: Could not copy parsed matrix onto inputoutput cv mat." << std::endl;
+        std::cerr << "In string2CVMat" << std::endl;
+        throw(1);
     }
-    //boost::trim(str0); //Remove any leading and trailing whitespaces (unnecessary?)
-    //boost::trim_right_if()
-    //iends_with(filename, ".exe")
-//boost::trim_left_if(str0,boost::is_any_of("["));
 /*
+    First idea:
     - Remove brackets [] throw error if not there boost::trimming för whitespace
     - Split into rows using ';' as delimiter
     - Split into elements using either whitespace or ',' as delimiter
@@ -120,7 +99,6 @@ std::cout << "This is NICE mthod! define as vector with push back and then resha
     - copy over to inputoutput matrix
 */
 
-    //std::vector<std::string> rows;
 return 1;
 }
 
@@ -197,8 +175,9 @@ int main(int argc, char** argv)
     }
     if (vm.count("OUT")) { //Funkar
         std::cout << "output file: " << vm["OUT"].as<std::string>() << std::endl;
-
-        string2CVMat(vm["OUT"].as<std::string>());
+        cv::Mat_<float> M;
+        string2CVMat(vm["OUT"].as<std::string>(),M);
+        std::cout << "Matrix: " << M << std::endl;
     }else{
         std::cout << "OUT was not set.\n";
     }
