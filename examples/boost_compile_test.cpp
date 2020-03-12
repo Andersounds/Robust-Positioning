@@ -98,7 +98,9 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
         cols = row.size();//Will be redefined for every row but must always be same so whatever
         for(std::string i:row){
             std::cout << "In string2CVMat: Split this into several rows and use try catch to specify what kind of error!" << std::endl;
-            V.push_back(std::stof(boost::trim_copy(i)));//remove whitespaces, convert to float and push back
+            std::string elementSTR = boost::trim_copy(i);
+            float element = std::stof(elementSTR);
+            V.push_back(element);//remove whitespaces, convert to float and push back
         }
     }
     cv::Mat_<float> V2;
@@ -142,7 +144,7 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         ("RES_XY",  po::value<std::vector<int> >(), "Camera resolution in X and Y direction")
         ("RES_X",  po::value<int>(), "Camera resolution in X direction")
         ("RES_Y",  po::value<int>(), "Camera resolution in X direction")
-        ("K_MAT",  po::value<std::string>()->default_value("[607.136353,s,320;0,607.136353,240;0,0,1]"), "Camera K matrix specified as float numbers row by row separated by whitespace") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
+        ("K_MAT",  po::value<std::string>()->default_value("[607.136353,0,320;0,607.136353,240;0,0,1]"), "Camera K matrix specified as float numbers row by row separated by whitespace") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
         ("T_MAT",  po::value<std::string>()->default_value("[0,1,0;-1,0,0,0,0,1]"), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
         ("CAMERA_BARREL_DISTORTION",    po::value<std::string>()->default_value("[0.2486857357354474,-1.452670730319596,2.638858641887943]"), "Barrel distortion coefficients given as [K1,K2,K3]")
         ("OPTICAL_FLOW_GRID",           po::value<int>()->default_value(4),"Sqrt of number of optical flow vectors")//Single int
@@ -207,7 +209,6 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
 
         po::store(po::parse_config_file(ini_file, initValues, true), vm);
         po::notify(vm);
-        std::cout << "Maybe define new ifstream file for every read or can it be reused?";
         po::store(po::parse_config_file(ini_file, modes, true), vm);
         po::notify(vm);
     }
@@ -215,7 +216,7 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         std::cout<< "Read K mat as string: " << vm["K_MAT"].as<std::string>() << std::endl;
         cv::Mat_<float> M;
         string2CVMat(vm["K_MAT"].as<std::string>(), M);
-        std::cout << "K mat as cv float mat: " << M << std::endl;
+        std::cout << "K mat as cv float mat:\n" << M << std::endl;
 
 
     }
