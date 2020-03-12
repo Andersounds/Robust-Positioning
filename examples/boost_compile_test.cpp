@@ -97,6 +97,7 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
         boost::split(row, rowStr, boost::is_any_of(","));//Must have ',' as column delimiter
         cols = row.size();//Will be redefined for every row but must always be same so whatever
         for(std::string i:row){
+            std::cout << "In string2CVMat: Split this into several rows and use try catch to specify what kind of error!" << std::endl;
             V.push_back(std::stof(boost::trim_copy(i)));//remove whitespaces, convert to float and push back
         }
     }
@@ -119,18 +120,105 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
 return 1;
 }
 
-
-
-int printDefaultConfigFile(const boost::program_options::options_description& descr){
+//    std::cout << generic << std::endl; options description can be printed out
 
 /*
-Is this even necessary? We have the help option that also shows default values as defined in the program
-I think we can skip
-
-In help message, just show how to write config file. (as an ini file)
+    This function is to specify all options. Unique for all programs.
 */
+int readCommandLine(int argc, char** argv,boost::program_options::variables_map& vm){
+
+    // Declare a group of options that will be
+    // allowed only on command line
+    namespace po=boost::program_options;
+    po::options_description generic("Command line options");
+    generic.add_options()
+        ("help,h", "produce help message")
+        ("file,f",po::value<std::string>(),"configuration file")// Possibly set this as first positional option?
+    ;
+
+    po::options_description parameters("Parameters");
+    parameters.add_options()
+        //Parameters
+        ("RES_XY",  po::value<std::vector<int> >(), "Camera resolution in X and Y direction")
+        ("RES_X",  po::value<int>(), "Camera resolution in X direction")
+        ("RES_Y",  po::value<int>(), "Camera resolution in X direction")
+        ("K_MAT",  po::value<std::string>()->default_value("[607.136353,s,320;0,607.136353,240;0,0,1]"), "Camera K matrix specified as float numbers row by row separated by whitespace") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
+        ("T_MAT",  po::value<std::string>()->default_value("[0,1,0;-1,0,0,0,0,1]"), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
+        ("CAMERA_BARREL_DISTORTION",    po::value<std::string>()->default_value("[0.2486857357354474,-1.452670730319596,2.638858641887943]"), "Barrel distortion coefficients given as [K1,K2,K3]")
+        ("OPTICAL_FLOW_GRID",           po::value<int>()->default_value(4),"Sqrt of number of optical flow vectors")//Single int
+        ("ROI_SIZE",po::value<int>()->default_value(150), "Side length of VO ROI. Used to edit K mat of VO alg.")
+        ;
+
+    po::options_description initValues("Initial values");
+    initValues.add_options()
+        ("XYZ_INIT",                    po::value<std::string>()->default_value("[0,0,-1.8]"), "Initial position expressed as [X,Y,Z] coordinate floats")
+        ("ROLL_INIT", po::value<float>()->default_value(0),"Initial roll of UAV, radians")
+        ("PITCH_INIT", po::value<float>()->default_value(0),"Initial pitch of UAV, radians")
+        ("YAW_INIT", po::value<float>()->default_value(0),"Initial yaw of UAV, radians")
+
+        ;
+    po::options_description modes("Program settings");
+    modes.add_options()
+        ("OUT,o",   po::value<std::string>()->default_value("[9,9,9]"), "Write output data to specified file. No output is not set")// Single string argument
+        ("TILT_COLUMNS", po::value<std::string>()->default_value("[4,3]"),"Specifies which columns of csv file that contains [roll,pitch] data (0-indexed)")
+        ("DIST_COLUMN", po::value<int>()->default_value(1),  "Specifies which column of csv file that contains distance (lidar) data")
+        ("PATH_TO_ARUCO_DATABASE", po::value<std::string>()->default_value("anchors.csv"),"Path to anchor database from base path")
+        ("BASE_PATH",po::value<std::string>(),"Base path from which I/O paths are relative. Defaults to pwd but may be overridden with this flag.\nGive as either absolute or relative path.")
+        //Maybe this one? setDefault("MAX_ID_ARUCO", (int) 50,"Database size. must be able to contain all IDs in ARUCO_DICT_TYPE");
+
+        //Possibly add aruco dict mode
+        // VO mode
+        // angulation mode
+        // positioning mode?
+/*
+        setDefault("OPTICAL_FLOW_MODE", (int) 0," KLT (1) or correlation (2) based optical flow");
+        setDefault("OPTICAL_FLOW_GRID", (int) 4," sqrt of total amount of points used in optical flow.");
+        setDefault("VISUAL_ODOMETRY_MODE", (int) 0," Homography (1) or Affine (2) odometry estimation");
+        setDefault("POS_EST_MODE", (int) 0,"Azipe+VO (0), AZIPE (1), VO (2), (todo: benchmark, benchmark+azipe)");
+        LOG_MODE
+*/
+        ;
 
 
+
+
+
+    // Parse command line
+    //po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, generic), vm);
+    po::notify(vm);
+    if (vm.count("help")) {
+        std::cout << "Allowed parameters:" << std::endl;
+        std::cout << generic<< std::endl;
+        std::cout << parameters<< std::endl;
+        std::cout << initValues<< std::endl;
+        std::cout << modes << std::endl;
+        std::cout << "---------------" << std::endl;
+        std::cout << "Paramaters may be given in initialization file using flag -f. File format:\n";
+        std::cout << "Format: \nPARAMETER_FLAG_1 = <value>   #Disregarded comment\nPARAMETER_FLAG_2 = <value>   #Some other comment" << std::endl;
+        return 0;
+    }
+    if(vm.count("file")){
+        std::string iniFile = vm["file"].as<std::string>();
+        std::cout << "Reading configuration file " << iniFile << "..." << std::endl;
+        std::ifstream ini_file(iniFile);//Try catch block?
+        po::store(po::parse_config_file(ini_file, parameters, true), vm);
+        po::notify(vm);
+
+        po::store(po::parse_config_file(ini_file, initValues, true), vm);
+        po::notify(vm);
+        std::cout << "Maybe define new ifstream file for every read or can it be reused?";
+        po::store(po::parse_config_file(ini_file, modes, true), vm);
+        po::notify(vm);
+    }
+    if(vm.count("K_MAT")){
+        std::cout<< "Read K mat as string: " << vm["K_MAT"].as<std::string>() << std::endl;
+        cv::Mat_<float> M;
+        string2CVMat(vm["K_MAT"].as<std::string>(), M);
+        std::cout << "K mat as cv float mat: " << M << std::endl;
+
+
+    }
     return 0;
 }
 
@@ -152,104 +240,11 @@ K_MAT = [1,2,3;1,2,4;1,2.5,3]
 //https://www.pyimagesearch.com/2015/04/27/installing-boost-and-boost-python-on-osx-with-homebrew/
 int main(int argc, char** argv)
 {
-    namespace po = boost::program_options;
 
-    // Declare a group of options that will be
-    // allowed only on command line
-    po::options_description generic("Generic options");
-    generic.add_options()
-            ("help,h", "produce help message")
-            ("f","configuration file")
-            ("d","write default configuration file")
-            // Also path to output file. But this may be stated both on cmnd line and ini file
-    ;
+    boost::program_options::variables_map vm;
 
-    std::cout << generic << std::endl;
-
-    po::options_description parameters("Parameters");
-    parameters.add_options()
-        ("OUT,o",   po::value<std::string>()->default_value("[9,9,9]"), "Write output data to specified file. No output is not set")// Single string argument
-        //Parameters
-        ("RES_XY",  po::value<std::vector<int> >(), "Camera resolution in X and Y direction")
-        ("RES_X",  po::value<int>(), "Camera resolution in X direction")
-        ("RES_Y",  po::value<int>(), "Camera resolution in X direction")
-        ("K_MAT",   po::value<std::vector<float> >(), "Camera K matrix specified as float numbers row by row separated by whitespace") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
-        ("T_MAT",   po::value<std::vector<float> >(), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
-        ("CAMERA_BARREL_DISTORTION",    po::value<std::vector<float> >(), "Barrel distortion coefficients K1, K2, K3 as floats")
-        ("OPTICAL_FLOW_GRID",           po::value<int>(),"Sqrt of number of optical flow vectors")//Single int
-        ("XYZ_INIT",                    po::value<std::vector<float> >(), "Initial position expressed as X Y Z coordinate floats")
-        ("ROLL_INIT", po::value<float>(),"Initial roll of UAV, radians")
-        ("optimization", po::value<int>()->default_value(10), "optimization level")
-        ;
-
-            std::cout << parameters << std::endl;
-    po::options_description initValues("Initial values");
-    initValues.add_options()
-//        ("PITCH_INIT", po::value<float>(),"Initial pitch of UAV, radians")
-//        ("YAW_INIT", po::value<float>(),"Initial yaw of UAV, radians")
-        ("ROLL_COLUMN", po::value<int>(),"Specifies which column of csv file that contains roll data (0-indexed)")
-//        ("PITCH_COLUMN", po::value<int>(),"Specifies which column of csv file that contains roll data (0-indexed)")
-//        ("YAW_COLUMN", po::value<int>(),"Specifies which column of csv file that contains roll data (0-indexed)")
-        ;
-    po::options_description moreValues("Something else");
-    moreValues.add_options()
-        ("RES_XY",  po::value<std::vector<int> >(), "Camera resolution in X and Y direction")
-        ;
-
-
-
-
-
-    // Parse command line
-/*    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, parameters), vm);
-    po::notify(vm);
-*/
-
-//Parse config file
-    std::ifstream ini_file("config.ini");
-    po::variables_map vm;
-    //What are arguments to parse config file?
-    po::store(po::parse_config_file(ini_file, parameters, true), vm);
-    po::notify(vm);
-    if (vm.count("help")) {
-        std::cout << parameters << "\n";
-        std::cout << "HELP" << std::endl;
-        return 1;
-    }
-
-    if (vm.count("ROLL_COLUMN")) { //Funkar
-        std::cout << "Compression level was set to "
-     << vm["ROLL_COLUMN"].as<int>() << ".\n";
-    } else {
-        std::cout << "CRES_XY was not set.\n";
-    }
-    if (vm.count("OUT")) { //Funkar
-        std::cout << "output file: " << vm["OUT"].as<std::string>() << std::endl;
-        cv::Mat_<float> M;
-        string2CVMat(vm["OUT"].as<std::string>(),M);
-        std::cout << "Matrix: " << M << std::endl;
-    }else{
-        std::cout << "OUT was not set.\n";
-    }
-    if (vm.count("ROLL_INIT")) { //Funkar
-        std::cout << "Float:" << vm["ROLL_INIT"].as<float>() << std::endl;
-    }else{
-        std::cout << "float not set.\n";
-    }
-
-    if (vm.count("RES_XY")) { //funkar
-        std::vector<int> resolution = vm["RES_XY"].as<std::vector<int> >();
-        for(int i:resolution){
-            std::cout << i << ", ";
-        }
-        std::cout << std::endl;
-    }else{
-        std::cout << "res int vector not set.\n";
-    }
-    if(vm.count("optimization")){
-        std::cout << "Optimization: " << vm["optimization"].as<int>() << std::endl;
-    }
+    readCommandLine(argc, argv,vm);
+    std::cout << "done" << std::endl;
 
 }
 
