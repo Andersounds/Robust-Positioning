@@ -97,9 +97,15 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
         boost::split(row, rowStr, boost::is_any_of(","));//Must have ',' as column delimiter
         cols = row.size();//Will be redefined for every row but must always be same so whatever
         for(std::string i:row){
-            std::cout << "In string2CVMat: Split this into several rows and use try catch to specify what kind of error!" << std::endl;
             std::string elementSTR = boost::trim_copy(i);
-            float element = std::stof(elementSTR);
+            float element;
+            try{
+                element = std::stof(elementSTR);
+            }catch(...){
+                std::cerr << "ERROR: could not convert element '" << elementSTR <<"' to float." << std::endl;
+                std::cerr << "In string2CVMat" << std::endl;
+                return 1;
+            }
             V.push_back(element);//remove whitespaces, convert to float and push back
         }
     }
@@ -144,8 +150,8 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         ("RES_XY",  po::value<std::vector<int> >(), "Camera resolution in X and Y direction")
         ("RES_X",  po::value<int>(), "Camera resolution in X direction")
         ("RES_Y",  po::value<int>(), "Camera resolution in X direction")
-        ("K_MAT",  po::value<std::string>()->default_value("[607.136353,0,320;0,607.136353,240;0,0,1]"), "Camera K matrix specified as float numbers row by row separated by whitespace") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
-        ("T_MAT",  po::value<std::string>()->default_value("[0,1,0;-1,0,0,0,0,1]"), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
+        ("K_MAT",  po::value<std::string>()->default_value("[607.136353, 0, 320;  0, 607.136353, 240;  0, 0, 1]"), "Camera K matrix specified as float numbers row by row separated by whitespace") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
+        ("T_MAT",  po::value<std::string>()->default_value("[0,1,0;-1,0,0;0,0,1]"), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
         ("CAMERA_BARREL_DISTORTION",    po::value<std::string>()->default_value("[0.2486857357354474,-1.452670730319596,2.638858641887943]"), "Barrel distortion coefficients given as [K1,K2,K3]")
         ("OPTICAL_FLOW_GRID",           po::value<int>()->default_value(4),"Sqrt of number of optical flow vectors")//Single int
         ("ROI_SIZE",po::value<int>()->default_value(150), "Side length of VO ROI. Used to edit K mat of VO alg.")
@@ -157,7 +163,6 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         ("ROLL_INIT", po::value<float>()->default_value(0),"Initial roll of UAV, radians")
         ("PITCH_INIT", po::value<float>()->default_value(0),"Initial pitch of UAV, radians")
         ("YAW_INIT", po::value<float>()->default_value(0),"Initial yaw of UAV, radians")
-
         ;
     po::options_description modes("Program settings");
     modes.add_options()
@@ -183,12 +188,42 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
 
 
 
+/*
+    How to handle paths? Some functionalities we want:
+        - A basepath from which imudata/imagepaths are relative so that we could use a single settings file for more datasets
+        - Or is it better to save a config file with each dataset in order to not forget K matrix, anchors, etc?
+
+        We could:
+            apply 2 basepaths before all paths in config.
+            - 1: path to directory of config file
+            - 2: onto that ALSO add parameter given with --BASEPATH
+            Both of them are default "" so if we run program with default settings it will look in pwd
+            If we run without settings file, we give BASEPATH to point to dataset from the settings file (Useful if we have some settings file in pwd and several datasets)
+            - But it is recommended to keep a settings file for each dataset as we should keep initial position there - unique for every set
+
+            So:
+            If we give just -file then program shall extract basepath from file path
+            If we give just BASEPATH then
+
+
+
+            ...
+            Maybe it is better to always force a settings file? Not give default on so many things?
+            Then i will always have to keep a dedicated settings file for each dataset and the settings for the dataset
+            will not be lost if program is changed
+
+
+
+*/
+
+
 
 
     // Parse command line
     //po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, generic), vm);
     po::notify(vm);
+    /*Produce help message */
     if (vm.count("help")) {
         std::cout << "Allowed parameters:" << std::endl;
         std::cout << generic<< std::endl;
@@ -200,6 +235,7 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         std::cout << "Format: \nPARAMETER_FLAG_1 = <value>   #Disregarded comment\nPARAMETER_FLAG_2 = <value>   #Some other comment" << std::endl;
         return 0;
     }
+    /*Read settings from file if specified*/
     if(vm.count("file")){
         std::string iniFile = vm["file"].as<std::string>();
         std::cout << "Reading configuration file " << iniFile << "..." << std::endl;
@@ -212,14 +248,30 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         po::store(po::parse_config_file(ini_file, modes, true), vm);
         po::notify(vm);
     }
-    if(vm.count("K_MAT")){
+
+std::cout << "CAN NOT GIVE SETTINGS ON COMMAND LINE. HOW TO SOLVE? NOT ALLOW?" << std::endl;
+
+/*
+
+    po::store(po::parse_command_line(argc, argv, parameters), vm);
+    po::notify(vm);
+
+    po::store(po::parse_command_line(argc, argv, initValues), vm);
+    po::notify(vm);
+    po::store(po::parse_command_line(argc, argv, modes), vm);
+    po::notify(vm);
+std::cout << "Do we need to notify(vm) after every store or just once?" << std::endl;
+
+*/
+
+/*    if(vm.count("K_MAT")){
         std::cout<< "Read K mat as string: " << vm["K_MAT"].as<std::string>() << std::endl;
         cv::Mat_<float> M;
         string2CVMat(vm["K_MAT"].as<std::string>(), M);
         std::cout << "K mat as cv float mat:\n" << M << std::endl;
 
 
-    }
+    }*/
     return 0;
 }
 
@@ -245,6 +297,17 @@ int main(int argc, char** argv)
     boost::program_options::variables_map vm;
 
     readCommandLine(argc, argv,vm);
+
+
+    if(vm.count("K_MAT")){
+        std::cout<< "Read K mat as string: " << vm["K_MAT"].as<std::string>() << std::endl;
+        cv::Mat_<float> M;
+        string2CVMat(vm["K_MAT"].as<std::string>(), M);
+        std::cout << "K mat as cv float mat:\n" << M << std::endl;
+
+
+    }
+
     std::cout << "done" << std::endl;
 
 }
