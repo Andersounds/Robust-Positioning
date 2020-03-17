@@ -142,15 +142,14 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
     generic.add_options()
         ("help,h", "produce help message")
         ("file,f",po::value<std::string>(),"configuration file")// Possibly set this as first positional option?
+        ("BASE_PATH,p",po::value<std::string>(),"Base path from which I/O paths are relative. Defaults to pwd but may be overridden with this flag.\nGive as either absolute or relative path.")
     ;
 
     po::options_description parameters("Parameters");
     parameters.add_options()
         //Parameters
-        ("RES_XY",  po::value<std::vector<int> >(), "Camera resolution in X and Y direction")
-        ("RES_X",  po::value<int>(), "Camera resolution in X direction")
-        ("RES_Y",  po::value<int>(), "Camera resolution in X direction")
-        ("K_MAT",  po::value<std::string>()->default_value("[607.136353, 0, 320;  0, 607.136353, 240;  0, 0, 1]"), "Camera K matrix specified as float numbers row by row separated by whitespace") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
+        ("RES_XY",  po::value<std::string>(), "Camera resolution in X and Y direction")
+        ("K_MAT",  po::value<std::string>(), "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
         ("T_MAT",  po::value<std::string>()->default_value("[0,1,0;-1,0,0;0,0,1]"), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
         ("CAMERA_BARREL_DISTORTION",    po::value<std::string>()->default_value("[0.2486857357354474,-1.452670730319596,2.638858641887943]"), "Barrel distortion coefficients given as [K1,K2,K3]")
         ("OPTICAL_FLOW_GRID",           po::value<int>()->default_value(4),"Sqrt of number of optical flow vectors")//Single int
@@ -225,14 +224,13 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
     po::notify(vm);
     /*Produce help message */
     if (vm.count("help")) {
-        std::cout << "Allowed parameters:" << std::endl;
         std::cout << generic<< std::endl;
+        std::cout << "All parameters below are to be defined in a configuration file specified with flag -f" << std::endl;
+        std::cout << "Format: \nPARAMETER_FLAG_1 = <value>   #Disregarded comment\nPARAMETER_FLAG_2 = <value>   #Some other comment" << std::endl;
         std::cout << parameters<< std::endl;
         std::cout << initValues<< std::endl;
         std::cout << modes << std::endl;
         std::cout << "---------------" << std::endl;
-        std::cout << "Paramaters may be given in initialization file using flag -f. File format:\n";
-        std::cout << "Format: \nPARAMETER_FLAG_1 = <value>   #Disregarded comment\nPARAMETER_FLAG_2 = <value>   #Some other comment" << std::endl;
         return 0;
     }
     /*Read settings from file if specified*/
@@ -248,6 +246,9 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         po::store(po::parse_config_file(ini_file, modes, true), vm);
         po::notify(vm);
     }
+
+
+
 
 std::cout << "CAN NOT GIVE SETTINGS ON COMMAND LINE. HOW TO SOLVE? NOT ALLOW?" << std::endl;
 
@@ -298,17 +299,20 @@ int main(int argc, char** argv)
 
     readCommandLine(argc, argv,vm);
 
-
+    std::cout << "Checking program options..." << std::endl;
     if(vm.count("K_MAT")){
         std::cout<< "Read K mat as string: " << vm["K_MAT"].as<std::string>() << std::endl;
         cv::Mat_<float> M;
         string2CVMat(vm["K_MAT"].as<std::string>(), M);
         std::cout << "K mat as cv float mat:\n" << M << std::endl;
-
-
+    }
+    std::cout << "Checking init values..." << std::endl;
+    if(vm.count("XYZ_INIT")){
+        std::cout<< "XYZ init: " << vm["XYZ_INIT"].as<std::string>() << std::endl;
     }
 
-    std::cout << "done" << std::endl;
+
+    std::cout << "Add something that allows options to be given on command line as well" << std::endl;
 
 }
 
