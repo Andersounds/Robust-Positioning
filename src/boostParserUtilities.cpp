@@ -11,6 +11,10 @@ These functions are meant to be used with boost program options command line and
 
 
 namespace boostParserUtilites{
+    // Prototype function. Allows the function to be defined below main function for readability.
+    // See program_options_boilerPlate.cpp for reference
+    int readCommandLine(int, char**,boost::program_options::variables_map&);
+
 /*
     Method that takes a string, and converts it to a opencv mat_<float>
     Possibly overload this with int versions
