@@ -36,10 +36,47 @@ PATH_TO_ARUCO_DATABASE = anchors.csv     #Path to anchor database from base path
 
 */
 
+
+int main(int argc, char** argv)
+{
+
+    boost::program_options::variables_map vm;
+
+    boostParserUtilites::readCommandLine(argc, argv,vm);
+
+    std::cout << "Checking program options..." << std::endl;
+    if(vm.count("K_MAT")){
+        std::cout<< "Read K mat as string: " << vm["K_MAT"].as<std::string>() << std::endl;
+        cv::Mat_<float> M;
+        boostParserUtilites::string2CVMat(vm["K_MAT"].as<std::string>(), M);
+        std::cout << "K mat as cv float mat:\n" << M << std::endl;
+    }
+    std::cout << "Checking init values..." << std::endl;
+    if(vm.count("XYZ_INIT")){
+        std::cout<< "XYZ init: " << vm["XYZ_INIT"].as<std::string>() << std::endl;
+    }
+    std::cout << "Checking dist column..." << std::endl;
+    if(vm.count("DIST_COLUMN")){
+        std::cout<< "DIST_COLUMN =  " << vm["DIST_COLUMN"].as<int>() << std::endl;
+    }
+
+
+
+    std::cout << "Checking BASE_PATH..." << std::endl;
+    if(vm.count("BASE_PATH")){
+        std::cout<< "BASE_PATH =  " <<vm["BASE_PATH"].as<std::string>() << std::endl;
+        //std::cout<< "BASE_PATH =  " <<vm["BASE_PATH"].as<int>() << std::endl;
+    }
+
+
+}
+
+
+
 /*
     This function is to specify all options. Unique for all programs.
 */
-int readCommandLine(int argc, char** argv,boost::program_options::variables_map& vm){
+int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_options::variables_map& vm){
 
     // Declare a group of options that will be
     // allowed only on command line
@@ -48,7 +85,7 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
     generic.add_options()
         ("help,h", "produce help message")
         ("file,f",po::value<std::string>(),"configuration file")// Possibly set this as first positional option?
-        ("BASE_PATH,p",po::value<std::string>(),"Base path from which I/O paths are relative. Defaults to pwd but may be overridden with this flag.\nGive as either absolute or relative path.")
+        //("BASE_PATH,p",po::value<std::string>(),"Base path from which I/O paths are relative. Defaults to pwd but may be overridden with this flag.\nGive as either absolute or relative path.")
     ;
 
     po::options_description parameters("Parameters");
@@ -76,23 +113,6 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         ("DIST_COLUMN", po::value<int>()->default_value(1),  "Specifies which column of csv file that contains distance (lidar) data")
         ("PATH_TO_ARUCO_DATABASE", po::value<std::string>()->default_value("anchors.csv"),"Path to anchor database from base path")
         ;
-    po::options_description hidden("Hidden settings");
-    hidden.add_options()
-        ("BASE_PATH", po::value<std::string>()->default_value(""),"base path")
-        ;
-
-
-/*
-    How to handle paths? Some functionalities we want:
-
-    Give a settings file for each
-*/
-
-
-
-
-
-
 
 
     // Parse command line
@@ -114,84 +134,17 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
     /*Read settings from file if specified*/
     if(vm.count("file")){
         std::string iniFile = vm["file"].as<std::string>();
-        std::cout << "Reading configuration file " << iniFile << "..." << std::endl;
+        std::cout << "Reading configuration file " << iniFile << "...";
         std::ifstream ini_file(iniFile);//Try catch block?
-        po::store(po::parse_config_file(ini_file, all, true), vm);
+        po::store(po::parse_config_file(ini_file, all, true), vm);//What is true?
+        std::cout << "Done." << std::endl;
+        //Add BASE_PATH option
+        std::string basePath =boostParserUtilites::basePathFromFilePath(iniFile);
+        std::cout << "Set --BASE_PATH to '" << basePath << "'." << std::endl;
+        vm.insert(std::make_pair("BASE_PATH", po::variable_value(basePath, false)));
         po::notify(vm);
-
-
-
-        boostParserUtilites::basePathFromFilePath(iniFile);
     }
-
-
-
-/*
-
-    po::store(po::parse_command_line(argc, argv, parameters), vm);
-    po::notify(vm);
-
-    po::store(po::parse_command_line(argc, argv, initValues), vm);
-    po::notify(vm);
-    po::store(po::parse_command_line(argc, argv, modes), vm);
-    po::notify(vm);
-std::cout << "Do we need to notify(vm) after every store or just once?" << std::endl;
-
-*/
-
-/*    if(vm.count("K_MAT")){
-        std::cout<< "Read K mat as string: " << vm["K_MAT"].as<std::string>() << std::endl;
-        cv::Mat_<float> M;
-        string2CVMat(vm["K_MAT"].as<std::string>(), M);
-        std::cout << "K mat as cv float mat:\n" << M << std::endl;
-
-
-    }*/
     return 0;
 }
 
-/*
-INI file of following syntax
-
-
-ROLL_COLUMN=4 #Works
-OUT=testi 1 2 4     #Works
-ROLL_INIT=1.2   #Works
-
-
-
-Will add string2Mat which will allow:
-K_MAT = [1,2,3;1,2,4;1,2.5,3]
-*/
-
-
 //https://www.pyimagesearch.com/2015/04/27/installing-boost-and-boost-python-on-osx-with-homebrew/
-int main(int argc, char** argv)
-{
-
-    boost::program_options::variables_map vm;
-
-    readCommandLine(argc, argv,vm);
-
-    std::cout << "Checking program options..." << std::endl;
-    if(vm.count("K_MAT")){
-        std::cout<< "Read K mat as string: " << vm["K_MAT"].as<std::string>() << std::endl;
-        cv::Mat_<float> M;
-        boostParserUtilites::string2CVMat(vm["K_MAT"].as<std::string>(), M);
-        std::cout << "K mat as cv float mat:\n" << M << std::endl;
-    }
-    std::cout << "Checking init values..." << std::endl;
-    if(vm.count("XYZ_INIT")){
-        std::cout<< "XYZ init: " << vm["XYZ_INIT"].as<std::string>() << std::endl;
-    }
-    std::cout << "Checking dist column..." << std::endl;
-    if(vm.count("DIST_COLUMN")){
-        std::cout<< "DIST_COLUMN =  " << vm["DIST_COLUMN"].as<int>() << std::endl;
-    }
-
-
-
-
-
-
-}
