@@ -77,10 +77,10 @@ int main(int argc, char** argv)
     This function is to specify all options. Unique for all programs.
 */
 int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_options::variables_map& vm){
-
     // Declare a group of options that will be
     // allowed only on command line
     namespace po=boost::program_options;
+
     po::options_description generic("Command line options");
     generic.add_options()
         ("help,h", "produce help message")
@@ -139,10 +139,16 @@ int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_op
         po::store(po::parse_config_file(ini_file, all, true), vm);//What is true?
         std::cout << "Done." << std::endl;
         //Add BASE_PATH option
-        std::string basePath =boostParserUtilites::basePathFromFilePath(iniFile);
-        std::cout << "Set --BASE_PATH to '" << basePath << "'." << std::endl;
+        std::string basePath;
+        std::string configFile;
+        boostParserUtilites::basePathFromFilePath(iniFile,basePath,configFile);
+        std::cout << "--Set --BASE_PATH to '" << basePath << "'." << std::endl;
+        std::cout << "--Config file is '" << configFile << "'." << std::endl;
         vm.insert(std::make_pair("BASE_PATH", po::variable_value(basePath, false)));
         po::notify(vm);
+    }else{
+        std::cout << "WARNING: No configuration file specified. BASE_PATH unusable" << std::endl;
+
     }
     return 0;
 }

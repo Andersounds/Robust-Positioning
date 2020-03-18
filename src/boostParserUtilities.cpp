@@ -69,13 +69,16 @@ return 1;
     Extracts the base path including last '/' from a given filepath. If just filename is given it returns
     an empty string
 */
-std::string basePathFromFilePath(std::string str){
+int basePathFromFilePath(std::string str,std::string&base, std::string&file){
     std::size_t found = str.find_last_of("/");
     if(found==str.npos){
-        return "";
+        base = "";
+        file = str;
     }else{
-        return str.substr(0,found+1);
+        base = str.substr(0,found+1);
+        file = str.substr(found+1,str.npos);
     }
+    return 1;
 }
 
 }
