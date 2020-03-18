@@ -17,7 +17,7 @@ All options are to be defined in every program to keep relevance
 
 
 Compilation command:
-g++ -std=c++11 -fvisibility=hidden /usr/local/lib/libboost_program_options.a `pkg-config --cflags --libs opencv` examples/boost_compile_test.cpp -o bin/example
+g++ -std=c++11 -fvisibility=hidden /usr/local/lib/libboost_program_options.a `pkg-config --cflags --libs opencv` examples/program_options_boilerPlate.cpp -o bin/example
 
 ########### Example configuration file ###########
 ######### Initial values:
