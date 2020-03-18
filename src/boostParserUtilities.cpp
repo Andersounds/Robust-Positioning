@@ -4,6 +4,12 @@
 #include <boost/algorithm/string.hpp>
 #include <opencv2/opencv.hpp>
 
+/*
+These functions are meant to be used with boost program options command line and config file parser
+
+*/
+
+
 namespace boostParserUtilites{
 /*
     Method that takes a string, and converts it to a opencv mat_<float>
