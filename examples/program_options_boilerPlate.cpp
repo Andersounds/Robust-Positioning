@@ -3,6 +3,8 @@
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 #include <opencv2/opencv.hpp>
+#include "../src/boostParserUtilities.cpp"
+
 
 /*
 --------------Boilerplate program for boost::program_options-------------------
@@ -40,6 +42,7 @@ PATH_TO_ARUCO_DATABASE = anchors.csv     #Path to anchor database from base path
     Possibly overload this with int versions
     Matrices given as string in matlab style using ',' as column separator, ';' as row separator
 */
+/*
 int string2CVMat(std::string str0, cv::Mat_<float>& M){
     boost::trim_if(str0,boost::is_any_of("[]"));//Trim brackets
     std::vector<std::string> SplitVec;
@@ -83,13 +86,14 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
     }
 return 1;
 }
-
+*/
 
 /*
     Extracts the base path including last '/' from a given filepath. If just filename is given it returns
     an empty string
 */
-std::string basePathFromFilePath(std::string str){
+
+/*std::string basePathFromFilePath(std::string str){
     std::size_t found = str.find_last_of("/");
     if(found==str.npos){
         return "";
@@ -97,6 +101,9 @@ std::string basePathFromFilePath(std::string str){
         return str.substr(0,found+1);
     }
 }
+
+
+*/
 /*
     This function is to specify all options. Unique for all programs.
 */
@@ -182,7 +189,7 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
 
 
 
-        basePathFromFilePath(iniFile);
+        boostParserUtilites::basePathFromFilePath(iniFile);
     }
 
 
@@ -238,7 +245,7 @@ int main(int argc, char** argv)
     if(vm.count("K_MAT")){
         std::cout<< "Read K mat as string: " << vm["K_MAT"].as<std::string>() << std::endl;
         cv::Mat_<float> M;
-        string2CVMat(vm["K_MAT"].as<std::string>(), M);
+        boostParserUtilites::string2CVMat(vm["K_MAT"].as<std::string>(), M);
         std::cout << "K mat as cv float mat:\n" << M << std::endl;
     }
     std::cout << "Checking init values..." << std::endl;
@@ -256,5 +263,3 @@ int main(int argc, char** argv)
 
 
 }
-
-//g++ -std=c++11 -fvisibility=hidden /usr/local/lib/libboost_program_options.a examples/boost_compile_test.cpp -o bin/example
