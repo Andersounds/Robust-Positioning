@@ -1,89 +1,45 @@
-//#include <boost/lambda/lambda.hpp>
 #include <iostream>
 #include <fstream> //Input stream from file
-//#include <iterator>
-//#include <algorithm>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
-//#include <iostream>
-//#include <fstream> //Input stream from file
 #include <opencv2/opencv.hpp>
-/*
- PARSE COMMAND LINE:
-    (First define all options. As well as the config file name)
-    - read argc argv
-    - is config file option given?
-        - Then pare config file
-    - Then read rest of command line.
-
-    When variable are defined from value map. If needed then include conversion function
-
-
-    - How to write default ini file?
-    - How to let command line override ini file?
-        MULTIPLE SOURCES: https://www.boost.org/doc/libs/1_72_0/doc/html/program_options/tutorial.html
-        DONE.
-    - Sectioning. See abit in link above
-*/
-
 
 /*
-    How its is to be used.
-        - Every program defines their own program options.
-        - This is done in a separate function defined in the main file
-        - The function defines options, their default values
-        - Reads argc argc
-        - For each option, one conversion is done to a correct format, and then added to a map with the same keys
-        - This map is passed back to main, which accesses values using the same keys as settings.
+--------------Boilerplate program for boost::program_options-------------------
+-Options defined in one or more options_description objects. Possibly with init values
+-Options passed either on command line or with configuration file
+-Priority:  1. Command line
+            2. Configuration file
+            3. [if defined] default value
+
+All options are to be defined in every program to keep relevance
 
 
-        - How to write config file?
-        - Order options in categories
-            -multiple sources
-                https://www.boost.org/doc/libs/1_72_0/doc/html/program_options/tutorial.html
-        - Write parameter description as comment in config file
-            https://www.boost.org/doc/libs/1_55_0/doc/html/program_options/overview.html#idp163379208
-        - config file multitoken
-            - in ini-file, one line can only be one value.
-            - How can multitoken be handled properly? Ideas below.
-                1. Do not use multitoken. Instead specify as single string and write parser for it.
-                    - Simple parser that
-                        -Goes through whole string
-                            -if char is numeric
-                            -read all numbers in a row, allowing a single point '.' somewhere
-                            -Convert this string to either int or float depending on option
-                        - This will allow to write pretty much however. [1,2,3;4,5,6] | 1 2 3 4 5 6 etc.
 
+Compilation command:
+g++ -std=c++11 -fvisibility=hidden /usr/local/lib/libboost_program_options.a `pkg-config --cflags --libs opencv` examples/boost_compile_test.cpp -o bin/example
 
-    Additional options:
-        - Write default settings file
-            - Possibly at some specified path
-        - Settings file must be given as argument.
-            - Can give just settings file, and its directory will be parsed, and all paths in file are relative to this path
-            - Option to specifically specify base path, i.e path to some other dataset. Other paths will then be relative to this instead
-        - ARguments given om command line should override arguments in ini file.
-*/
+########### Example configuration file ###########
+######### Initial values:
+XYZ_INIT =[0,0,-1.8]                    #Initial position expressed as [X,Y,Z] coordinate floats
+ROLL_INIT = 0                           #Initial roll of UAV, radians
+PITCH_INIT = 0                          #Initial pitch of UAV, radians
+YAW_INIT =0                             #Initial yaw of UAV, radians
 
-
-/*
-    New comments regarding function of settings parser
-        - Every program should probably define options in the main function itself. That way relevance is kept
-        - No multitoken works due to ini file. But I can write a separate set of overloaded functions that parse strings of matlab style to either float or int mat or vector
-        - Should maybe write a class that contains all boost program options including 2 additional methods:
-            - conversion methors as stated above
-            - function to write default ini file including sections and comments
-
+######## Program settings:
+OUT = outFile.csv                       #Write output data to specified file. No output is not set
+TILT_COLUMNS =[4,3]                     #Specifies which columns of csv file that contains [roll,pitch] data (0-indexed)
+DIST_COLUMN =2                          #Specifies which column of csv file that contains distance (lidar) data
+PATH_TO_ARUCO_DATABASE = anchors.csv     #Path to anchor database from base path
 
 */
-
 
 
 /*
     Method that takes a string, and converts it to a opencv mat_<float>
     Possibly overload this with int versions
+    Matrices given as string in matlab style using ',' as column separator, ';' as row separator
 */
-
-//int string2CVMat(std::string str0,cv::Mat_<float>& cvMat){
 int string2CVMat(std::string str0, cv::Mat_<float>& M){
     boost::trim_if(str0,boost::is_any_of("[]"));//Trim brackets
     std::vector<std::string> SplitVec;
@@ -128,8 +84,19 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
 return 1;
 }
 
-//    std::cout << generic << std::endl; options description can be printed out
 
+/*
+    Extracts the base path including last '/' from a given filepath. If just filename is given it returns
+    an empty string
+*/
+std::string basePathFromFilePath(std::string str){
+    std::size_t found = str.find_last_of("/");
+    if(found==str.npos){
+        return "";
+    }else{
+        return str.substr(0,found+1);
+    }
+}
 /*
     This function is to specify all options. Unique for all programs.
 */
@@ -169,58 +136,30 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         ("TILT_COLUMNS", po::value<std::string>()->default_value("[4,3]"),"Specifies which columns of csv file that contains [roll,pitch] data (0-indexed)")
         ("DIST_COLUMN", po::value<int>()->default_value(1),  "Specifies which column of csv file that contains distance (lidar) data")
         ("PATH_TO_ARUCO_DATABASE", po::value<std::string>()->default_value("anchors.csv"),"Path to anchor database from base path")
-        ("BASE_PATH",po::value<std::string>(),"Base path from which I/O paths are relative. Defaults to pwd but may be overridden with this flag.\nGive as either absolute or relative path.")
-        //Maybe this one? setDefault("MAX_ID_ARUCO", (int) 50,"Database size. must be able to contain all IDs in ARUCO_DICT_TYPE");
-
-        //Possibly add aruco dict mode
-        // VO mode
-        // angulation mode
-        // positioning mode?
-/*
-        setDefault("OPTICAL_FLOW_MODE", (int) 0," KLT (1) or correlation (2) based optical flow");
-        setDefault("OPTICAL_FLOW_GRID", (int) 4," sqrt of total amount of points used in optical flow.");
-        setDefault("VISUAL_ODOMETRY_MODE", (int) 0," Homography (1) or Affine (2) odometry estimation");
-        setDefault("POS_EST_MODE", (int) 0,"Azipe+VO (0), AZIPE (1), VO (2), (todo: benchmark, benchmark+azipe)");
-        LOG_MODE
-*/
         ;
-
+    po::options_description hidden("Hidden settings");
+    hidden.add_options()
+        ("BASE_PATH", po::value<std::string>()->default_value(""),"base path")
+        ;
 
 
 /*
     How to handle paths? Some functionalities we want:
-        - A basepath from which imudata/imagepaths are relative so that we could use a single settings file for more datasets
-        - Or is it better to save a config file with each dataset in order to not forget K matrix, anchors, etc?
 
-        We could:
-            apply 2 basepaths before all paths in config.
-            - 1: path to directory of config file
-            - 2: onto that ALSO add parameter given with --BASEPATH
-            Both of them are default "" so if we run program with default settings it will look in pwd
-            If we run without settings file, we give BASEPATH to point to dataset from the settings file (Useful if we have some settings file in pwd and several datasets)
-            - But it is recommended to keep a settings file for each dataset as we should keep initial position there - unique for every set
-
-            So:
-            If we give just -file then program shall extract basepath from file path
-            If we give just BASEPATH then
-
-
-
-            ...
-            Maybe it is better to always force a settings file? Not give default on so many things?
-            Then i will always have to keep a dedicated settings file for each dataset and the settings for the dataset
-            will not be lost if program is changed
-
-
-
+    Give a settings file for each
 */
+
+
+
+
 
 
 
 
     // Parse command line
-    //po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, generic), vm);
+    po::options_description all("All options");
+    all.add(generic).add(parameters).add(initValues).add(modes);
+    po::store(po::parse_command_line(argc, argv, all), vm);//Read command line
     po::notify(vm);
     /*Produce help message */
     if (vm.count("help")) {
@@ -238,19 +177,15 @@ int readCommandLine(int argc, char** argv,boost::program_options::variables_map&
         std::string iniFile = vm["file"].as<std::string>();
         std::cout << "Reading configuration file " << iniFile << "..." << std::endl;
         std::ifstream ini_file(iniFile);//Try catch block?
-        po::store(po::parse_config_file(ini_file, parameters, true), vm);
+        po::store(po::parse_config_file(ini_file, all, true), vm);
         po::notify(vm);
 
-        po::store(po::parse_config_file(ini_file, initValues, true), vm);
-        po::notify(vm);
-        po::store(po::parse_config_file(ini_file, modes, true), vm);
-        po::notify(vm);
+
+
+        basePathFromFilePath(iniFile);
     }
 
 
-
-
-std::cout << "CAN NOT GIVE SETTINGS ON COMMAND LINE. HOW TO SOLVE? NOT ALLOW?" << std::endl;
 
 /*
 
@@ -310,9 +245,15 @@ int main(int argc, char** argv)
     if(vm.count("XYZ_INIT")){
         std::cout<< "XYZ init: " << vm["XYZ_INIT"].as<std::string>() << std::endl;
     }
+    std::cout << "Checking dist column..." << std::endl;
+    if(vm.count("DIST_COLUMN")){
+        std::cout<< "DIST_COLUMN =  " << vm["DIST_COLUMN"].as<int>() << std::endl;
+    }
 
 
-    std::cout << "Add something that allows options to be given on command line as well" << std::endl;
+
+
+
 
 }
 
