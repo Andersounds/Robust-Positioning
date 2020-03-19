@@ -48,8 +48,9 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     std::cout << "Basepath:  " << basePath << std::endl;
     std::cout << "imageBase: " << imageBase << std::endl;
     std::cout << "ImageInfo: " << imageInfo << std::endl;
-    std::cout << "Vstreamer argument: " << basePath+imageBase << ", " << imageInfo << std::endl;
-    robustPositioning::Streamer VStreamer(basePath+imageBase,imageInfo);
+    std::cout << "Vstreamer argument 1: " << basePath+imageBase << std::endl;
+    std::cout << "Vstreamer argument 2: " << basePath+imageBase+imageInfo << std::endl;
+    robustPositioning::Streamer VStreamer(basePath+imageBase,basePath+imageBase+imageInfo);
     cv::Mat frame, colorFrame;
     //Initialize data stream
     std::string dataFile;   bpu::assign(vm,dataFile,"STREAM_DATA_FILE");
@@ -121,9 +122,9 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
                 std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),roll,pitch,yaw,nmbrOfAnchors};
                 databin_LOG.dump(logData);
             }
-            std::cout << "X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll*rad2Grad<<", pitch: " << pitch*rad2Grad << "yaw: " << yaw<< std::endl;
+            std::cout << "X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll<<", pitch: " << pitch << "yaw: " << yaw<< std::endl;
             cv::imshow("showit",colorFrame);
-            //cv::waitKey(0);
+            cv::waitKey(0);
             if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
             std::cout << "Lap " << counter  << ", time: " << timeStamp_data/1000<< std::endl;
