@@ -151,7 +151,7 @@ std::cout << "Initializing image dataset streamer..." << std::endl;
     if(useTimeStampFile){
 //        std::cout <<"\tReading filenames from \"" << pathToDataset+dataFile << "\"..." << std::endl;
         std::cout <<"\tReading filenames from \"" << dataFile << "\"..." << std::endl;
-        if(readTimeStampData(dataFile)){
+        if(readTimeStampData(basePath+dataFile)){
             initialized = 1;
             std::cout << "\tRead " << timeStamps_f.size() << " timestamps and image file names" << std::endl;
             std::cout << "Done." << std::endl;
