@@ -79,9 +79,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
                         cv::aruco::DICT_4X4_50,
                         maxIdAruco,basePath+anchorPath,flowGrid,roiSize,K,T);
     //Init values of position and yaw
-    std::string t_str;          bpu::assign(vm,t_str,"XYZ_INIT");
-    cv::Mat_<float> t;
-    boostParserUtilites::string2CVMat(t_str,t);
+    cv::Mat_<float> t;          bpu::assign(vm,t,"XYZ_INIT");
     float yaw;                  bpu::assign(vm, yaw,"YAW_INIT");
     float nmbrOfAnchors = 0;
 
