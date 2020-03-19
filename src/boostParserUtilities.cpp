@@ -10,17 +10,25 @@ These functions are meant to be used with boost program options command line and
 */
 
 
+/*
+Write an assign-function here with overloaded functions for different types. calls string2cvmat accordingly
+Also raises appropriate error if setting is missing
+
+*/
+
+
+
 namespace boostParserUtilites{
     // Prototype function. Allows the function to be defined below main function for readability.
     // See program_options_boilerPlate.cpp for reference
     int readCommandLine(int, char**,boost::program_options::variables_map&);
-
 /*
     Method that takes a string, and converts it to a opencv mat_<float>
     Possibly overload this with int versions
     Matrices given as string in matlab style using ',' as column separator, ';' as row separator
 */
 int string2CVMat(std::string str0, cv::Mat_<float>& M){
+    std::cout << "FIX IN BOOSTPARSERUTILITES: SEE ABOVE IN SROUCE COUDE" << std::endl;
     boost::trim_if(str0,boost::is_any_of("[]"));//Trim brackets
     std::vector<std::string> SplitVec;
     boost::split(SplitVec, str0, boost::is_any_of(";"));//Split into rows
@@ -63,6 +71,53 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
     }
 return 1;
 }
+
+/*
+    Set of overloaded functions that assigns casted option to given inputoutput argument
+*/
+
+int assign(boost::program_options::variables_map& vm, int& var,std::string key){
+    try{
+        var = vm[key].as<int>();
+        return 0;
+    }catch(...){
+        std::cerr << "ERROR: could not convert element '" << key <<"' to int." << std::endl;
+        std::cerr << "In boostParserUtilites::assign" << std::endl;
+        return 1;
+    }
+}
+int assign(boost::program_options::variables_map& vm, float& var,std::string key){
+    try{
+        var = vm[key].as<float>();
+        return 0;
+    }catch(...){
+        std::cerr << "ERROR: could not convert element '" << key <<"' to float." << std::endl;
+        std::cerr << "In boostParserUtilites::assign" << std::endl;
+        return 1;
+    }
+}
+int assign(boost::program_options::variables_map& vm, std::string& var,std::string key){
+    try{
+        var = vm[key].as<std::string>();
+        return 0;
+    }catch(...){
+        std::cerr << "ERROR: could not convert element '" << key <<"' to string." << std::endl;
+        std::cerr << "In boostParserUtilites::assign" << std::endl;
+        return 1;
+    }
+}
+int assign(boost::program_options::variables_map& vm, cv::Mat_<float>& var,std::string key){
+    try{
+        std::string var_STR = vm[key].as<std::string>();
+        string2CVMat(var_STR,var);
+        return 0;
+    }catch(...){
+        std::cerr << "ERROR: could not convert element '" << key <<"' to cv::Mat_<float>." << std::endl;
+        std::cerr << "In boostParserUtilites::assign" << std::endl;
+        return 1;
+    }
+}
+
 
 
 /*

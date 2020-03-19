@@ -39,6 +39,7 @@ PATH_TO_ARUCO_DATABASE = anchors.csv     #Path to anchor database from base path
 
 int main(int argc, char** argv)
 {
+    namespace bpu=boostParserUtilites;
 
     boost::program_options::variables_map vm;
 
@@ -68,6 +69,12 @@ int main(int argc, char** argv)
         //std::cout<< "BASE_PATH =  " <<vm["BASE_PATH"].as<int>() << std::endl;
     }
 
+
+    std::cout << "Assigning....." << std::endl;
+    int variable;
+    std::string key = "OPTICAL_FLOW_GRID";
+    bpu::assign(vm, variable,key);
+    std::cout << "value: " << variable << std::endl;
 
 }
 
