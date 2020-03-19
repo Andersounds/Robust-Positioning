@@ -1,5 +1,4 @@
 #include <iostream>
-//#include <fstream> //Input stream from file
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
 //#include <chrono> //For timestamps
@@ -8,7 +7,7 @@
 //#include "../src/save2file.cpp"
 #include "../src/videoStream.hpp"
 #include "../src/dataStream.hpp"
-#include "../src/settingsParser.cpp"
+#include "../src/boostParserUtilities.cpp" //Includes boost and two utility functions
 
 #include "../src/logger.hpp"
 #include "../src/timeStamp.cpp"
@@ -16,6 +15,7 @@
 
 
 #include <typeinfo>
+
 int main(int argc, char** argv){
 timestamp::timeStamp_ms stamp;
 //Can these two rows be written as stamp.get(double timeStamp); is timeStamp available in this scope then?
@@ -36,19 +36,25 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
 
 
     //Initialize settings
-    set::settings S(argc,argv);
-    if(!S.success()){return 0;}
-
-  std::cout << "TODO: Test fullangulation and give known pitch roll." << std::endl;
+    namespace bpu=boostParserUtilites;
+    boost::program_options::variables_map vm;
+    boostParserUtilites::readCommandLine(argc, argv,vm);
+    std::string basePath;   bpu::assign(vm,basePath,"BASE_PATH");
     //Initialize video stream
-    std::string basePath = S.data.imageStreamBasePath;
-    std::string imageInfo = S.data.imageStreamInfoFile;
-    robustPositioning::Streamer VStreamer(basePath,imageInfo);
+    std::string imageInfoFile;  bpu::assign(vm,imageInfoFile,"STREAM_IMAGES_INFO_FILE");
+    std::string imageBase;
+    std::string imageInfo;
+    boostParserUtilites::basePathFromFilePath(imageInfoFile,imageBase,imageInfo);
+    std::cout << "Basepath:  " << basePath << std::endl;
+    std::cout << "imageBase: " << imageBase << std::endl;
+    std::cout << "ImageInfo: " << imageInfo << std::endl;
+    std::cout << "Vstreamer argument: " << basePath+imageBase << std::endl;
+    robustPositioning::Streamer VStreamer(basePath+imageBase,imageInfo);
     cv::Mat frame, colorFrame;
     //Initialize data stream
-    std::string dataFile = S.data.dataStreamFile;
+    std::string dataFile;   bpu::assign(vm,dataFile,"STREAM_DATA_FILE");
     int skipLines = 1;
-    robustPositioning::dataStreamer getData(dataFile,skipLines);
+    robustPositioning::dataStreamer getData(basePath + dataFile,skipLines);
     std::vector<float> data;
     //Initialize data logger
     robustPositioning::dataLogger databin_LOG;
@@ -58,21 +64,23 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
 
     //Initialize positioning object
     int maxIdAruco = 50;
-    std::string anchorPath = S.data.anchorPath;//"anchors.txt";
-    int flowGrid = S.data.optical_flow_grid;
-    cv::Rect2f roiSize = S.data.ROI;
-    cv::Mat_<float> K = S.data.K;
-    cv::Mat_<float> T = S.data.T;//warper.getZRot(-PI/2);//UAV frame is x forward, camera frame is -y forward
+    std::string anchorPath;     bpu::assign(vm,anchorPath,"PATH_TO_ARUCO_DATABASE");
+    int flowGrid;               bpu::assign(vm, flowGrid,"OPTICAL_FLOW_GRID");
+    float roi_side;             bpu::assign(vm, roi_side,"ROI_SIZE");
+    float roi_x = (vm["RES_X"].as<float>()-roi_side)/2;//assign manually as we need a calculation
+    float roi_y = (vm["RES_Y"].as<float>()-roi_side)/2;
+    cv::Rect2f roiSize = cv::Rect2f(roi_x,roi_y,roi_side,roi_side);;
+    cv::Mat_<float> K;          bpu::assign(vm,K,"K_MAT");
+    cv::Mat_<float> T;          bpu::assign(vm,T,"T_MAT");
     pos::positioning P(pos::OF_MODE_KLT,//pos::OF_MODE_CORR,//pos::OF_MODE_KLT,
                         pos::VO_MODE_AFFINE,//pos::VO_MODE_HOMOGRAPHY,//pos::VO_MODE_AFFINE,
                         cv::aruco::DICT_4X4_50,
-                        maxIdAruco,anchorPath,flowGrid,roiSize,K,T);
+                        maxIdAruco,basePath+anchorPath,flowGrid,roiSize,K,T);
     //Init values of position and yaw
-    cv::Mat_<float> t = cv::Mat_<float>::zeros(3,1);
-    t(0,0) = S.data.x0;
-    t(1,0) = S.data.y0;
-    t(2,0) = S.data.z0;
-    float yaw = S.data.yaw0;
+    std::string t_str;          bpu::assign(vm,t_str,"XYZ_INIT");
+    cv::Mat_<float> t;
+    boostParserUtilites::string2CVMat(t_str,t);
+    float yaw;                  bpu::assign(vm, yaw,"YAW_INIT");
     float nmbrOfAnchors = 0;
 
 
@@ -84,11 +92,15 @@ int counter = 0;
 double timeStamp_start;
 stamp.get(timeStamp_start);
 float rad2Grad = 57.2958;
+
+int distColumn;                 bpu::assign(vm,distColumn,"DIST_COLUMN");
+int pitchColumn;                bpu::assign(vm,pitchColumn,"PITCH_COLUMN");
+int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
     while(getData.get(data)){
         timeStamp_data = data[0];
-        float dist = data[S.data.distColumn];//This is used as a subst as actual height is not in dataset
-        float pitch = data[S.data.pitchColumn];
-        float roll = data[S.data.rollColumn];
+        float dist = data[distColumn];//This is used as a subst as actual height is not in dataset
+        float pitch = data[pitchColumn];
+        float roll = data[rollColumn];
 
         //####TEMP EDIT. give correct
 
@@ -148,3 +160,93 @@ float rad2Grad = 57.2958;
     std::cout << "Processed " << counter << "images in " << tot_time_s << " s. (" << fps << " fps)" << std::endl;
     return 1;
 }
+
+
+
+
+
+
+/*
+ *
+ * Definition of allowed program options
+ *
+ *
+ *
+ */
+
+ int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_options::variables_map& vm){
+
+     // Declare a group of options that will be
+     // allowed only on command line
+     namespace po=boost::program_options;
+     po::options_description generic("Command line options");
+     generic.add_options()
+         ("help,h", "produce help message")
+         ("file,f",po::value<std::string>(),"configuration file")// Possibly set this as first positional option?
+         //("BASE_PATH,p",po::value<std::string>(),"Base path from which I/O paths are relative. Defaults to pwd but may be overridden with this flag.\nGive as either absolute or relative path.")
+     ;
+
+     po::options_description parameters("Parameters");
+     parameters.add_options()
+         //Parameters
+         ("RES_X",  po::value<float>(), "Camera resolution in X direction")
+         ("RES_Y",  po::value<float>(), "Camera resolution in Y direction")
+         ("K_MAT",  po::value<std::string>(), "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
+         ("T_MAT",  po::value<std::string>()->default_value("[0,1,0;-1,0,0;0,0,1]"), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
+         ("CAMERA_BARREL_DISTORTION",    po::value<std::string>()->default_value("[0.2486857357354474,-1.452670730319596,2.638858641887943]"), "Barrel distortion coefficients given as [K1,K2,K3]")
+         ("OPTICAL_FLOW_GRID",           po::value<int>()->default_value(4),"Sqrt of number of optical flow vectors")//Single int
+         ("ROI_SIZE",po::value<float>()->default_value(150), "Side length of VO ROI. Used to edit K mat of VO alg.")
+         ;
+
+     po::options_description initValues("Initial values");
+     initValues.add_options()
+         ("XYZ_INIT",                    po::value<std::string>()->default_value("[0,0,-1.8]"), "Initial position expressed as [X,Y,Z] coordinate floats")
+         ("ROLL_INIT", po::value<float>()->default_value(0),"Initial roll of UAV, radians")
+         ("PITCH_INIT", po::value<float>()->default_value(0),"Initial pitch of UAV, radians")
+         ("YAW_INIT", po::value<float>()->default_value(0),"Initial yaw of UAV, radians")
+         ;
+     po::options_description modes("Program settings");
+     modes.add_options()
+         ("OUT,o",   po::value<std::string>()->default_value("[9,9,9]"), "Write output data to specified file. No output is not set")// Single string argument
+         ("TILT_COLUMNS", po::value<std::string>()->default_value("[4,3]"),"Specifies which columns of csv file that contains [roll,pitch] data (0-indexed)")
+         ("DIST_COLUMN", po::value<int>()->default_value(1),  "Specifies which column of csv file that contains distance (lidar) data")
+        ("ROLL_COLUMN", po::value<int>()->default_value(4),  "Specifies which column of csv file that contains distance (lidar) data")
+        ("PITCH_COLUMN", po::value<int>()->default_value(3),  "Specifies which column of csv file that contains distance (lidar) data")
+         ("PATH_TO_ARUCO_DATABASE", po::value<std::string>()->default_value("anchors.csv"),"Path to anchor database from base path")
+         ("STREAM_IMAGES_INFO_FILE",po::value<std::string>(),"Path to images info file from config file path")
+         ("STREAM_DATA_FILE",po::value<std::string>(),"Path to data file from config file path")
+         ;
+
+     // Parse command line
+     po::options_description all("All options");
+     all.add(generic).add(parameters).add(initValues).add(modes);
+     po::store(po::parse_command_line(argc, argv, all), vm);//Read command line
+     po::notify(vm);
+     /*Produce help message */
+     if (vm.count("help")) {
+         std::cout << generic<< std::endl;
+         std::cout << "All parameters below are to be defined in a configuration file specified with flag -f" << std::endl;
+         std::cout << "Format: \nPARAMETER_FLAG_1 = <value>   #Disregarded comment\nPARAMETER_FLAG_2 = <value>   #Some other comment" << std::endl;
+         std::cout << parameters<< std::endl;
+         std::cout << initValues<< std::endl;
+         std::cout << modes << std::endl;
+         std::cout << "---------------" << std::endl;
+         return 0;
+     }
+     /*Read settings from file if specified*/
+     if(vm.count("file")){
+         std::string iniFile = vm["file"].as<std::string>();
+         std::cout << "Reading configuration file " << iniFile << "...";
+         std::ifstream ini_file(iniFile);//Try catch block?
+         po::store(po::parse_config_file(ini_file, all, true), vm);//What is true?
+         std::cout << "Done." << std::endl;
+         //Add BASE_PATH option
+         std::string file;
+         std::string basePath;
+         boostParserUtilites::basePathFromFilePath(iniFile,basePath,file);
+         std::cout << "Set --BASE_PATH to '" << basePath << "'." << std::endl;
+         vm.insert(std::make_pair("BASE_PATH", po::variable_value(basePath, false)));
+         po::notify(vm);
+     }
+     return 0;
+ }
