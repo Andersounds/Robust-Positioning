@@ -28,7 +28,6 @@ namespace boostParserUtilites{
     Matrices given as string in matlab style using ',' as column separator, ';' as row separator
 */
 int string2CVMat(std::string str0, cv::Mat_<float>& M){
-    std::cout << "FIX IN BOOSTPARSERUTILITES: SEE ABOVE IN SROUCE COUDE" << std::endl;
     boost::trim_if(str0,boost::is_any_of("[]"));//Trim brackets
     std::vector<std::string> SplitVec;
     boost::split(SplitVec, str0, boost::is_any_of(";"));//Split into rows
