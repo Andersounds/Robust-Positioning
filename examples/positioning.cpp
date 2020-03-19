@@ -48,7 +48,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     std::cout << "Basepath:  " << basePath << std::endl;
     std::cout << "imageBase: " << imageBase << std::endl;
     std::cout << "ImageInfo: " << imageInfo << std::endl;
-    std::cout << "Vstreamer argument: " << basePath+imageBase << std::endl;
+    std::cout << "Vstreamer argument: " << basePath+imageBase << ", " << imageInfo << std::endl;
     robustPositioning::Streamer VStreamer(basePath+imageBase,imageInfo);
     cv::Mat frame, colorFrame;
     //Initialize data stream
@@ -60,6 +60,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     robustPositioning::dataLogger databin_LOG;
     std::cout << "Writing output file to log.csv" << std::endl;
     if(!databin_LOG.init("log.csv",std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []"})) return 0;
+
 
 
     //Initialize positioning object
