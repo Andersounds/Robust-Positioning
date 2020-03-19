@@ -80,6 +80,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
                         maxIdAruco,basePath+anchorPath,flowGrid,roiSize,K,T);
     //Init values of position and yaw
     cv::Mat_<float> t;          bpu::assign(vm,t,"XYZ_INIT");
+    std::cout << "t start SÄTT CHECK I READCOMMANDLINE: " << std::endl;
     float yaw;                  bpu::assign(vm, yaw,"YAW_INIT");
     float nmbrOfAnchors = 0;
 
