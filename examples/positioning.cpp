@@ -38,7 +38,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     //Initialize settings
     namespace bpu=boostParserUtilites;
     boost::program_options::variables_map vm;
-    boostParserUtilites::readCommandLine(argc, argv,vm);
+    if(boostParserUtilites::readCommandLine(argc, argv,vm)) return 1;
     std::string basePath;   bpu::assign(vm,basePath,"BASE_PATH");
     //Initialize video stream
     std::string imageInfoFile;  bpu::assign(vm,imageInfoFile,"STREAM_IMAGES_INFO_FILE");
@@ -80,7 +80,6 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
                         maxIdAruco,basePath+anchorPath,flowGrid,roiSize,K,T);
     //Init values of position and yaw
     cv::Mat_<float> t;          bpu::assign(vm,t,"XYZ_INIT");
-    std::cout << "t start SÄTT CHECK I READCOMMANDLINE: " << std::endl;
     float yaw;                  bpu::assign(vm, yaw,"YAW_INIT");
     float nmbrOfAnchors = 0;
 
@@ -201,7 +200,7 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
 
      po::options_description initValues("Initial values");
      initValues.add_options()
-         ("XYZ_INIT",                    po::value<std::string>()->default_value("[0,0,-1.8]"), "Initial position expressed as [X,Y,Z] coordinate floats")
+         ("XYZ_INIT",                    po::value<std::string>()->default_value("[0;0;-1.8]"), "Initial position expressed as [X,Y,Z] coordinate floats")
          ("ROLL_INIT", po::value<float>()->default_value(0),"Initial roll of UAV, radians")
          ("PITCH_INIT", po::value<float>()->default_value(0),"Initial pitch of UAV, radians")
          ("YAW_INIT", po::value<float>()->default_value(0),"Initial yaw of UAV, radians")
@@ -249,5 +248,19 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
          vm.insert(std::make_pair("BASE_PATH", po::variable_value(basePath, false)));
          po::notify(vm);
      }
+
+    // Check format of some critical inputs
+        namespace bpu=boostParserUtilites;
+        cv::Mat_<float> t_test;
+        bpu::assign(vm,t_test,"XYZ_INIT");
+        if(t_test.rows!=3 || t_test.cols!=1){
+            std::cerr << "Incorrect format of XYZ_INIT parameter. Give as column vector" << std::endl;
+            return 1;//Error if non zero
+        }
+
+
+
+
+
      return 0;
  }
