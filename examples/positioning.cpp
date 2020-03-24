@@ -65,9 +65,13 @@ cv::Rect2f roiSize = cv::Rect2f(roi_x,roi_y,roi_side,roi_side);;
 cv::Mat_<float> K;          bpu::assign(vm,K,"K_MAT");
 cv::Mat_<float> T;          bpu::assign(vm,T,"T_MAT");
 
-
+/*
+    Define execution modes
+*/
 int of_mode;    std::string of_mode_str;    bpu::assign(vm,of_mode_str,"OF_MODE");
 int vo_mode;    std::string vo_mode_str;    bpu::assign(vm,vo_mode_str,"VO_MODE");
+int pos_mode;   std::string pos_mode_str;   bpu::assign(vm,pos_mode_str,"POS_MODE");
+/*--------KLT--------*/
 if(of_mode_str=="KLT"){
     std::cout << "Starting positioning object using KLT based optical flow." << std::endl;
     of_mode = pos::OF_MODE_KLT;}
@@ -75,6 +79,7 @@ else if(of_mode_str=="CORR"){
     std::cout << "Starting positioning object using Correlation based optical flow." << std::endl;
     of_mode = pos::OF_MODE_CORR;}
 else{std::cout << "Unknown --OF_MODE argument" << std::endl;return 0;}
+/*--------Visual Odometry----------*/
 if(vo_mode_str=="HOMOGRAPHY"){
     std::cout << "Starting positioning object using Homography based Visual odometry." << std::endl;
     vo_mode = pos::VO_MODE_HOMOGRAPHY;}
@@ -82,6 +87,17 @@ else if(vo_mode_str=="AFFINE"){
     std::cout << "Starting positioning object using Affine based Visual odometry." << std::endl;
     vo_mode = pos::VO_MODE_AFFINE;}
 else{std::cout << "Unknown --VO_MODE argument" << std::endl;return 0;}
+/*-------Positioning mode----------*/
+if(pos_mode_str=="AZIPE"){
+    std::cout << "Starting positioning object using Azipe mode" << std::endl;
+    pos_mode = pos::MODE_AZIPE;}
+else if(pos_mode_str == "VO"){
+    std::cout << "Starting positioning object using Visual Odometry mode" << std::endl;
+    pos_mode = pos::MODE_VO;}
+else if(pos_mode_str == "AZIPE_AND_VO"){
+    std::cout << "Starting positioning object using Visual Odometry mode" << std::endl;
+    pos_mode = pos::MODE_AZIPE_AND_VO;}
+else{std::cout << "Unknown --POS_MODE argument" << std::endl;return 0;}
 
 pos::positioning P(of_mode,
                     vo_mode,
@@ -114,16 +130,15 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
         //####TEMP EDIT. give correct
 
 //Get new image
+//Separate processAndIllustrate with just process using switch statement
         if(VStreamer.peek()<=timeStamp_data){
             VStreamer.getImage(frame);
             if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-            //int mode = P.process(pos::MODE_VO,frame,dist, roll, pitch, yaw, t);
-            //int mode = P.process(pos::MODE_AZIPE_AND_VO,frame,dist, roll, pitch, yaw, t);
-//            int mode = P.process(pos::MODE_AZIPE,frame,dist, roll, pitch, yaw, t);
-//            int mode = P.processAndIllustrate(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
-        //int mode = P.process(pos::MODE_VO,frame,dist, roll, pitch, yaw, t);
-            int mode = P.processAz(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
+
+            int mode = P.processAndIllustrate(pos_mode,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
+
+            //int mode = P.processAz(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
             //Log data
             if(true){
                 std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),roll,pitch,yaw,nmbrOfAnchors};
@@ -225,6 +240,7 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
          ("STREAM_DATA_FILE",po::value<std::string>(),"Path to data file from config file path")
          ("OF_MODE",po::value<std::string>(),"Mode of Optical flow algorithm. KLT or CORR")
          ("VO_MODE",po::value<std::string>(),"Mode of Visual Odometry algorithm. HOMOGRAPHY or AFFINE")
+         ("POS_MODE",po::value<std::string>(),"Positioning mode | AZIPE or VO or AZIPE_AND_VO")
          ;
 
      // Parse command line
