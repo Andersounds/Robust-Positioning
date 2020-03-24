@@ -156,5 +156,13 @@ if [ ”$1” = ”fullangulationtest” ];then
 fi
 
 
+################# deportation example with dataset (general)
+if [ ”$1” = ”derot” ];then
+	#
+	echo Compiling general positioning program
+	g++ -std=c++11 -fvisibility=hidden -ggdb /usr/local/lib/libboost_program_options.a `pkg-config --cflags --libs opencv` examples/visualizeDerotationDataset.cpp src/vopos.cpp src/angulation.cpp src/azipe.cpp src/opticalFlow.cpp src/homographyVO.cpp include/Quartic-master/quartic.cpp src/videoStream.cpp src/dataStream.cpp src/logger.cpp -o bin/derot.out
+	echo Run with command ./bin/positioning.out [option]
+fi
+
 
 echo done

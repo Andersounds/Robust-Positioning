@@ -184,6 +184,35 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
     return returnMode;
 }
+/*
+    A stub function to visualize derotation in order to verify function
+*/
+void pos::positioning::illustrateDerotation(cv::Mat& frame, cv::Mat& outputFrame,float dist,float& roll, float& pitch,float& yaw){
+    //Define dummy position mat
+    static cv::Mat_<float> t = cv::Mat_<float>::ones(3,1);
+
+    static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
+    static float roll_prev = 0;
+    static float pitch_prev = 0;
+
+    std::vector<cv::Point2f> features;                                  //Must declare these before every calculation doe to being manipulated on
+    std::vector<cv::Point2f> updatedFeatures;                           //The new positions estimated from KLT
+    of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures); //Get flow field
+//std::cout "Rollprev: " << roll_prev << ", \t Pitchprev: " << pitch_prev << std::endl;
+//std::cout "Roll:     " << roll << ", \t Pitch:     " << pitch << std::endl;
+    deRotateFlowField(features, roll_prev, pitch_prev);//Derotate
+    deRotateFlowField(updatedFeatures, roll, pitch);//Derotate
+    std::cout << "Is it correct? vopos:illustrateDerotation" << std::endl;
+    float scale = 1;                                                    //Illustrate
+    cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
+    drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
+    cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
+
+
+    frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
+    roll_prev = roll;
+    pitch_prev = pitch;
+}
 
 /*
     A stub function used to eliminate everything except azipe
