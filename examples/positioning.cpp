@@ -45,11 +45,6 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     std::string imageBase;
     std::string imageInfo;
     boostParserUtilites::basePathFromFilePath(imageInfoFile,imageBase,imageInfo);
-    std::cout << "Basepath:  " << basePath << std::endl;
-    std::cout << "imageBase: " << imageBase << std::endl;
-    std::cout << "ImageInfo: " << imageInfo << std::endl;
-    std::cout << "Vstreamer argument 1: " << basePath+imageBase << std::endl;
-    std::cout << "Vstreamer argument 2: " << basePath+imageBase+imageInfo << std::endl;
     robustPositioning::Streamer VStreamer(basePath+imageBase,basePath+imageBase+imageInfo);
     cv::Mat frame, colorFrame;
     //Initialize data stream
@@ -59,8 +54,14 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     std::vector<float> data;
     //Initialize data logger
     robustPositioning::dataLogger databin_LOG;
-    std::cout << "Writing output file to log.csv" << std::endl;
-    if(!databin_LOG.init("log.csv",std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []"})) return 0;
+    std::string outFile;
+    if(vm["OUT_TO_PWD"].as<std::string>()=="YES"){
+        outFile = vm["OUT"].as<std::string>();
+    }else{
+        outFile = vm["BASE_PATH"].as<std::string>() + vm["OUT"].as<std::string>();
+    }
+    std::cout << "Writing output file to " << outFile << std::endl;
+    if(!databin_LOG.init(outFile,std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []"})) return 0;
 
 
 
@@ -168,7 +169,7 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
 
 /*
  *
- * Definition of allowed program options
+ * Definition of allowed program options according to the prototype defined in namespace boostParserUtilites
  *
  *
  *
@@ -207,7 +208,8 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
          ;
      po::options_description modes("Program settings");
      modes.add_options()
-         ("OUT,o",   po::value<std::string>()->default_value("[9,9,9]"), "Write output data to specified file. No output is not set")// Single string argument
+         ("OUT,o",   po::value<std::string>()->default_value("log.csv"), "Write output data to specified file.")// Single string argument
+         ("OUT_TO_PWD",   po::value<std::string>()->default_value("YES"), "Write output file pwd instead of to BASEPATH (NO or YES)")// Single string argument
          ("TILT_COLUMNS", po::value<std::string>()->default_value("[4,3]"),"Specifies which columns of csv file that contains [roll,pitch] data (0-indexed)")
          ("DIST_COLUMN", po::value<int>()->default_value(1),  "Specifies which column of csv file that contains distance (lidar) data")
          ("ROLL_COLUMN", po::value<int>()->default_value(4),  "Specifies which column of csv file that contains distance (lidar) data")
@@ -247,6 +249,9 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
          std::cout << "Set --BASE_PATH to '" << basePath << "'." << std::endl;
          vm.insert(std::make_pair("BASE_PATH", po::variable_value(basePath, false)));
          po::notify(vm);
+     }else{
+         std::cerr << "No mandatory --file argument given. " << std::endl;
+         return 0;
      }
 
     // Check format of some critical inputs
@@ -254,6 +259,9 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
         if(!bpu::checkDimOfCVMatOption(vm,"XYZ_INIT",3, 1)){return 0;}
         if(!bpu::checkDimOfCVMatOption(vm,"T_MAT",3, 3)){return 0;}
         if(!bpu::checkDimOfCVMatOption(vm,"K_MAT",3, 3)){return 0;}
+        if(!bpu::checkDimOfCVMatOption(vm,"CAMERA_BARREL_DISTORTION",1, 3)){return 0;}
+        if(!bpu::checkDimOfCVMatOption(vm,"TILT_COLUMNS",1, 2)){return 0;}
+
 
      return 1;
  }
