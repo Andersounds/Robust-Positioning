@@ -95,11 +95,20 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
     cv::Mat_<double> b_double;//odometry estimation of translation in camera frame
     cv::Mat_<double> A_double;//odometry estimation of rotation in camera frame
     bool success;
-    if(mode == USE_AFFINETRANSFORM){
-        success = odometryAffine(p1,p2,roll,pitch,dist,b_double,A_double);
-    }else if(mode == USE_HOMOGRAPHY){
-        success = odometryHom(p1,p2,roll,pitch,dist,b_double,A_double);
-    }else{std::cout << "Invalid homography mode (vo::planarHomographyVO::process)";return false;}
+    switch(mode){
+        case USE_AFFINETRANSFORM:{
+            success = odometryAffine(p1,p2,roll,pitch,dist,b_double,A_double);
+            break;
+        }
+        case USE_HOMOGRAPHY:{
+            success = odometryHom(p1,p2,roll,pitch,dist,b_double,A_double);
+            break;
+        }
+        default:{
+            std::cout << "Invalid homography mode (vo::planarHomographyVO::process)";
+            return false;
+        }
+    }
     //Convert to float
     cv::Mat_<float> b;//odometry estimation of translation in camera frame
     cv::Mat_<float> A;
