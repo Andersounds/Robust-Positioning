@@ -134,10 +134,8 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
 
     switch (mode) {
         case pos::MODE_AZIPE_AND_VO:{
-            std::cout << "Using VO as fallback... ";
         }
         case pos::MODE_AZIPE:{
-            std::cout << "Trying Azipe... ";
             cv::aruco::detectMarkers(frame, dictionary, corners, ids);//Detect markers
             std::vector<cv::Mat_<float>> q;
             std::vector<bool> mask;
@@ -154,8 +152,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             if(mode!=pos::MODE_AZIPE_AND_VO){break;}                            //If we do not want fallback then break.
         }
         case pos::MODE_VO:{
-            std::cout << "Trying VO... ";
-            std::vector<cv::Point2f> features;
+            std::vector<cv::Point2f> features;                                  //Must declare these before every calculation doe to being manipulated on
             std::vector<cv::Point2f> updatedFeatures;                           //The new positions estimated from KLT
             of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures); //Get flow field
             float scale = 5;                                                    //Illustrate
