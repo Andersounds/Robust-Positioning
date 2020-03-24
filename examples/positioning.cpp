@@ -50,7 +50,7 @@ if(vm["OUT_TO_PWD"].as<std::string>()=="YES"){
     outFile = vm["BASE_PATH"].as<std::string>() + vm["OUT"].as<std::string>();
 }
 std::cout << "Writing output file to " << outFile << std::endl;
-if(!databin_LOG.init(outFile,std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []"})) return 0;
+if(!databin_LOG.init(outFile,std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []","Mode"})) return 0;
 
 
 
@@ -141,12 +141,12 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
             //int mode = P.processAz(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
             //Log data
             if(true){
-                std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),roll,pitch,yaw,nmbrOfAnchors};
+                std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),roll,pitch,yaw,nmbrOfAnchors,mode};
                 databin_LOG.dump(logData);
             }
             std::cout << "X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll<<", pitch: " << pitch << "yaw: " << yaw<< std::endl;
             cv::imshow("showit",colorFrame);
-            cv::waitKey(0);
+            //cv::waitKey(0);
             if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
             std::cout << "Lap " << counter  << ", time: " << timeStamp_data/1000<< std::endl;
