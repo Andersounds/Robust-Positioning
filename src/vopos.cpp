@@ -203,7 +203,7 @@ void pos::positioning::illustrateDerotation(cv::Mat& frame, cv::Mat& outputFrame
     deRotateFlowField(features, roll_prev, pitch_prev);//Derotate
     deRotateFlowField(updatedFeatures, roll, pitch);//Derotate
     std::cout << "Is it correct? vopos:illustrateDerotation" << std::endl;
-    float scale = 1;                                                    //Illustrate
+    float scale = 3;                                                    //Illustrate
     cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
     drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
     cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
