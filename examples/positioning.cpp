@@ -22,67 +22,75 @@ timestamp::timeStamp_ms stamp;
 double timeStamp;
 stamp.get(timeStamp);
 
-/*
-//Initialize imagebin. It automatically creates a directory 'images' in the given path
-robustPositioning::imageLogger imagebin;
-imagebin.init("","5_jul");
 
+
+//Initialize settings
+namespace bpu=boostParserUtilites;
+boost::program_options::variables_map vm;
+if(!boostParserUtilites::readCommandLine(argc, argv,vm)) return 0;
+std::string basePath;   bpu::assign(vm,basePath,"BASE_PATH");
+//Initialize video stream
+std::string imageInfoFile;  bpu::assign(vm,imageInfoFile,"STREAM_IMAGES_INFO_FILE");
+std::string imageBase;
+std::string imageInfo;
+boostParserUtilites::basePathFromFilePath(imageInfoFile,imageBase,imageInfo);
+robustPositioning::Streamer VStreamer(basePath+imageBase,basePath+imageBase+imageInfo);
+cv::Mat frame, colorFrame;
+//Initialize data stream
+std::string dataFile;   bpu::assign(vm,dataFile,"STREAM_DATA_FILE");
+int skipLines = 1;
+robustPositioning::dataStreamer getData(basePath + dataFile,skipLines);
+std::vector<float> data;
+//Initialize data logger
 robustPositioning::dataLogger databin_LOG;
-//if(!databin_EST.init("estPath.csv",std::vector<std::string>{"Timestamp [ms]","x[m]","y[m]","z[m]","yaw[rad]","mode"})) return 0;
-if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [ms]","x [m]","y [m]","z [m]","yaw [rad]","pitch [rad]","roll [rad]"})) return 0;
-
-
-*/
-
-
-    //Initialize settings
-    namespace bpu=boostParserUtilites;
-    boost::program_options::variables_map vm;
-    if(!boostParserUtilites::readCommandLine(argc, argv,vm)) return 0;
-    std::string basePath;   bpu::assign(vm,basePath,"BASE_PATH");
-    //Initialize video stream
-    std::string imageInfoFile;  bpu::assign(vm,imageInfoFile,"STREAM_IMAGES_INFO_FILE");
-    std::string imageBase;
-    std::string imageInfo;
-    boostParserUtilites::basePathFromFilePath(imageInfoFile,imageBase,imageInfo);
-    robustPositioning::Streamer VStreamer(basePath+imageBase,basePath+imageBase+imageInfo);
-    cv::Mat frame, colorFrame;
-    //Initialize data stream
-    std::string dataFile;   bpu::assign(vm,dataFile,"STREAM_DATA_FILE");
-    int skipLines = 1;
-    robustPositioning::dataStreamer getData(basePath + dataFile,skipLines);
-    std::vector<float> data;
-    //Initialize data logger
-    robustPositioning::dataLogger databin_LOG;
-    std::string outFile;
-    if(vm["OUT_TO_PWD"].as<std::string>()=="YES"){
-        outFile = vm["OUT"].as<std::string>();
-    }else{
-        outFile = vm["BASE_PATH"].as<std::string>() + vm["OUT"].as<std::string>();
-    }
-    std::cout << "Writing output file to " << outFile << std::endl;
-    if(!databin_LOG.init(outFile,std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []"})) return 0;
+std::string outFile;
+if(vm["OUT_TO_PWD"].as<std::string>()=="YES"){
+    outFile = vm["OUT"].as<std::string>();
+}else{
+    outFile = vm["BASE_PATH"].as<std::string>() + vm["OUT"].as<std::string>();
+}
+std::cout << "Writing output file to " << outFile << std::endl;
+if(!databin_LOG.init(outFile,std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []"})) return 0;
 
 
 
-    //Initialize positioning object
-    int maxIdAruco = 50;
-    std::string anchorPath;     bpu::assign(vm,anchorPath,"PATH_TO_ARUCO_DATABASE");
-    int flowGrid;               bpu::assign(vm, flowGrid,"OPTICAL_FLOW_GRID");
-    float roi_side;             bpu::assign(vm, roi_side,"ROI_SIZE");
-    float roi_x = (vm["RES_X"].as<float>()-roi_side)/2;//assign manually as we need a calculation
-    float roi_y = (vm["RES_Y"].as<float>()-roi_side)/2;
-    cv::Rect2f roiSize = cv::Rect2f(roi_x,roi_y,roi_side,roi_side);;
-    cv::Mat_<float> K;          bpu::assign(vm,K,"K_MAT");
-    cv::Mat_<float> T;          bpu::assign(vm,T,"T_MAT");
-    pos::positioning P(pos::OF_MODE_KLT,//pos::OF_MODE_CORR,//pos::OF_MODE_KLT,
-                        pos::VO_MODE_AFFINE,//pos::VO_MODE_HOMOGRAPHY,//pos::VO_MODE_AFFINE,
-                        cv::aruco::DICT_4X4_50,
-                        maxIdAruco,basePath+anchorPath,flowGrid,roiSize,K,T);
-    //Init values of position and yaw
-    cv::Mat_<float> t;          bpu::assign(vm,t,"XYZ_INIT");
-    float yaw;                  bpu::assign(vm, yaw,"YAW_INIT");
-    float nmbrOfAnchors = 0;
+//Initialize positioning object
+int maxIdAruco = 50;
+std::string anchorPath;     bpu::assign(vm,anchorPath,"PATH_TO_ARUCO_DATABASE");
+int flowGrid;               bpu::assign(vm, flowGrid,"OPTICAL_FLOW_GRID");
+float roi_side;             bpu::assign(vm, roi_side,"ROI_SIZE");
+float roi_x = (vm["RES_X"].as<float>()-roi_side)/2;//assign manually as we need a calculation
+float roi_y = (vm["RES_Y"].as<float>()-roi_side)/2;
+cv::Rect2f roiSize = cv::Rect2f(roi_x,roi_y,roi_side,roi_side);;
+cv::Mat_<float> K;          bpu::assign(vm,K,"K_MAT");
+cv::Mat_<float> T;          bpu::assign(vm,T,"T_MAT");
+
+
+int of_mode;    std::string of_mode_str;    bpu::assign(vm,of_mode_str,"OF_MODE");
+int vo_mode;    std::string vo_mode_str;    bpu::assign(vm,vo_mode_str,"VO_MODE");
+if(of_mode_str=="KLT"){
+    std::cout << "Starting positioning object using KLT based optical flow." << std::endl;
+    of_mode = pos::OF_MODE_KLT;}
+else if(of_mode_str=="CORR"){
+    std::cout << "Starting positioning object using Correlation based optical flow." << std::endl;
+    of_mode = pos::OF_MODE_CORR;}
+else{std::cout << "Unknown --OF_MODE argument" << std::endl;return 0;}
+if(vo_mode_str=="HOMOGRAPHY"){
+    std::cout << "Starting positioning object using Homography based Visual odometry." << std::endl;
+    vo_mode = pos::VO_MODE_HOMOGRAPHY;}
+else if(vo_mode_str=="AFFINE"){
+    std::cout << "Starting positioning object using Affine based Visual odometry." << std::endl;
+    vo_mode = pos::VO_MODE_AFFINE;}
+else{std::cout << "Unknown --VO_MODE argument" << std::endl;return 0;}
+
+pos::positioning P(of_mode,
+                    vo_mode,
+                    cv::aruco::DICT_4X4_50,
+                    maxIdAruco,basePath+anchorPath,flowGrid,roiSize,K,T);
+//Init values of position and yaw
+cv::Mat_<float> t;          bpu::assign(vm,t,"XYZ_INIT");
+float yaw;                  bpu::assign(vm, yaw,"YAW_INIT");
+float nmbrOfAnchors = 0;
 
 
 
@@ -165,8 +173,6 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
 
 
 
-
-
 /*
  *
  * Definition of allowed program options according to the prototype defined in namespace boostParserUtilites
@@ -217,6 +223,8 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
          ("PATH_TO_ARUCO_DATABASE", po::value<std::string>()->default_value("anchors.csv"),"Path to anchor database from base path")
          ("STREAM_IMAGES_INFO_FILE",po::value<std::string>(),"Path to images info file from config file path")
          ("STREAM_DATA_FILE",po::value<std::string>(),"Path to data file from config file path")
+         ("OF_MODE",po::value<std::string>(),"Mode of Optical flow algorithm. KLT or CORR")
+         ("VO_MODE",po::value<std::string>(),"Mode of Visual Odometry algorithm. HOMOGRAPHY or AFFINE")
          ;
 
      // Parse command line
