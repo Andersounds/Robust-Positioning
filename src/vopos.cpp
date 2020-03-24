@@ -118,106 +118,72 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
 /*
 Process the given data and update position and yaw. Also illustrate by drawing on the outputFrame mat
 dist - Distance from camera to the flow field plane.
+Mode pos::AZIPE         -Only do azipe
+Mode pos::VO            -Only do VO
+Mode pos::AZIPE_AND_VO  -Try Azipe, fallback on VO
+
 */
 int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& outputFrame,int illustrate_flag,float dist,float& roll, float& pitch,float& yaw, cv::Mat_<float>& pos,float& noOfAnchors){
     static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field
     //Aruco detect
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
-    cv::aruco::detectMarkers(frame, dictionary, corners, ids);
+    int knownAnchors;
+    int returnMode;
 
-    //Only do angulation if at least two known anchors are visible
-    int status = 0;
-    int returnMode = pos::RETURN_MODE_AZIPE;
-    //Convert IDs to q-coordinates and count number of known anchors from database
-    std::vector<cv::Mat_<float>> q;
-    std::vector<bool> mask;
-    int knownAnchors = dataBase2q(ids,q,mask);
-    noOfAnchors = (float)knownAnchors;
-    //std::cout << knownAnchors <<  ";" <<std::endl;
-    // Draw detected markers and identify known markers
-    drawMarkers(outputFrame,corners,ids,mask);
-    if(knownAnchors == 0){
-        std::cout << "No anchors" << std::endl;
-        returnMode = pos::RETURN_MODE_VO;
-    }else if(knownAnchors < minAnchors){
-        std::cout << "too few anchors" << std::endl;
-        returnMode = pos::RETURN_MODE_PROJ;
-    } else{
-        returnMode = pos::RETURN_MODE_AZIPE;
-    }
-    bool vo_success = false;
-    switch (returnMode) {
-        case pos::RETURN_MODE_VO:{
-            //Get flow field
-            std::vector<cv::Point2f> features;
-            std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
-            of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
-            //Draw flow field arrows
-            float scale = 5;
-            cv::Point2f focusOffset(roi.x,roi.y);
-            drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset);
-            cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);
-            vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
-            if(!vo_success){
-                returnMode = pos::RETURN_MODE_INERTIA;
-                //std::cout << "VO inertia  mode" << std::endl;
+
+    switch (mode) {
+        case pos::MODE_AZIPE_AND_VO:{
+            std::cout << "Using VO as fallback... ";
+        }
+        case pos::MODE_AZIPE:{
+            std::cout << "Trying Azipe... ";
+            cv::aruco::detectMarkers(frame, dictionary, corners, ids);//Detect markers
+            std::vector<cv::Mat_<float>> q;
+            std::vector<bool> mask;
+            knownAnchors = dataBase2q(ids,q,mask);
+            noOfAnchors = (float)knownAnchors;
+            drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+            if(knownAnchors>=4){                                                //If enough anchors then do triangulation and break
+                std::vector<cv::Mat_<float>> v;
+                pix2uLOS(corners,v);
+                ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);        //Perform angulation
+                returnMode = pos::RETURN_MODE_AZIPE;
+                break;
             }
-            break;
+            if(mode!=pos::MODE_AZIPE_AND_VO){break;}                            //If we do not want fallback then break.
         }
-        case pos::RETURN_MODE_PROJ:{
-            //Get flow field
+        case pos::MODE_VO:{
+            std::cout << "Trying VO... ";
             std::vector<cv::Point2f> features;
-            std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
-            of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
-            vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
-            std::vector<cv::Mat_<float>> v;
-            pix2uLOS(corners,v);
-        //    projectionFusing(pos,q,v,mask,yaw,roll,pitch);
+            std::vector<cv::Point2f> updatedFeatures;                           //The new positions estimated from KLT
+            of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures); //Get flow field
+            float scale = 5;                                                    //Illustrate
+            cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
+            drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
+            cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
+            bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+            if(!vo_success){returnMode = pos::RETURN_MODE_INERTIA;}
+            else{returnMode = pos::RETURN_MODE_VO;}
             break;
         }
-        case pos::RETURN_MODE_AZIPE:{
-            std::vector<cv::Mat_<float>> v;
-            pix2uLOS(corners,v);
-            std::cout << "ANCHORS:    " << v.size() << std::endl;
-            ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
-            //calculate(q,v,mask,pos,yaw,roll,pitch);
-            break;
-        }
-    }
-/*
 
-    if(knownAnchors>=minAnchors){
-
-    } else{
-        std::cout << "TODO: " << std::endl;
-        std::cout << "1: Can not compare with ids.size(). Have to compare with amount of KNOWN anchors.  " << std::endl;
-        std::cout << "      Do that separately first with dataBase2q. it returns number of known anchors. " << std::endl;
-        std::cout << "2: Make a wrapper to drawdetectedMarkers that draws known and unknown markers with different colors." << std::endl;
-        std::cout << "3: As dataBase2q will be separate. See of calculateQV can be removed or improved" << std::endl;
-        std::cout << "2: make smarter processAndIllustrate. But prio is to test functionality of projectionFusing" << std::endl;
     }
-    if(status != ang::AZIPE_SUCCESS){//If not successful (Can fail due to either no known anchors or some azipe error)
+    std::cout << std::endl;
+    /* Below example of how proj fallback was written
+    case pos::RETURN_MODE_PROJ:{
         //Get flow field
         std::vector<cv::Point2f> features;
         std::vector<cv::Point2f> updatedFeatures; //The new positions estimated from KLT
         of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures);
-        //Draw flow field arrows
-        float scale = 10;
-        cv::Point2f focusOffset(roi.x,roi.y);
-        drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset);
-        cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);
-        bool success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
-        //Is there at least one available anchor so that we can to projection fusing?
-        if(success && ids.size()>0){
-            projectionFusing(pos,q,v,mask,yaw,roll,pitch);
-            returnMode = pos::RETURN_MODE_PROJ;
-        }
-        else if(success){returnMode = pos::RETURN_MODE_VO;}
-        else{returnMode = pos::RETURN_MODE_INERTIA;}
-    }*/
+        vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+        std::vector<cv::Mat_<float>> v;
+        pix2uLOS(corners,v);
+    //    projectionFusing(pos,q,v,mask,yaw,roll,pitch);
+        break;
+    }
 
-
+    */
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
     return returnMode;
 }
