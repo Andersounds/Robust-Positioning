@@ -142,7 +142,7 @@ bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1,
 //roll_prev = roll;
 //pitch_prev = pitch;
     //Check that there are enough point correspondances
-    if((p1.size()<3)|| (p2.size()<3)){//std::cout << "Not enough point correspondances" << std::endl;
+    if((p1.size()<3)|| (p2.size()<3)){std::cout << "odometryHom::Not enough point correspondances" << std::endl;
         return false;
     }
     if(activateDerotation){
@@ -189,6 +189,7 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
         return false;
     }
     //De-rotate
+    std::cout << "Bug in odometryAffine: Derotation" << std::endl;
     deRotateFlowField(p1, roll_prev, pitch_prev);
     deRotateFlowField(p2, roll, pitch);
     //Translate flow field to camera coordinate system. ie origin is in the middle
