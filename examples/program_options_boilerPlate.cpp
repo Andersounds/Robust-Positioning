@@ -100,7 +100,7 @@ int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_op
         //Parameters
         ("RES_XY",  po::value<std::string>(), "Camera resolution in X and Y direction")
         ("K_MAT",  po::value<std::string>(), "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
-        ("T_MAT",  po::value<std::string>()->default_value("[0,1,0;-1,0,0;0,0,1]"), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
+        ("T_MAT",  po::value<std::string>()->default_value("[0,-1,0;1,0,0;0,0,1]"), "UAV-to-Camera matrix. Default +90deg. Specified in matlab style")
         ("CAMERA_BARREL_DISTORTION",    po::value<std::string>()->default_value("[0.2486857357354474,-1.452670730319596,2.638858641887943]"), "Barrel distortion coefficients given as [K1,K2,K3]")
         ("OPTICAL_FLOW_GRID",           po::value<int>()->default_value(4),"Sqrt of number of optical flow vectors")//Single int
         ("ROI_SIZE",po::value<int>()->default_value(150), "Side length of VO ROI. Used to edit K mat of VO alg.")

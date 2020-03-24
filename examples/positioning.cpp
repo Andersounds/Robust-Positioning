@@ -192,7 +192,7 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
          ("RES_X",  po::value<float>(), "Camera resolution in X direction")
          ("RES_Y",  po::value<float>(), "Camera resolution in Y direction")
          ("K_MAT",  po::value<std::string>(), "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
-         ("T_MAT",  po::value<std::string>()->default_value("[0,1,0;-1,0,0;0,0,1]"), "UAV - camera T matrix specified as float numbers row by row separated by whitespace")
+         ("T_MAT",  po::value<std::string>()->default_value("[0,-1,0;1,0,0;0,0,1]"), "UAV-to-Camera matrix. Default +90deg. Specified in matlab style")
          ("CAMERA_BARREL_DISTORTION",    po::value<std::string>()->default_value("[0.2486857357354474,-1.452670730319596,2.638858641887943]"), "Barrel distortion coefficients given as [K1,K2,K3]")
          ("OPTICAL_FLOW_GRID",           po::value<int>()->default_value(4),"Sqrt of number of optical flow vectors")//Single int
          ("ROI_SIZE",po::value<float>()->default_value(150), "Side length of VO ROI. Used to edit K mat of VO alg.")
@@ -210,8 +210,8 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
          ("OUT,o",   po::value<std::string>()->default_value("[9,9,9]"), "Write output data to specified file. No output is not set")// Single string argument
          ("TILT_COLUMNS", po::value<std::string>()->default_value("[4,3]"),"Specifies which columns of csv file that contains [roll,pitch] data (0-indexed)")
          ("DIST_COLUMN", po::value<int>()->default_value(1),  "Specifies which column of csv file that contains distance (lidar) data")
-        ("ROLL_COLUMN", po::value<int>()->default_value(4),  "Specifies which column of csv file that contains distance (lidar) data")
-        ("PITCH_COLUMN", po::value<int>()->default_value(3),  "Specifies which column of csv file that contains distance (lidar) data")
+         ("ROLL_COLUMN", po::value<int>()->default_value(4),  "Specifies which column of csv file that contains distance (lidar) data")
+         ("PITCH_COLUMN", po::value<int>()->default_value(3),  "Specifies which column of csv file that contains distance (lidar) data")
          ("PATH_TO_ARUCO_DATABASE", po::value<std::string>()->default_value("anchors.csv"),"Path to anchor database from base path")
          ("STREAM_IMAGES_INFO_FILE",po::value<std::string>(),"Path to images info file from config file path")
          ("STREAM_DATA_FILE",po::value<std::string>(),"Path to data file from config file path")
