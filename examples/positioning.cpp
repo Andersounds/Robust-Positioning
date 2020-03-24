@@ -38,7 +38,7 @@ if(!databin_LOG.init("5_jul/truePath.csv",std::vector<std::string>{"Timestamp [m
     //Initialize settings
     namespace bpu=boostParserUtilites;
     boost::program_options::variables_map vm;
-    if(boostParserUtilites::readCommandLine(argc, argv,vm)) return 1;
+    if(!boostParserUtilites::readCommandLine(argc, argv,vm)) return 0;
     std::string basePath;   bpu::assign(vm,basePath,"BASE_PATH");
     //Initialize video stream
     std::string imageInfoFile;  bpu::assign(vm,imageInfoFile,"STREAM_IMAGES_INFO_FILE");
@@ -251,16 +251,9 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
 
     // Check format of some critical inputs
         namespace bpu=boostParserUtilites;
-        cv::Mat_<float> t_test;
-        bpu::assign(vm,t_test,"XYZ_INIT");
-        if(t_test.rows!=3 || t_test.cols!=1){
-            std::cerr << "Incorrect format of XYZ_INIT parameter. Give as column vector" << std::endl;
-            return 1;//Error if non zero
-        }
+        if(!bpu::checkDimOfCVMatOption(vm,"XYZ_INIT",3, 1)){return 0;}
+        if(!bpu::checkDimOfCVMatOption(vm,"T_MAT",3, 3)){return 0;}
+        if(!bpu::checkDimOfCVMatOption(vm,"K_MAT",3, 3)){return 0;}
 
-
-
-
-
-     return 0;
+     return 1;
  }

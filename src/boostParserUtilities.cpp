@@ -75,7 +75,7 @@ return 1;
     Set of overloaded functions that assigns casted option to given inputoutput argument
 */
 
-int assign(boost::program_options::variables_map& vm, int& var,std::string key){
+int assign(const boost::program_options::variables_map& vm, int& var,std::string key){
     try{
         var = vm[key].as<int>();
         return 0;
@@ -85,7 +85,7 @@ int assign(boost::program_options::variables_map& vm, int& var,std::string key){
         return 1;
     }
 }
-int assign(boost::program_options::variables_map& vm, float& var,std::string key){
+int assign(const boost::program_options::variables_map& vm, float& var,std::string key){
     try{
         var = vm[key].as<float>();
         return 0;
@@ -95,7 +95,7 @@ int assign(boost::program_options::variables_map& vm, float& var,std::string key
         return 1;
     }
 }
-int assign(boost::program_options::variables_map& vm, std::string& var,std::string key){
+int assign(const boost::program_options::variables_map& vm, std::string& var,std::string key){
     try{
         var = vm[key].as<std::string>();
         return 0;
@@ -105,7 +105,7 @@ int assign(boost::program_options::variables_map& vm, std::string& var,std::stri
         return 1;
     }
 }
-int assign(boost::program_options::variables_map& vm, cv::Mat_<float>& var,std::string key){
+int assign(const boost::program_options::variables_map& vm, cv::Mat_<float>& var,std::string key){
     try{
         std::string var_STR = vm[key].as<std::string>();
         string2CVMat(var_STR,var);
@@ -115,6 +115,21 @@ int assign(boost::program_options::variables_map& vm, cv::Mat_<float>& var,std::
         std::cerr << "In boostParserUtilites::assign" << std::endl;
         return 1;
     }
+}
+//Check dimension of matrix
+//Error: return 0
+//Pass:  return 1
+int checkDimOfCVMatOption(const boost::program_options::variables_map& vm,std::string KEY, int rows, int cols){
+    cv::Mat_<float> mat_test;
+    assign(vm,mat_test,KEY);
+    int actualRows = mat_test.rows;
+    int actualCols = mat_test.cols;
+    if(actualRows!=rows || actualCols!=cols){
+        std::cerr << "Incorrect format of option --" << KEY << ". Should be [" << rows << "x"<< cols <<"]." << std::endl;
+        std::cerr << "  Actual dimentions: [" << actualRows << "x" << actualCols << "]." << std::endl;
+        return 0;
+    }
+    return 1;
 }
 
 
