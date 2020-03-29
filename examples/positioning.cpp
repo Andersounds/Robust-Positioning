@@ -233,8 +233,8 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
          ("OUT_TO_PWD",   po::value<std::string>()->default_value("YES"), "Write output file pwd instead of to BASEPATH (NO or YES)")// Single string argument
          ("TILT_COLUMNS", po::value<std::string>()->default_value("[4,3]"),"Specifies which columns of csv file that contains [roll,pitch] data (0-indexed)")
          ("DIST_COLUMN", po::value<int>()->default_value(1),  "Specifies which column of csv file that contains distance (lidar) data")
-         ("ROLL_COLUMN", po::value<int>()->default_value(4),  "Specifies which column of csv file that contains distance (lidar) data")
-         ("PITCH_COLUMN", po::value<int>()->default_value(3),  "Specifies which column of csv file that contains distance (lidar) data")
+         ("ROLL_COLUMN", po::value<int>()->default_value(4),  "Specifies which column of csv file that contains roll data")
+         ("PITCH_COLUMN", po::value<int>()->default_value(3),  "Specifies which column of csv file that contains pitch data")
          ("PATH_TO_ARUCO_DATABASE", po::value<std::string>()->default_value("anchors.csv"),"Path to anchor database from base path")
          ("STREAM_IMAGES_INFO_FILE",po::value<std::string>(),"Path to images info file from config file path")
          ("STREAM_DATA_FILE",po::value<std::string>(),"Path to data file from config file path")
