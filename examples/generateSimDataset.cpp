@@ -16,6 +16,14 @@ double timeStamp;
 stamp.get(timeStamp);
 
 
+//Initialize settings
+namespace bpu=boostParserUtilites;
+boost::program_options::variables_map vm;
+//if(!boostParserUtilites::readCommandLine(argc, argv,vm)) return 0;
+
+
+
+
 
 std::cout << "This file will be edited to be used to create simulation dataset" << std::endl;
 std::cout << "1. Read a predefined true path with roll, pitch, yaw" << std::endl;
@@ -131,7 +139,10 @@ int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_op
         ("R_P_Y_COLUMNS",         po::value<int>(),         "Specifies which columns of csv file that contains [roll,pitch,yaw] data (0-indexed)")
         ("BASESCENE",           po::value<std::string>()->default_value(""),   "Path to the base scene image that is to be warped. Defaults to chess board")
         ("BASESCENE_WIDTH",      po::value<float>(),        "Physical width of base scene in meter (x-dir)")
-        ("K_MAT",  po::value<std::string>(), "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator")
+        ("K_MAT",  po::value<std::string>(),                "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator")
+        ("CHESSBASE_BOXWIDTH",         po::value<int>()->default_value(11),     "Size of each chessbox if not custom --BASESCENE is used")
+        ("CHESSBASE_ROWS",         po::value<int>()->default_value(30),         "Number of chessbox rows if not custom --BASESCENE is used")
+        ("CHESSBASE_COLS",         po::value<int>()->default_value(60),         "Number of chessbox cols if not custom --BASESCENE is used")
         ;
 
     // Parse command line
