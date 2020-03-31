@@ -79,8 +79,9 @@ int string2vec(std::string str0, std::vector<int>& v){
     std::vector<std::string> SplitVec;
     boost::split(SplitVec, str0, boost::is_any_of(",;"));//Split into elements with either deliminator
     for(std::string element:SplitVec){
+        int element_i;
         try{
-            int element_i = std::stoi(element);
+            element_i = std::stoi(element);
         }catch(...){
             std::cerr << "ERROR: could not convert element '" << element <<"' to int." << std::endl;
             throw(1);
@@ -99,8 +100,9 @@ int string2vec(std::string str0, std::vector<float>& v){
     std::vector<std::string> SplitVec;
     boost::split(SplitVec, str0, boost::is_any_of(",;"));//Split into elements with either deliminator
     for(std::string element:SplitVec){
+        int element_i;
         try{
-            int element_i = std::stof(element);
+            element_i = std::stof(element);
         }catch(...){
             std::cerr << "ERROR: could not convert element '" << element <<"' to float." << std::endl;
             throw(1);
