@@ -19,8 +19,23 @@ stamp.get(timeStamp);
 //Initialize settings
 namespace bpu=boostParserUtilites;
 boost::program_options::variables_map vm;
-//if(!boostParserUtilites::readCommandLine(argc, argv,vm)) return 0;
-
+if(!bpu::readCommandLine(argc, argv,vm)) return 0;
+//Assign values
+std::string basePath = vm["BASE_PATH"].as<std::string>();
+std::string trajectoryFile;     bpu::assign(vm,trajectoryFile,"STREAM_DATA_FILE");
+std::vector<int> xyz_cols;      bpu::assign(vm,xyz_cols,"XYZ_COLUMS");
+int xCol = xyz_cols[0]; int yCol = xyz_cols[1]; int zCol = xyz_cols[2];
+std::vector<int> rpy_cols;      bpu::assign(vm,rpy_cols,"Y_P_R_COLUMNS");
+int yawCol = rpy_cols[0];int pitchCol = rpy_cols[1];int rollCol = rpy_cols[2];
+int timeCol = vm["TIMESTAMP_COL"].as<int>();
+int distCol = vm["DIST_COLUMN"].as<int>();
+cv::Mat_<float> K;               bpu::assign(vm,K,"K_MAT");
+std::string baseScene = vm["BASESCENE"].as<std::string>();
+float baseSceneWidth = vm["BASESCENE_WIDTH"].as<float>();
+int boxWidth = vm["CHESSBASE_BOXWIDTH"].as<int>();
+int rowsOfBoxes = vm["CHESSBASE_ROWS"].as<int>();
+int colsOfBoxes = vm["CHESSBASE_COLS"].as<int>();
+;
 
 
 
@@ -45,42 +60,29 @@ std::cout << "Base scene coordinate system must be aligned with pixel coordinate
 std::cout << "The base scene will be resized to camera resolution proportions by padding with black pixles" << std::endl;
 
 robustPositioning::imageLogger imagebin;
-std::string pathToDir = "Generated-dataSets/29-mar/";
+std::string pathToDir = basePath;
 std::string newDir = "images";
 imagebin.init(pathToDir,newDir);
 
-//robustPositioning::dataStreamer getData("Generated-dataSets/5_jul/truePath.csv");
-robustPositioning::dataStreamer getData("Generated-dataSets/13-okt/path.csv");
+robustPositioning::dataStreamer getData(basePath+trajectoryFile);
 
-
-    //Initialize settings
-    //set::settings S(argc,argv);
-    //if(!S.success){return 0;}
-    //Initialize simulation
-    // Define sim chessboard parameters
-    int boxWidth = 11;
-    int rowsOfBoxes = 30;
-    int colsOfBoxes = 60;
-// Define file objects to output data into
-//    std::ofstream file_true;
-//    std::ofstream file_estimated;
-// Init simulation environment
-    simulatePose warper;
-    //cv::Mat floor = cv::imread("spike/test2.png",cv::IMREAD_REDUCED_COLOR_4);
+simulatePose warper;
+cv::Mat floor;
+//cv::Mat floor = cv::imread("spike/test2.png",cv::IMREAD_REDUCED_COLOR_4);
+if(baseScene == ""){// If no base scene defined go with default
+    warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
+}else{
     cv::Mat floor = cv::imread("Generated-dataSets/Scene/baseScene.png");
     if(floor.empty()){std::cout << "Could not read base image" << std::endl; return 0;}
-    cv::Mat floor8U;
-    cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
-
-    cv::Mat_<float> K = cv::Mat_<float>::eye(3,3);
-    K(0,0) = 607;
-    K(1,1) = 607;
-    K(0,2) = 320;
-    K(1,2) = 240;
+    //cv::Mat floor8U;
+    //cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
-    warper.setBaseSceneWidth(4);    //Scenewidth is 4m
-    warper.setKMat(K);
-    warper.init();//Initialize with configuration 0
+}
+warper.setBaseSceneWidth(boxWidth);
+warper.setKMat(K);
+warper.init();//Initialize with configuration 0
+
+
 
 
 std::cout << "Cpordinates are correct? sign of z?" << std::endl;
@@ -89,8 +91,8 @@ std::cout << "Cpordinates are correct? sign of z?" << std::endl;
 std::vector<float> data;
     while(getData.get(data)){
         //Get data
-        std::vector<float> trueCoordinate{data[1],data[2],data[3]};
-        std::vector<float> angles{data[4],data[5],data[6]};
+        std::vector<float> trueCoordinate{data[xCol],data[yCol],data[zCol]};
+        std::vector<float> angles{data[yawCol],data[pitchCol],data[rollCol]};
     //Get new image
         cv::Mat rawFrame = warper.simulateView(angles,trueCoordinate);
         //cv::Mat rawFrame = warper.uav2BasePose(angles,trueCoordinate);
@@ -134,13 +136,13 @@ int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_op
     settings.add_options()
         ("STREAM_DATA_FILE",    po::value<std::string>(),   "Path to data file from config file path")
         ("XYZ_COLUMS",          po::value<std::string>(),   "Specifies [<X_COL>,<Y_COL>,<Z_COL>] as matlab style vector (0-indexed)")
-        ("TIMESTAMP_COL,",      po::value<int>(),           "Specifies which column of csv file that contains timestamp data (0-indexed)")
+        ("TIMESTAMP_COL",      po::value<int>(),           "Specifies which column of csv file that contains timestamp data (0-indexed)")
         ("DIST_COLUMN",         po::value<int>(),           "Specifies which column of csv file that contains distance (lidar) data (0-indexed)")
-        ("R_P_Y_COLUMNS",         po::value<int>(),         "Specifies which columns of csv file that contains [roll,pitch,yaw] data (0-indexed)")
+        ("Y_P_R_COLUMNS",       po::value<std::string>(),   "Specifies which columns of csv file that contains [yaw,pitch,col] data (0-indexed)")
         ("BASESCENE",           po::value<std::string>()->default_value(""),   "Path to the base scene image that is to be warped. Defaults to chess board")
-        ("BASESCENE_WIDTH",      po::value<float>(),        "Physical width of base scene in meter (x-dir)")
-        ("K_MAT",  po::value<std::string>(),                "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator")
-        ("CHESSBASE_BOXWIDTH",         po::value<int>()->default_value(11),     "Size of each chessbox if not custom --BASESCENE is used")
+        ("BASESCENE_WIDTH",     po::value<float>(),        "Physical width of base scene in meter (x-dir)")
+        ("K_MAT",               po::value<std::string>(),                "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator")
+        ("CHESSBASE_BOXWIDTH",     po::value<int>()->default_value(11),     "Size of each chessbox if not custom --BASESCENE is used")
         ("CHESSBASE_ROWS",         po::value<int>()->default_value(30),         "Number of chessbox rows if not custom --BASESCENE is used")
         ("CHESSBASE_COLS",         po::value<int>()->default_value(60),         "Number of chessbox cols if not custom --BASESCENE is used")
         ;
@@ -185,8 +187,6 @@ int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_op
     // Check format of some critical inputs
         namespace bpu=boostParserUtilites;
         if(!bpu::checkDimOfCVMatOption(vm,"K_MAT",3, 3)){return 0;}
-        if(!bpu::checkDimOfCVMatOption(vm,"XYZ_COLUMNS",1, 3)){return 0;}
-        if(!bpu::checkDimOfCVMatOption(vm,"R_P_Y_COLUMNS",1, 3)){return 0;}
 
 
     return 1;
