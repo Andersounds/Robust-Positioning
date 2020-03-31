@@ -70,6 +70,46 @@ int string2CVMat(std::string str0, cv::Mat_<float>& M){
     }
 return 1;
 }
+/*
+ Function to convert matlab style vector definition to std::vector
+*/
+int string2vec(std::string str0, std::vector<int>& v){
+    v.clear();
+    boost::trim_if(str0,boost::is_any_of("[]"));//Trim brackets
+    std::vector<std::string> SplitVec;
+    boost::split(SplitVec, str0, boost::is_any_of(",;"));//Split into elements with either deliminator
+    for(std::string element:SplitVec){
+        try{
+            int element_i = std::stoi(element);
+        }catch(...){
+            std::cerr << "ERROR: could not convert element '" << element <<"' to int." << std::endl;
+            throw(1);
+            return 0;
+        }
+        v.push_back(element_i);
+    }
+return 1;
+}
+/*
+    Overloaded conversion function for floats
+*/
+int string2vec(std::string str0, std::vector<float>& v){
+    v.clear();
+    boost::trim_if(str0,boost::is_any_of("[]"));//Trim brackets
+    std::vector<std::string> SplitVec;
+    boost::split(SplitVec, str0, boost::is_any_of(",;"));//Split into elements with either deliminator
+    for(std::string element:SplitVec){
+        try{
+            int element_i = std::stof(element);
+        }catch(...){
+            std::cerr << "ERROR: could not convert element '" << element <<"' to float." << std::endl;
+            throw(1);
+            return 0;
+        }
+        v.push_back(element_i);
+    }
+return 1;
+}
 
 /*
     Set of overloaded functions that assigns casted option to given inputoutput argument
@@ -112,6 +152,28 @@ int assign(const boost::program_options::variables_map& vm, cv::Mat_<float>& var
         return 0;
     }catch(...){
         std::cerr << "ERROR: could not convert element '" << key <<"' to cv::Mat_<float>." << std::endl;
+        std::cerr << "In boostParserUtilites::assign" << std::endl;
+        return 1;
+    }
+}
+int assign(const boost::program_options::variables_map& vm, std::vector<int>& var,std::string key){
+    try{
+        std::string var_STR = vm[key].as<std::string>();
+        string2vec(var_STR,var);
+        return 0;
+    }catch(...){
+        std::cerr << "ERROR: could not convert element '" << key <<"' to std::vector<int>." << std::endl;
+        std::cerr << "In boostParserUtilites::assign" << std::endl;
+        return 1;
+    }
+}
+int assign(const boost::program_options::variables_map& vm, std::vector<float>& var,std::string key){
+    try{
+        std::string var_STR = vm[key].as<std::string>();
+        string2vec(var_STR,var);
+        return 0;
+    }catch(...){
+        std::cerr << "ERROR: could not convert element '" << key <<"' to std::vector<float>." << std::endl;
         std::cerr << "In boostParserUtilites::assign" << std::endl;
         return 1;
     }
