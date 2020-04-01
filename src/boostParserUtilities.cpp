@@ -180,6 +180,20 @@ int assign(const boost::program_options::variables_map& vm, std::vector<float>& 
         return 1;
     }
 }
+int assign(const boost::program_options::variables_map& vm, bool& var,std::string key){
+    std::string var_STR = vm[key].as<std::string>();
+    if(var_STR == "YES"){
+        var = true;
+    }else if(var_STR == "NO"){
+        var = false;
+    }else{
+        std::cerr << "ERROR: could not convert element '" << key <<"' to bool <YES/NO>" << std::endl;
+        std::cerr << "In boostParserUtilites::assign" << std::endl;
+        return 1;
+    }
+    return 0;
+
+}
 //Check dimension of matrix
 //Error: return 0
 //Pass:  return 1
