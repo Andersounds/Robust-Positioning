@@ -73,7 +73,7 @@ cv::Mat floor;
 if(baseScene == ""){// If no base scene defined go with default
     warper.setBaseScene(boxWidth,rowsOfBoxes,colsOfBoxes);
 }else{
-    cv::Mat floor = cv::imread("Generated-dataSets/Scene/baseScene.png");
+    cv::Mat floor = cv::imread(basePath+baseScene);
     if(floor.empty()){std::cout << "Could not read base image" << std::endl; return 0;}
     //cv::Mat floor8U;
     //cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
