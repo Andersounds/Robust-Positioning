@@ -29,13 +29,14 @@ std::vector<int> rpy_cols;      bpu::assign(vm,rpy_cols,"Y_P_R_COLUMNS");
 int yawCol = rpy_cols[0];int pitchCol = rpy_cols[1];int rollCol = rpy_cols[2];
 int timeCol = vm["TIMESTAMP_COL"].as<int>();
 int distCol = vm["DIST_COLUMN"].as<int>();
-cv::Mat_<float> K;               bpu::assign(vm,K,"K_MAT");
+cv::Mat_<float> K;              bpu::assign(vm,K,"K_MAT");
 std::string baseScene = vm["BASESCENE"].as<std::string>();
 float baseSceneWidth = vm["BASESCENE_WIDTH"].as<float>();
 int boxWidth = vm["CHESSBASE_BOXWIDTH"].as<int>();
 int rowsOfBoxes = vm["CHESSBASE_ROWS"].as<int>();
 int colsOfBoxes = vm["CHESSBASE_COLS"].as<int>();
-;
+bool log;                       bpu::assign(vm,log,"LOG");
+bool step;                      bpu::assign(vm,step,"STEP");
 
 
 
@@ -83,10 +84,6 @@ warper.setKMat(K);
 warper.init();//Initialize with configuration 0
 
 
-
-
-std::cout << "Cpordinates are correct? sign of z?" << std::endl;
-
 //Go through whole path
 std::vector<float> data;
     while(getData.get(data)){
@@ -101,10 +98,13 @@ std::vector<float> data;
         cv::imshow("showit",rawFrame);
 
         //Dump image
-        //stamp.get(timeStamp);
-        timeStamp = (double)data[0];
-        imagebin.dump(timeStamp,frame);
-        //cv::waitKey(0);
+        if(log){
+            timeStamp = (double)data[timeCol];
+            imagebin.dump(timeStamp,frame);
+        }
+        if(step){
+            cv::waitKey(0);
+        }
         if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
     }
     //imagebin.rename(cv::String(pathToDir+newDir+"/"),cv::String("img_"));
@@ -130,7 +130,8 @@ int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_op
     generic.add_options()
         ("help,h", "produce help message")
         ("file,f",po::value<std::string>(),"configuration file")// Possibly set this as first positional option?
-        //("BASE_PATH,p",po::value<std::string>(),"Base path from which I/O paths are relative. Defaults to pwd but may be overridden with this flag.\nGive as either absolute or relative path.")
+        ("LOG,l",    po::value<std::string>(),   "Log dataset? <YES/NO>")
+        ("STEP,l",    po::value<std::string>(),   "Wait for keypress after every image? <YES/NO>")
     ;
     po::options_description settings("Program settings");
     settings.add_options()
