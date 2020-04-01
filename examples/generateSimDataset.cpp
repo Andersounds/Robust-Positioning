@@ -78,7 +78,7 @@ if(baseScene == ""){// If no base scene defined go with default
     //cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
 }
-warper.setBaseSceneWidth(boxWidth);
+warper.setBaseSceneWidth(baseSceneWidth);
 warper.setKMat(K);
 warper.init();//Initialize with configuration 0
 
