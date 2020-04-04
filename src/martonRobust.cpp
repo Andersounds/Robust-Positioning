@@ -89,3 +89,137 @@ void robustPositioning::martonRobust::setDistortCoefficents(float k1, float k2, 
     k2_barrel = k2;
     k3_barrel = k3;
 }
+
+
+/*
+Below are function definitions for Marton robust positioning algorithm
+
+
+
+*/
+
+/*
+    Data struct with parameters that are given to cost and jacobian functions later
+*/
+struct robustPositioning::martonRobust::poly2_data {
+
+};
+/*
+    Cost function to be passed to solver.
+    x: arguments (in this case the polynomial parameters a,b,c in f = a + bt + ct^2)
+    data: arbritary parameters given by us to solver that are passed to solver. In this case will it be t in the above equation. Also measuremed values and previous known locations
+    f: The results of all cost functions shall be passed back to the solver via this vector
+*/
+int robustPositioning::martonRobust::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
+
+// Read parameters from data-struct
+//Dessa måste ges.
+x, x_prev, x_prev_prev
+y, y_prev, y_prev_prev
+z, z_prev, z_prev_prev
+yaw, yaw_prev, yaw_prev_prev
+t, t_prev, t_prev_prev
+
+Ekvationer 1-9 definieras på exakt samma sätt. Kan göra med ngn smartare matrismultiplikation eller iteratorer eller så
+
+Samma sak med 10-12 antar jag om jag inte ska göra specialfall
+
+Kom på hur ekvation 13 (kon-surface) och ekvation 14 (yaw)
+
+//arguments
+  double sx0 = gsl_vector_get (x, 0);
+  double sx1 = gsl_vector_get (x, 1);
+  double sx2 = gsl_vector_get (x, 2);
+
+  double sy0 = gsl_vector_get (x, 3);
+  double sy1 = gsl_vector_get (x, 4);
+  double sy2 = gsl_vector_get (x, 5);
+
+  double sz0 = gsl_vector_get (x, 6);
+  double sz1 = gsl_vector_get (x, 7);
+  double sz2 = gsl_vector_get (x, 8);
+
+  double syaw0 = gsl_vector_get (x, 9);
+  double syaw1 = gsl_vector_get (x, 10);
+  double syaw2 = gsl_vector_get (x, 11);
+
+
+  double f1 =
+
+}
+/*
+    Analytic jacobian matrix of the above cost function
+*/
+int robustPositioning::martonRobust::poly2_df (const gsl_vector * x, void *data, gsl_matrix * J){
+
+}
+/*
+    The function that sets up the problem and solves it using GSL nonlinear least square optimization method
+    Code is adapted from first example at https://www.gnu.org/software/gsl/doc/html/nls.html
+*/
+int robustPositioning::martonRobust::nlinear_lsqr(void){
+
+    const gsl_multifit_nlinear_type *T = gsl_multifit_nlinear_trust;
+    gsl_multifit_nlinear_workspace *w;
+    gsl_multifit_nlinear_fdf fdf;
+    gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();
+    const size_t n = N; //N is number of data points
+    const size_t p = 3; // p is i guess number of parameters to solve for
+
+    gsl_vector *f;
+    gsl_matrix *J;
+    gsl_matrix *covar = gsl_matrix_alloc (p, p);
+    double t[N], y[N], weights[N];
+    struct data d = { n, t, y };
+    double x_init[3] = { 1.0, 1.0, 0.0 }; /* starting values */
+    gsl_vector_view x = gsl_vector_view_array (x_init, p);
+    gsl_vector_view wts = gsl_vector_view_array(weights, n);
+    gsl_rng * r;
+    double chisq, chisq0;
+    int status, info;
+    size_t i;
+
+    const double xtol = 1e-8;
+    const double gtol = 1e-8;
+    const double ftol = 0.0;
+
+    gsl_rng_env_setup();
+    r = gsl_rng_alloc(gsl_rng_default);
+
+    /* define the function to be minimized */
+    fdf.f = expb_f;
+    fdf.df = expb_df;   /* set to NULL for finite-difference Jacobian */
+    fdf.fvv = NULL;     /* not using geodesic acceleration */
+    fdf.n = n;
+    fdf.p = p;
+    fdf.params = &d;
+
+    /* this is the data to be fitted */
+    //for (i = 0; i < n; i++)
+    //  {
+    //    double ti = i * TMAX / (n - 1.0);
+    //    double yi = 1.0 + 5 * exp (-0.1 * ti);
+    //    double si = 0.1 * yi;
+    //    double dy = gsl_ran_gaussian(r, si);
+
+    //    t[i] = ti;
+    //    y[i] = yi + dy;
+    //    weights[i] = 1.0 / (si * si);
+    //  };
+
+    /* allocate workspace with default parameters */
+    w = gsl_multifit_nlinear_alloc (T, &fdf_params, n, p);
+
+    /* initialize solver with starting point and weights */
+    gsl_multifit_nlinear_winit (&x.vector, &wts.vector, &fdf, w);
+
+    /* compute initial cost function */
+    //f = gsl_multifit_nlinear_residual(w);
+    //gsl_blas_ddot(f, f, &chisq0);
+
+    /* solve the system with a maximum of 100 iterations */
+    status = gsl_multifit_nlinear_driver(100, xtol, gtol, ftol,
+                                         callback, NULL, &info, w);
+
+
+}
