@@ -102,7 +102,11 @@ Below are function definitions for Marton robust positioning algorithm
     Data struct with parameters that are given to cost and jacobian functions later
 */
 struct robustPositioning::martonRobust::poly2_data {
-
+    //size_t n;         //Use this to allow for more than one anchor later. then alpha can be passed as [sx1,sy1,sz1,vx1,vy1,vz1,sx2,sy2,sz2,vx2,vy2,vz2]
+    //size_t m;         //Use this to vary number of previous known positions that are passed to solver
+    double * p;         //Previous known positions [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...]
+    double * alpha;     //[sx,sy,sz,vx,vy] parameters to visible anchor.vx,vy is vector pointing towards anchor, in UAV frame! translate with T before passing.Maybe allow for more than one anchor later?
+    double * t;         //Timestamps, current and previous [t1 t2 t3 tf]
 };
 /*
     Cost function to be passed to solver.
@@ -111,53 +115,59 @@ struct robustPositioning::martonRobust::poly2_data {
     f: The results of all cost functions shall be passed back to the solver via this vector
 */
 int robustPositioning::martonRobust::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
-
 // Read parameters from data-struct
-//Dessa måste ges.
-x, x_prev, x_prev_prev
-y, y_prev, y_prev_prev
-z, z_prev, z_prev_prev
-yaw, yaw_prev, yaw_prev_prev
-t, t_prev, t_prev_prev
+double *p = ((struct data *)data)->p;
+double *alpha = ((struct data *)data)->alpha;
+double *t = ((struct data *)data)->t;
+/* Equations 0-11 */
+// T order: [t1,t2,t3,tf]  kronologisk
+// p order: [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...] Yttre ordning: kronologisk, inre ordning: x,y,z,yaw
+// x order: [sigmax0,sigmax1,sigmax2,sigmay0,sigmay1,sigmay2]  Yttre ordgning: x,y,z,yaw, inre ordnnig: stigande grad
+for (i = 0;i < 3; i++){
+    // Calculate time stamp powers
+    double t_i = t[i];
+    double t_i_sqr = t_j^2;
+    int offset = i*4;
+    gsl_vector_set (f, 0+offset, x[0]+x[ 1]*ti+x[ 2]*t_i_sqrd - p[0+offset]); //X for time i
+    gsl_vector_set (f, 1+offset, x[3]+x[ 4]*ti+x[ 5]*t_i_sqrd - p[1+offset]); //Y for time i
+    gsl_vector_set (f, 2+offset, x[6]+x[ 7]*ti+x[ 8]*t_i_sqrd - p[2+offset]); //Z for time i
+    gsl_vector_set (f, 3+offset, x[9]+x[10]*ti+x[11]*t_i_sqrd - p[3+offset]); //Yaw for time i
+}
+/*Equation 12 - Hardcoded position 13. keep counter if allow for more previous data points*/
+    double c = (alpha[3]^2 + alpha[4]^2)/(alpha[5]^2); // to use in cone equation x^2+y^2 = c*z^2
+    double t_f = t[3];      //Current time stamp (tf = time of failure)
+    double t_f_sqr = t_f^2;
+    //Evaluate coordinate with current provided sigma-parameters
+    double x_est = x[0]+x[ 1]*tf+x[ 2]*t_f_sqrd;
+    double y_est = x[3]+x[ 4]*tf+x[ 5]*t_f_sqrd;
+    double z_est = x[6]+x[ 7]*tf+x[ 8]*t_f_sqrd;
+    f12 = (x_est-alpha[0])^2 + (y_est - alpha[1])^2 - c*(z_est - alpha[2])^2;
+    gsl_vector_set (f, 12, f12);
+/*Equation 13 - Hardcoded position 14. keep counter if allow for more previous data points*/
+    double yaw_est = x[9]+x[10]*tf+x[11]*t_f_sqrd;
+    est_norm = sqrt(x_est^2+y_est^2);
+    v_norm = sqrt(alpha[3]^2 + alpha[4]^2);
+    double cos_ = cos(yaw_est);
+    double sin_ = sin(yaw_est);
 
-Ekvationer 1-9 definieras på exakt samma sätt. Kan göra med ngn smartare matrismultiplikation eller iteratorer eller så
+    double v_est_x = cos_*alpha[3] - sin_*alpha[4];//v vector rotated with the estimated yaw
+    double v_est_y = sin_*alpha[3] + cos_*alpha[4];
+    double f13 = (x_est/est_norm  + v_est_x/v_norm)^2 + (y_est/est_norm + v_est_y/v_norm)^2;
+    gsl_vector_set (f, 12, f13);
 
-Samma sak med 10-12 antar jag om jag inte ska göra specialfall
-
-Kom på hur ekvation 13 (kon-surface) och ekvation 14 (yaw)
-
-//arguments
-  double sx0 = gsl_vector_get (x, 0);
-  double sx1 = gsl_vector_get (x, 1);
-  double sx2 = gsl_vector_get (x, 2);
-
-  double sy0 = gsl_vector_get (x, 3);
-  double sy1 = gsl_vector_get (x, 4);
-  double sy2 = gsl_vector_get (x, 5);
-
-  double sz0 = gsl_vector_get (x, 6);
-  double sz1 = gsl_vector_get (x, 7);
-  double sz2 = gsl_vector_get (x, 8);
-
-  double syaw0 = gsl_vector_get (x, 9);
-  double syaw1 = gsl_vector_get (x, 10);
-  double syaw2 = gsl_vector_get (x, 11);
-
-
-  double f1 =
-
+    return GSL_SUCCESS;
 }
 /*
     Analytic jacobian matrix of the above cost function
 */
 int robustPositioning::martonRobust::poly2_df (const gsl_vector * x, void *data, gsl_matrix * J){
-
+return GSL_SUCCESS;
 }
 /*
     The function that sets up the problem and solves it using GSL nonlinear least square optimization method
     Code is adapted from first example at https://www.gnu.org/software/gsl/doc/html/nls.html
 */
-int robustPositioning::martonRobust::nlinear_lsqr(void){
+int robustPositioning::martonRobust::nlinear_lsqr_solve_2deg(void){
 
     const gsl_multifit_nlinear_type *T = gsl_multifit_nlinear_trust;
     gsl_multifit_nlinear_workspace *w;
@@ -168,30 +178,31 @@ int robustPositioning::martonRobust::nlinear_lsqr(void){
 
     gsl_vector *f;
     gsl_matrix *J;
-    gsl_matrix *covar = gsl_matrix_alloc (p, p);
-    double t[N], y[N], weights[N];
-    struct data d = { n, t, y };
-    double x_init[3] = { 1.0, 1.0, 0.0 }; /* starting values */
-    gsl_vector_view x = gsl_vector_view_array (x_init, p);
-    gsl_vector_view wts = gsl_vector_view_array(weights, n);
-    gsl_rng * r;
-    double chisq, chisq0;
-    int status, info;
+    //gsl_matrix *covar = gsl_matrix_alloc (p, p);
+    double p[12], alpha[5], t[4]; //p: 12 previous data point (3x{x,y,z,yaw}| alpha: one anchor [sz,sy,sz,vx,vy] | t: 4 timestamps ([t_oldoldold,t_oldold,t_old,t_now))
+    //double t[N], y[N], weights[N];
+    struct data d = { p, alpha, t };
+    double x_init[3] = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+    //gsl_vector_view x = gsl_vector_view_array (x_init, p);
+    //gsl_vector_view wts = gsl_vector_view_array(weights, n);
+    //gsl_rng * r;
+    //double chisq, chisq0;
+    //int status, info;
     size_t i;
 
     const double xtol = 1e-8;
     const double gtol = 1e-8;
     const double ftol = 0.0;
 
-    gsl_rng_env_setup();
-    r = gsl_rng_alloc(gsl_rng_default);
+    //gsl_rng_env_setup();
+    //r = gsl_rng_alloc(gsl_rng_default);
 
     /* define the function to be minimized */
-    fdf.f = expb_f;
-    fdf.df = expb_df;   /* set to NULL for finite-difference Jacobian */
+    fdf.f = poly2_f;
+    fdf.df = NULL; //poly2_df;   /* set to NULL for finite-difference Jacobian */
     fdf.fvv = NULL;     /* not using geodesic acceleration */
-    fdf.n = n;
-    fdf.p = p;
+    fdf.n = 14; //the number of functions, i.e. the number of components of the vector f.
+    fdf.p = 12;  //the number of independent variables, i.e. the number of components of the vector x.
     fdf.params = &d;
 
     /* this is the data to be fitted */

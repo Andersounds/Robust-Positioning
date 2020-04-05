@@ -17,7 +17,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_multifit_nlinear.h>
-
+#include <math.h>       /* cos */
 namespace robustPositioning{
 /*
 
