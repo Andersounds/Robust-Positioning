@@ -1,7 +1,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include "angulation.hpp"
-#include "azipe.hpp"
+
 
 
 /*
@@ -94,7 +94,7 @@ std::vector<std::string> ang::angulation::parse(std::string line){
 }
 
 
-int ang::angulation::maskOut(const std::vector<cv::Mat_<float>>& vFull, std::vector<cv::Mat_<float>>& vMasked, std::vector<bool>& mask){
+int ang::angulation::maskOut(std::vector<cv::Mat_<float>>& vFull, std::vector<cv::Mat_<float>>& vMasked, std::vector<bool>& mask){
     //Use the mask to feed through
     vMasked.clear();
     std::vector<cv::Mat_<float>>::iterator it_v = vFull.begin();
@@ -106,38 +106,7 @@ int ang::angulation::maskOut(const std::vector<cv::Mat_<float>>& vFull, std::vec
         it_v++;
         it_mask++;
     }
-}
-/* Performs the position and azimuth calculation
- * Discards all elements that are masked away and then calls azipe
- * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?
- */
-int ang::angulation::calculateAzipe(std::vector<cv::Mat_<float>>& q, std::vector<cv::Mat_<float>>& v,std::vector<bool>& mask, cv::Mat_<float>& pos,float& yaw, float& roll,float& pitch){
-    //Use the mask to feed through
-    std::vector<cv::Mat_<float>> v_m;
-    std::vector<cv::Mat_<float>> q_m;
-    std::vector<cv::Mat_<float>>::iterator it_v = v.begin();
-    std::vector<cv::Mat_<float>>::iterator it_q = q.begin();
-    std::vector<bool>::iterator it_mask = mask.begin();
-    while(it_mask != mask.end()){
-        if(*it_mask){
-            v_m.push_back(*it_v);
-            q_m.push_back(*it_q);
-        }
-        it_v++;
-        it_q++;
-        it_mask++;
-    }
-    cv::Mat_<float> t_opt;
-    //return az::azipe(v_m,q_m,pos,yaw,roll,pitch,t_opt);//Gammal ordning på vinklar
-    az::azipe(v_m,q_m,pos,yaw,pitch,roll);
-    if(v_m.size()>2 && false){
-        std::cout << "angulation, row 118"<< std::endl;
-        int r = az::aipe(v_m,q_m,pos,yaw,pitch,roll,1);
-            //std::cout << "Roll: " << roll << ", pitch: " << pitch << std::endl;
-        return r;
-    }
-    return 0;
-
+    return 1;
 }
 
 /*Converts a vector of camera pixel coordinates to a vector of uLOS vectors expressed as Mat_<float>
