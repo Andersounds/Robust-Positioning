@@ -26,7 +26,7 @@ pos::positioning::positioning(int opticalFlow_mode,
     //Set some settings for angulation object
     ang::angulation::setKmat(K);
     ang::angulation::setTmat(T);
-    minAnchors = 2;//Descider wether to try angulation or not
+    minAnchors = 3;//Descider wether to try angulation or not
     //Initialize the aruco dictionary
     dictionary = cv::aruco::getPredefinedDictionary(arucoDictionary);
     //Set some settings for Optical Flow object
