@@ -21,6 +21,20 @@
 
 
 namespace marton{
+    /*
+    Small class to act as a circular buffer to store old x,y,z,yaw,timestamps. To be passed to process-function
+    */
+    class circBuff{
+        std::vector<float> p;   //Vector keeping xyz yaw as : [x_oldold,y_oldold,z_oldold,yaw_oldold,x_old,y_old,z_old,yaw_old,x,y,z,yaw]
+        std::vector<float> t;   //Vector keeping t as [y_oldold,t_old,t]
+        std::vector<float>::iterator p_it;
+        std::vector<float>::iterator t_it;
+    public:
+        circBuff(int);//Constructor
+        int add(const cv::Mat_<float>&,float,float); //Add x,y,x, yaw and timestamp
+        int read_t(double*);
+        int read_p(double*);    // Functions to fill a c style array with the buffer values as doubles
+    };
 /*
  Can this be done without a class but as just free functions?
 */
@@ -29,6 +43,11 @@ namespace marton{
         //int bufferSize; //How many previous locations are to be saved in circular buffer? (min value dep on polyParameters)
 //    public:
         void process(void);// template for complete process method. add arguments and return type when clear
+        void process(const std::vector<cv::Mat_<float>>& v,
+                    const std::vector<cv::Mat_<float>>& q,
+                    cv::Mat_<float>& position,
+                    float& yaw,
+                    float pitch,float roll);
 //    private:
         int nlinear_lsqr_solve_2deg(void);     //Perform the nonlinear least square optimization Add arguments when known
 //    };
@@ -39,5 +58,8 @@ namespace marton{
     int poly2_f (const gsl_vector * x, void *data, gsl_vector * f); // Cost function for gsl_multifit_nlinear (2nd order polynomial)
     int poly2_df (const gsl_vector * x, void *data, gsl_matrix * J);// Jacobian of cost function for gsl-multifit_nlinear (2nd order polynomial)
 
+
+    cv::Mat getXRot(float);
+    cv::Mat getYRot(float);
 }
 #endif

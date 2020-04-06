@@ -36,7 +36,33 @@ void marton::process(void){
     int status = marton::nlinear_lsqr_solve_2deg();
     std::cout << "Status: " << status << std::endl;
 }
+void marton::process(const std::vector<cv::Mat_<float>>& v,
+            const std::vector<cv::Mat_<float>>& q,
+            cv::Mat_<float>& position,
+            float& yaw,
+            float pitch,float roll){
 
+                /*
+                (0.)    Extract only first v and q. In future maybe allow more
+                 1.     Derotate v using pitch and roll
+                 2.     Construct alpha from v and q (cast to double also)
+                 3.     Norm previous timetamps so that oldest is 0. construct t
+                 4.     Norm x,y,z,yaw so that oldes is 0. This to get more consistent parameters in case we use as start guess construct p
+                 5.     construct poly2_data
+                 6.     Give initial guess via inputOutput argument.
+                 7.     possibly give weights,xtol,ftol, iterations via a struct
+                 8.     Perform nonlinear least square optimization
+                 9.     If successful, pass back position and yaw estimation, otherwise some fail code
+                */
+
+                //1.
+                cv::Mat Rx = marton::getXRot(roll);
+                cv::Mat Ry = marton::getYRot(pitch);
+                cv::Mat_<float> v0 = Ry*Rx*v[0];//Derotate v vector back in reverse order. (roll-pitch-yaw instead of yaw-pitch-roll)
+                cv::Mat_<float> q0 = q[0];
+
+
+            }
 
 
 /*
@@ -226,4 +252,81 @@ int marton::nlinear_lsqr_solve_2deg(void){
     }
     return status;
 
+}
+
+
+
+/*
+    Circular buffer implementation
+*/
+
+
+
+marton::circBuff::circBuff(int size){
+    //Initialize sie of vectors
+    p = std::vector<float>(size*4);
+    t = std::vector<float>(size);
+    p_it = p.begin();
+    t_it = t.begin();
+}
+//Must be ingle column pos
+int marton::circBuff::add(const cv::Mat_<float>& pos,float yaw,float timeStamp){
+    *p_it = pos(0,0);p_it++;
+    *p_it = pos(1,0);p_it++;
+    *p_it = pos(2,0);p_it++;
+    *p_it = yaw;   p_it++;
+    *t_it = timeStamp; t_it++;
+    if(t_it == t.end()){        //Reset iterators
+        p_it = p.begin();
+        t_it = t.begin();
+    }
+    return 1;
+}
+int marton::circBuff::read_t(double* time){
+    size_t size = t.size();
+    for(size_t i=0;i<size;i++){
+        if(t_it == t.end()){
+            t_it = t.begin();
+        }
+        time[i] = (double)*t_it;
+        t_it++;
+
+    }
+    return 1;
+}
+int marton::circBuff::read_p(double* p2){
+    size_t size = p.size();
+    for(size_t i=0;i<size;i++){
+        if(p_it == p.end()){
+            p_it = p.begin();
+        }
+        p2[i] = (double)*p_it;
+        p_it++;
+    }
+    return 1;
+}
+/* Functions for defining roll, pitch, and yaw rotation matrices
+ * Increase speed by passing reference and edit in place?
+ */
+cv::Mat marton::getXRot(float roll){
+    float sinX = std::sin(roll);
+    float cosX = std::cos(roll);
+    cv::Mat_<float> R_x = cv::Mat_<float>::zeros(3,3);
+    R_x(0,0) = 1;
+    R_x(1,1) = cosX;
+    R_x(1,2) = -sinX;
+    R_x(2,1) = sinX;
+    R_x(2,2) = cosX;
+    return R_x;
+}
+cv::Mat marton::getYRot(float pitch){
+    float sinY = std::sin(pitch);
+    float cosY = std::cos(pitch);
+    cv::Mat_<float> R_y = cv::Mat_<float>::zeros(3,3);
+    R_y(0,0) = cosY;
+    R_y(0,2) = sinY;
+    R_y(1,1) = 1;
+    R_y(2,0) = -sinY;
+    R_y(2,2) = cosY;
+    return R_y;
 }
