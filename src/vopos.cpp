@@ -55,15 +55,17 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
         case pos::MODE_AZIPE:{
             // Detect markers, extract the known ones using the database
             cv::aruco::detectMarkers(frame, dictionary, corners, ids);
-            std::vector<cv::Mat_<float>> q;
-            std::vector<cv::Mat_<float>> v;
+            std::vector<cv::Mat_<float>> q,q_m;//q and q_masked
+            std::vector<cv::Mat_<float>> v,v_m;//v and v_masked
             std::vector<bool> mask;
             int knownAnchors = dataBase2q(ids,q,mask);//Count how many known anchors are found and return their coordinates from database (in q)
             if(knownAnchors < minAnchors){
                 returnMode = pos::RETURN_MODE_AZIPE_FAILED;
             } else{
                 pix2uLOS(corners,v);
-                ang::angulation::calculateAzipe(q,v,mask,pos,yaw,roll,pitch);
+                ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+                ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+                az::azipe(v,q,pos,yaw,pitch,roll);
                 returnMode = pos::RETURN_MODE_AZIPE;
             }
             break;
@@ -71,8 +73,8 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
         case pos::MODE_AZIPE_AND_VO:{
             cv::aruco::detectMarkers(frame, dictionary, corners, ids);
             //Convert IDs to q-coordinates and count number of known anchors from database
-            std::vector<cv::Mat_<float>> q;
-            std::vector<cv::Mat_<float>> v;
+            std::vector<cv::Mat_<float>> q,q_m;//q and q_masked
+            std::vector<cv::Mat_<float>> v,v_m;//v and v_masked
             std::vector<bool> mask;
             int knownAnchors = dataBase2q(ids,q,mask);
             if(knownAnchors == 0){//do pure VO
@@ -94,7 +96,9 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
                 returnMode = pos::RETURN_MODE_PROJ;
             } else{//Do pure Azipe
                 pix2uLOS(corners,v);
-                ang::angulation::calculateAzipe(q,v,mask,pos,yaw,roll,pitch);
+                ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+                ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+                az::azipe(v,q,pos,yaw,pitch,roll);
                 returnMode = pos::RETURN_MODE_AZIPE;
             }
             break;
@@ -137,15 +141,17 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
         }
         case pos::MODE_AZIPE:{
             cv::aruco::detectMarkers(frame, dictionary, corners, ids);//Detect markers
-            std::vector<cv::Mat_<float>> q;
+            std::vector<cv::Mat_<float>> q,q_m;//q and q_masked
             std::vector<bool> mask;
             knownAnchors = dataBase2q(ids,q,mask);
             noOfAnchors = (float)knownAnchors;
             drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
             if(knownAnchors>=4){                                                //If enough anchors then do triangulation and break
-                std::vector<cv::Mat_<float>> v;
+                std::vector<cv::Mat_<float>> v,v_m;//v and v_masked;
                 pix2uLOS(corners,v);
-                ang::angulation::calculateAzipe(q,v,mask,pos,yaw,roll,pitch);        //Perform angulation
+                ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+                ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+                az::azipe(v,q,pos,yaw,pitch,roll);
                 returnMode = pos::RETURN_MODE_AZIPE;
                 break;
             }
@@ -234,7 +240,7 @@ std::cout << ids.size() << std::endl;
     int status = 0;
     int returnMode = pos::RETURN_MODE_AZIPE;
     //Convert IDs to q-coordinates and count number of known anchors from database
-    std::vector<cv::Mat_<float>> q;
+    std::vector<cv::Mat_<float>> q,q_m;//q and q_masked;
     std::vector<bool> mask;
 
     int knownAnchors = dataBase2q(ids,q,mask);
@@ -246,12 +252,14 @@ std::cout << ids.size() << std::endl;
     bool vo_success = false;
 
 
-    std::vector<cv::Mat_<float>> v;
+    std::vector<cv::Mat_<float>> v,v_m;//v and v_masked;
     pix2uLOS(corners,v);
     //std::cout << "ANCHORS:    " << knownAnchors<< std::endl;
     if(knownAnchors>3){
         //pos_init_est.copyTo(pos);// Set initial position guess va? varför?
-        ang::angulation::calculateAzipe(q,v,mask,pos,yaw,roll,pitch);
+        ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+        ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+        az::azipe(v,q,pos,yaw,pitch,roll);
         std::cout << "k" << std::endl;
 //        pos_init_est*=0.95;     //slow down movement of pos_init_est
 //        pos_init_est+=(pos*0.05);//Used to prevent estimations in wrong sign z from causing panic

@@ -3,9 +3,10 @@
 //#include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
-#include "../src/angulation.hpp"
-#include "../src/opticalFlow.hpp"
-#include "../src/homographyVO.hpp"
+#include "angulation.hpp"
+#include "opticalFlow.hpp"
+#include "homographyVO.hpp"
+#include "azipe.hpp"
 /*
 This class implements a complete positioning functionality with fallback method, using Aruco as base and excluding Kalman fusing with IMU data
 
