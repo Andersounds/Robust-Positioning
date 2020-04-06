@@ -20,18 +20,18 @@
 #include <math.h>       /* cos, pow */
 
 
-namespace robustPositioning{
+namespace marton{
 /*
-
+ Can this be done without a class but as just free functions?
 */
-class martonRobust{
-        int polyParameters;//How many parameters? ie what degree should the polynomial be?
-        int bufferSize; //How many previous locations are to be saved in circular buffer? (min value dep on polyParameters)
-    public:
+//class martonRobust{
+        //int polyParameters;//How many parameters? ie what degree should the polynomial be?
+        //int bufferSize; //How many previous locations are to be saved in circular buffer? (min value dep on polyParameters)
+//    public:
         void process(void);// template for complete process method. add arguments and return type when clear
-    private:
+//    private:
         int nlinear_lsqr_solve_2deg(void);     //Perform the nonlinear least square optimization Add arguments when known
-    };
+//    };
 
 
 // Free cost and jacobian of cost frunctions

@@ -30,10 +30,10 @@ Keep same interface as azipe. v,q,pos,yaw,pitch,roll
 Possibly keep list of previous positions here. or keep thet externally and give as argument?
 
 */
-void robustPositioning::martonRobust::process(void){
+void marton::process(void){
 
 
-    int status = nlinear_lsqr_solve_2deg();
+    int status = marton::nlinear_lsqr_solve_2deg();
     std::cout << "Status: " << status << std::endl;
 }
 
@@ -49,7 +49,7 @@ Below are function definitions for Marton robust positioning algorithm
 /*
     Data struct with parameters that are given to cost and jacobian functions later
 */
-struct robustPositioning::poly2_data {
+struct marton::poly2_data {
     //size_t n;         //Use this to allow for more than one anchor later. then alpha can be passed as [sx1,sy1,sz1,vx1,vy1,vz1,sx2,sy2,sz2,vx2,vy2,vz2]
     //size_t m;         //Use this to vary number of previous known positions that are passed to solver
     double * p;         //Previous known positions [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...]
@@ -62,7 +62,7 @@ struct robustPositioning::poly2_data {
     data: arbritary parameters given by us to solver that are passed to solver. In this case will it be t in the above equation. Also measuremed values and previous known locations
     f: The results of all cost functions shall be passed back to the solver via this vector
 */
-int robustPositioning::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
+int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
 // Read parameters from data-struct
 double *p = ((struct poly2_data *)data)->p;
 double *alpha = ((struct poly2_data *)data)->alpha;
@@ -114,7 +114,7 @@ for (size_t i = 0;i < 3; i++){
 /*
     Analytic jacobian matrix of the above cost function
 */
-int robustPositioning::poly2_df (const gsl_vector * x, void *data, gsl_matrix * J){
+int marton::poly2_df (const gsl_vector * x, void *data, gsl_matrix * J){
 return GSL_SUCCESS;
 }
 
@@ -124,7 +124,7 @@ return GSL_SUCCESS;
     The function that sets up the problem and solves it using GSL nonlinear least square optimization method
     Code is adapted from first example at https://www.gnu.org/software/gsl/doc/html/nls.html
 */
-int robustPositioning::martonRobust::nlinear_lsqr_solve_2deg(void){
+int marton::nlinear_lsqr_solve_2deg(void){
 
     const gsl_multifit_nlinear_type *T = gsl_multifit_nlinear_trust;
     gsl_multifit_nlinear_workspace *w;
@@ -169,7 +169,7 @@ int robustPositioning::martonRobust::nlinear_lsqr_solve_2deg(void){
     //r = gsl_rng_alloc(gsl_rng_default);
 
     /* define the function to be minimized */
-    fdf.f = robustPositioning::poly2_f;
+    fdf.f = marton::poly2_f;
     fdf.df = NULL; //poly2_df;   /* set to NULL for finite-difference Jacobian */
     fdf.fvv = NULL;     /* not using geodesic acceleration */
     fdf.n = n; //the number of functions, i.e. the number of components of the vector f.
