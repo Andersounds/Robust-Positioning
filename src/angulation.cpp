@@ -94,6 +94,19 @@ std::vector<std::string> ang::angulation::parse(std::string line){
 }
 
 
+int ang::angulation::maskOut(const std::vector<cv::Mat_<float>>& vFull, std::vector<cv::Mat_<float>>& vMasked, std::vector<bool>& mask){
+    //Use the mask to feed through
+    vMasked.clear();
+    std::vector<cv::Mat_<float>>::iterator it_v = vFull.begin();
+    std::vector<bool>::iterator it_mask = mask.begin();
+    while(it_mask != mask.end()){
+        if(*it_mask){
+            vMasked.push_back(*it_v);
+        }
+        it_v++;
+        it_mask++;
+    }
+}
 /* Performs the position and azimuth calculation
  * Discards all elements that are masked away and then calls azipe
  * Depending on how the roll and pitch data is available, maybe it can be given as cos terms directly?

@@ -34,6 +34,7 @@ namespace ang{
         void setTmat(cv::Mat_<float>);          //uav -to- camera frame transformation matrix
         void setDistortCoefficents(float,float,float);//Set k1,k2,k3 distortion coefficients
         int addAnchor(int,cv::Mat_<float>);     //Add an anchor to database (id and 3d coordinate)
+        int maskOut(const std::vector<cv::Mat_<float>>&, std::vector<cv::Mat_<float>>&,std::vector<bool>&);
         int calculateAzipe(std::vector<cv::Mat_<float>>&, std::vector<cv::Mat_<float>>&,std::vector<bool>&,cv::Mat_<float>&,float&,float&,float&); //Take pixel coordinates and IDs of anchors and calculate AZIPE
         cv::Point2f unDistort(const cv::Point2f&);//Compensate for barrel distortion
         void pix2uLOS(const std::vector<cv::Point2f>&,std::vector<cv::Mat_<float>>&);//Converts image pixel coordinates to uLOS vectors in uav frame
