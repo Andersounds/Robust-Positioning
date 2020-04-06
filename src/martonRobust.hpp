@@ -8,16 +8,15 @@
             to find expression for possible circle in 3d
         - The final position estimation is used together with initial angulation data to estimate yaw angle
 */
-#include <stdio.h>
+
 #include <opencv2/opencv.hpp>
-// Libraries for gsl nonlinear least squared optimization
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
+
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
-#include <gsl/gsl_blas.h>
 #include <gsl/gsl_multifit_nlinear.h>
-#include <math.h>       /* cos */
+
+
+
 namespace robustPositioning{
 /*
 
@@ -41,11 +40,14 @@ class martonRobust{
         void pix2angles(const std::vector<std::vector<cv::Point2f>>&,std::vector<cv::Mat_<float>>&);//Overloaded version for corner locations of anchors instead of center location
         void process(void);// template for complete process method. add arguments and return type when clear
     private:
-        struct poly2_data; // Data struct for gsl containing n: t: y:
-        int poly2_f (const gsl_vector * x, void *data, gsl_vector * f); // Cost function for gsl_multifit_nlinear (2nd order polynomial)
-        int poly2_df (const gsl_vector * x, void *data, gsl_matrix * J);// Jacobian of cost function for gsl-multifit_nlinear (2nd order polynomial)
-        int nlinear_lsqr(void);     //Perform the nonlinear least square optimization Add arguments when known
+        int nlinear_lsqr_solve_2deg(void);     //Perform the nonlinear least square optimization Add arguments when known
     };
+
+
+// Free cost and jacobian of cost frunctions
+    struct poly2_data; // Data struct for gsl containing n: t: y:
+    int poly2_f (const gsl_vector * x, void *data, gsl_vector * f); // Cost function for gsl_multifit_nlinear (2nd order polynomial)
+    int poly2_df (const gsl_vector * x, void *data, gsl_matrix * J);// Jacobian of cost function for gsl-multifit_nlinear (2nd order polynomial)
 
 }
 #endif
