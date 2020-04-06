@@ -63,7 +63,7 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
                 returnMode = pos::RETURN_MODE_AZIPE_FAILED;
             } else{
                 pix2uLOS(corners,v);
-                ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+                ang::angulation::calculateAzipe(q,v,mask,pos,yaw,roll,pitch);
                 returnMode = pos::RETURN_MODE_AZIPE;
             }
             break;
@@ -94,7 +94,7 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
                 returnMode = pos::RETURN_MODE_PROJ;
             } else{//Do pure Azipe
                 pix2uLOS(corners,v);
-                ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+                ang::angulation::calculateAzipe(q,v,mask,pos,yaw,roll,pitch);
                 returnMode = pos::RETURN_MODE_AZIPE;
             }
             break;
@@ -145,7 +145,7 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             if(knownAnchors>=4){                                                //If enough anchors then do triangulation and break
                 std::vector<cv::Mat_<float>> v;
                 pix2uLOS(corners,v);
-                ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);        //Perform angulation
+                ang::angulation::calculateAzipe(q,v,mask,pos,yaw,roll,pitch);        //Perform angulation
                 returnMode = pos::RETURN_MODE_AZIPE;
                 break;
             }
@@ -251,7 +251,7 @@ std::cout << ids.size() << std::endl;
     //std::cout << "ANCHORS:    " << knownAnchors<< std::endl;
     if(knownAnchors>3){
         //pos_init_est.copyTo(pos);// Set initial position guess va? varför?
-        ang::angulation::calculate(q,v,mask,pos,yaw,roll,pitch);
+        ang::angulation::calculateAzipe(q,v,mask,pos,yaw,roll,pitch);
         std::cout << "k" << std::endl;
 //        pos_init_est*=0.95;     //slow down movement of pos_init_est
 //        pos_init_est+=(pos*0.05);//Used to prevent estimations in wrong sign z from causing panic

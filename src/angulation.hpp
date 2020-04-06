@@ -10,8 +10,8 @@
 
 namespace ang{
     const int NO_ANCHORS = 0;
-    const int AZIPE_FAIL = 2;
-    const int AZIPE_SUCCESS = 3;
+    const int AZIPE_FAIL = 2; //Should be defined in azipe i guess? nor here
+    const int AZIPE_SUCCESS = 3; //As above
 
     class angulation{
         cv::Mat_<float> K;                      //Camera matrix
@@ -34,7 +34,7 @@ namespace ang{
         void setTmat(cv::Mat_<float>);          //uav -to- camera frame transformation matrix
         void setDistortCoefficents(float,float,float);//Set k1,k2,k3 distortion coefficients
         int addAnchor(int,cv::Mat_<float>);     //Add an anchor to database (id and 3d coordinate)
-        int calculate(std::vector<cv::Mat_<float>>&, std::vector<cv::Mat_<float>>&,std::vector<bool>&,cv::Mat_<float>&,float&,float&,float&); //Take pixel coordinates and IDs of anchors and calculate AZIPE
+        int calculateAzipe(std::vector<cv::Mat_<float>>&, std::vector<cv::Mat_<float>>&,std::vector<bool>&,cv::Mat_<float>&,float&,float&,float&); //Take pixel coordinates and IDs of anchors and calculate AZIPE
         cv::Point2f unDistort(const cv::Point2f&);//Compensate for barrel distortion
         void pix2uLOS(const std::vector<cv::Point2f>&,std::vector<cv::Mat_<float>>&);//Converts image pixel coordinates to uLOS vectors in uav frame
         void pix2uLOS(const std::vector<std::vector<cv::Point2f>>&,std::vector<cv::Mat_<float>>&);//Overloaded version for corner locations of anchors instead of center locations
