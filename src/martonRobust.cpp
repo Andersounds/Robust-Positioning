@@ -225,7 +225,7 @@ int robustPositioning::martonRobust::nlinear_lsqr_solve_2deg(void){
 
 
     struct poly2_data d = { p, alpha, t };
-    double x_init[12] = { 0.9, 5.4, 3.7, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+    double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
     double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     gsl_vector_view x = gsl_vector_view_array (x_init, par);
     gsl_vector_view wts = gsl_vector_view_array(weights, n);
