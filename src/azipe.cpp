@@ -15,6 +15,11 @@ It solves the quartic equation using the package
 
 https://github.com/sasamil/Quartic
 
+
+Methods for defining the input arguments are defined in the ang::angulation class
+    src/angulation.hpp
+    src/angulation.cpp
+
 Inputs:
 vector<Mat> v   A set of unit-Line-of-Sight vectors in the vehicle frame (measured) to each of the visible anchors
 vector<Mat> q   A corresponding set of 3d-coordinates of each anchor in the global frame
