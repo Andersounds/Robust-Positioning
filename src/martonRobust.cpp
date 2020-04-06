@@ -28,7 +28,11 @@
     //
 
 //}
+void robustPositioning::martonRobust::process(void){
 
+    int status = nlinear_lsqr_solve_2deg();
+    std::cout << "Status: " << status << std::endl;
+}
 
 
 /* This method takes one or more pixel locations, undistorts them, and calculate alpha, beta, and gamma angles
@@ -139,7 +143,7 @@ for(size_t i = 0;i<12;i++){
 /* Equations 0-11 */
 // T order: [t1,t2,t3,tf]  kronologisk
 // p order: [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...] Yttre ordning: kronologisk, inre ordning: x,y,z,yaw
-// x order: [sigmax0,sigmax1,sigmax2,sigmay0,sigmay1,sigmay2]  Yttre ordgning: x,y,z,yaw, inre ordnnig: stigande grad
+// x order: [sigmax0,sigmax1,sigmax2,sigmay0,sigmay1,sigmay2...]  Yttre ordgning: x,y,z,yaw, inre ordnnig: stigande grad
 for (size_t i = 0;i < 3; i++){
     // Calculate time stamp powers
     double t_i = t[i];
@@ -172,14 +176,23 @@ for (size_t i = 0;i < 3; i++){
     double f13 = pow(x_est/est_norm  + v_est_x/v_norm,(double)2) + pow(y_est/est_norm + v_est_y/v_norm,(double)2);
     gsl_vector_set (f, 12, f13);
 
+    for(size_t i = 0;i<12;i++){
+        double cost = gsl_vector_get (f, i);
+        std::cout << cost << ", ";
+    }
+    std::cout << std::endl;
     return GSL_SUCCESS;
 }
+
 /*
     Analytic jacobian matrix of the above cost function
 */
 int robustPositioning::poly2_df (const gsl_vector * x, void *data, gsl_matrix * J){
 return GSL_SUCCESS;
 }
+
+
+
 /*
     The function that sets up the problem and solves it using GSL nonlinear least square optimization method
     Code is adapted from first example at https://www.gnu.org/software/gsl/doc/html/nls.html
@@ -204,17 +217,16 @@ int robustPositioning::martonRobust::nlinear_lsqr_solve_2deg(void){
     double alpha[5] = {sx,sy,sz,vx,vy};
     double t[4] = {t_oldoldold,t_oldold,t_old,t_now};
 */
-    double p[12] = {1,1,1,
-                    1,1,1,
-                    1,1,1,
-                    1,1,1};
+    double p[12] = {0.4,1,1,0,
+                    9.4,2,2,0,
+                    26.4,3,3,0};
     double alpha[5] = {0,0,0,0.4,0.3};
-    double t[4] = {0,0.1,0.4,0.5};
+    double t[4] = {0,1,2,3};
 
 
     struct poly2_data d = { p, alpha, t };
-    double x_init[12] = { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
-    double weights[12];
+    double x_init[12] = { 0.9, 5.4, 3.7, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+    double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     gsl_vector_view x = gsl_vector_view_array (x_init, par);
     gsl_vector_view wts = gsl_vector_view_array(weights, n);
     //gsl_rng * r;
@@ -264,6 +276,27 @@ int robustPositioning::martonRobust::nlinear_lsqr_solve_2deg(void){
     int status,info;
     status = gsl_multifit_nlinear_driver(100, xtol, gtol, ftol,
                                          NULL, NULL, &info, w);
+
+
+    std::cout << "Polynomial: ";
+    for(size_t i=0;i<12;i++){
+        double xi = gsl_vector_get(w->x, i);
+        std::cout << xi << ", ";
+    }
+        std::cout << std::endl;
+
+    switch(status){
+        case(GSL_SUCCESS):{
+            std::cout << " Success" << std::endl;
+            std::cout << "Info: " << info <<  std::endl;
+            std::cout << "Iterations: " << gsl_multifit_nlinear_niter(w) << std::endl;
+            break;
+        }
+        case(GSL_ENOPROG):{
+            std::cout << " Could not find" <<std::endl;
+            break;
+        }
+    }
     return status;
 
 }
