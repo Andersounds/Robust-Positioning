@@ -22,7 +22,7 @@ int main(int argc, char** argv){
     p(0,0) = 0;p(1,0) = 1;p(2,0)=2;
     float yaw = 3;
     float t = 0;
-    for(int i = 0;i<4;i++){
+    for(int i = 0;i<6;i++){
         std::cout << "Addning t: " << t << std::endl;
         C.add(p,yaw,t);
         p+=4;
