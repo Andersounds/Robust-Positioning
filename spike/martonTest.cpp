@@ -16,7 +16,7 @@ int main(int argc, char** argv){
     marton::process();
 
 
-    marton::circBuff C(4);
+    marton::circBuff C(3);
 
     cv::Mat_<float> p(3,1);
     p(0,0) = 0;p(1,0) = 1;p(2,0)=2;
@@ -37,13 +37,13 @@ int main(int argc, char** argv){
     C.read_p(p2);
 
     std::cout << "t2: ";
-    for(int i =0;i<4;i++){
+    for(int i =0;i<3;i++){
         std::cout << t2[i] << ", ";
     }
     std::cout << std::endl;
 
     std::cout << "p2: ";
-    for(int i =0;i<16;i++){
+    for(int i =0;i<12;i++){
         std::cout << p2[i] << ", ";
     }
     std::cout << std::endl;
