@@ -16,10 +16,15 @@ struct marton::nlinear_lsqr_param {
     double * x_init;     //Initial guess for variables
     double * weights;    //Variable weights
     double xtol;         //variable convergence criteria
-    double ftol;
+    double gtol;
 };
 /*
     Data struct with parameters that are given to cost and jacobian functions later
+    double p[12] = {x_oldoldold,y_oldoldold,z_oldoldold,yaw_oldoldold,
+                    x_oldold,y_oldold,z_oldold,yaw_oldold,
+                    x_old,y_old,z_old,yaw_old}
+    double alpha[5] = {sx,sy,sz,vx,vy};
+    double t[4] = {t_oldoldold,t_oldold,t_old,t_now};
 */
 struct marton::poly2_data {
     //size_t n;         //Use this to allow for more than one anchor later. then alpha can be passed as [sx1,sy1,sz1,vx1,vy1,vz1,sx2,sy2,sz2,vx2,vy2,vz2]
@@ -194,41 +199,22 @@ int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data da
     const size_t n = 14; //N is number of data points
     const size_t par = 12; // p is i guess number of parameters to solve for
 
-    gsl_vector *f;
-    gsl_matrix *J;
-    //gsl_matrix *covar = gsl_matrix_alloc (p, p);
-    //p: 12 previous data point (3x{x,y,z,yaw}| alpha: one anchor [sz,sy,sz,vx,vy] | t: 4 timestamps ([t_oldoldold,t_oldold,t_old,t_now))
-/*
-    double p[12] = {x_oldoldold,y_oldoldold,z_oldoldold,yaw_oldoldold,
-                    x_oldold,y_oldold,z_oldold,yaw_oldold,
-                    x_old,y_old,z_old,yaw_old}
-    double alpha[5] = {sx,sy,sz,vx,vy};
-    double t[4] = {t_oldoldold,t_oldold,t_old,t_now};
-*/
-    double p[12] = {0.4,1,1,0,
-                    9.4,2,2,0,
-                    26.4,3,3,0};
-    double alpha[5] = {0,0,0,0.4,0.3};
-    double t[4] = {0,1,2,3};
-    double tf = 4;
+    //gsl_vector *f;
+    //gsl_matrix *J;
 
-
-    struct poly2_data d = { p, alpha, t,tf};
-    double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
-    double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    //struct poly2_data d = { p, alpha, t,tf};
+    //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+    double *x_init = parameters.x_init;
+    //double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    double *weights = parameters.weights;
     gsl_vector_view x = gsl_vector_view_array (x_init, par);
     gsl_vector_view wts = gsl_vector_view_array(weights, n);
-    //gsl_rng * r;
-    //double chisq, chisq0;
-    //int status, info;
-    //size_t i;
 
-    const double xtol = 1e-2;
-    const double gtol = 1e-2;
+    //const double xtol = 1e-2;
+    double xtol = parameters.xtol;
+    //const double gtol = 1e-2;
+    double gtol = parameters.gtol;
     const double ftol = 0.0;
-
-    //gsl_rng_env_setup();
-    //r = gsl_rng_alloc(gsl_rng_default);
 
     /* define the function to be minimized */
     fdf.f = marton::poly2_f;
@@ -236,21 +222,7 @@ int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data da
     fdf.fvv = NULL;     /* not using geodesic acceleration */
     fdf.n = n; //the number of functions, i.e. the number of components of the vector f.
     fdf.p = par;  //the number of independent variables, i.e. the number of components of the vector x.
-    fdf.params = &d;
-
-    /* this is the data to be fitted */
-    //for (i = 0; i < n; i++)
-    //  {
-    //    double ti = i * TMAX / (n - 1.0);
-    //    double yi = 1.0 + 5 * exp (-0.1 * ti);
-    //    double si = 0.1 * yi;
-    //    double dy = gsl_ran_gaussian(r, si);
-
-    //    t[i] = ti;
-    //    y[i] = yi + dy;
-    //    weights[i] = 1.0 / (si * si);
-    //  };
-
+    fdf.params = &data;
     /* allocate workspace with default parameters */
     w = gsl_multifit_nlinear_alloc (T, &fdf_params, n, par);
 
