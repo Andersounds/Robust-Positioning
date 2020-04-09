@@ -40,12 +40,13 @@ void marton::process(const std::vector<cv::Mat_<float>>& v,
             const std::vector<cv::Mat_<float>>& q,
             cv::Mat_<float>& position,
             float& yaw,
-            float pitch,float roll){
+            float pitch,float roll, float t,
+            const circBuff& prevBuffer){
 
                 /*
-                (0.)    Extract only first v and q. In future maybe allow more
-                 1.     Derotate v using pitch and roll
-                 2.     Construct alpha from v and q (cast to double also)
+                X(0.)    Extract only first v and q. In future maybe allow more
+                X 1.     Derotate v using pitch and roll
+                X 2.     Construct alpha from v and q (cast to double also)
                  3.     Norm previous timetamps so that oldest is 0. construct t
                  4.     Norm x,y,z,yaw so that oldes is 0. This to get more consistent parameters in case we use as start guess construct p
                  5.     construct poly2_data
@@ -60,10 +61,32 @@ void marton::process(const std::vector<cv::Mat_<float>>& v,
                 cv::Mat Ry = marton::getYRot(pitch);
                 cv::Mat_<float> v0 = Ry*Rx*v[0];//Derotate v vector back in reverse order. (roll-pitch-yaw instead of yaw-pitch-roll)
                 cv::Mat_<float> q0 = q[0];
+                v0.reshape(1);//Reshape to column to make sure that we access corret elements below
+                q0.reshape(1);
+                double alpha[6];
+                alpha[0] = (double)q0(0,0);
+                alpha[1] = (double)q0(1,0);
+                alpha[2] = (double)q0(2,0);
+                alpha[3] = (double)v0(0,0);
+                alpha[4] = (double)v0(1,0);
+                alpha[5] = (double)v0(2,0);
+
+                // Get values from prevBuffer and construct arrays
+                double tPrev_N[3];double pPrev_N[12];
+                prevBuffer.read_t_normed(tPrev_N);
+                prevBuffer.read_p_normed(pPrev_N);
+
+                /*
+                    - Is circBuff general, so that we can change its size easily?
+                    - How to shift values back from normalization? Do here in this process function
+                    X - Give current time as a separate argument. We dont have the current position so we cant add both current t and p
+
+
+                */
+
 
 
             }
-
 
 /*
 Below are function definitions for Marton robust positioning algorithm
@@ -80,7 +103,8 @@ struct marton::poly2_data {
     //size_t m;         //Use this to vary number of previous known positions that are passed to solver
     double * p;         //Previous known positions [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...]
     double * alpha;     //[sx,sy,sz,vx,vy] parameters to visible anchor.vx,vy is vector pointing towards anchor, in UAV frame! translate with T before passing.Maybe allow for more than one anchor later?
-    double * t;         //Timestamps, current and previous [t1 t2 t3 tf]
+    double * t;         //Timestamps previous [t1 t2 t3]
+    double tf;        //Timestamp current
 };
 /*
     Cost function to be passed to solver.
@@ -93,6 +117,8 @@ int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
 double *p = ((struct poly2_data *)data)->p;
 double *alpha = ((struct poly2_data *)data)->alpha;
 double *t = ((struct poly2_data *)data)->t;
+double tf = ((struct poly2_data *)data)->tf;
+
 // Get arguments to a normal vector for easy access
 double x_[12];
 for(size_t i = 0;i<12;i++){
@@ -115,7 +141,7 @@ for (size_t i = 0;i < 3; i++){
 }
 /*Equation 12 - Hardcoded position 13. keep counter if allow for more previous data points*/
     double c = (pow(alpha[3],(double)2) + pow(alpha[4],(double)2))/(pow(alpha[5],(double)2)); // to use in cone equation x^2+y^2 = c*z^2
-    double t_f = t[3];      //Current time stamp (tf = time of failure)
+    double t_f = tf;      //Current time stamp (tf = time of failure)
     double t_f_sqrd = pow(t_f,(double)2);
     //Evaluate coordinate with current provided sigma-parameters
     double x_est = x_[0]+x_[1]*t_f+x_[2]*t_f_sqrd;
@@ -175,9 +201,10 @@ int marton::nlinear_lsqr_solve_2deg(void){
                     26.4,3,3,0};
     double alpha[5] = {0,0,0,0.4,0.3};
     double t[4] = {0,1,2,3};
+    double tf = 4;
 
 
-    struct poly2_data d = { p, alpha, t };
+    struct poly2_data d = { p, alpha, t,tf};
     double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
     double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     gsl_vector_view x = gsl_vector_view_array (x_init, par);
@@ -282,6 +309,7 @@ int marton::circBuff::add(const cv::Mat_<float>& pos,float yaw,float timeStamp){
     }
     return 1;
 }
+//read t array
 int marton::circBuff::read_t(double* time){
     size_t size = t.size();
     for(size_t i=0;i<size;i++){
@@ -294,6 +322,22 @@ int marton::circBuff::read_t(double* time){
     }
     return 1;
 }
+// Read t array but normalize it so that first element is 0
+int marton::circBuff::read_t_normed(double* time){
+    size_t size = t.size();
+    marton::circBuff::read_t(time);
+    for(size_t i=0;i<size;i++){
+        time[i]-=time[0];   //Time shift
+    }
+    return 1;
+}
+float marton::circBuff::read_T_offset(void){
+    return *t_it;
+}
+float marton::circBuff::read_P_offset(int state){
+    return *(p_it+state);
+}
+
 int marton::circBuff::read_p(double* p2){
     size_t size = p.size();
     for(size_t i=0;i<size;i++){
@@ -305,6 +349,9 @@ int marton::circBuff::read_p(double* p2){
     }
     return 1;
 }
+
+
+
 /* Functions for defining roll, pitch, and yaw rotation matrices
  * Increase speed by passing reference and edit in place?
  */

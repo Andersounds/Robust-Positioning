@@ -21,6 +21,10 @@
 
 
 namespace marton{
+    const int X = 0;
+    const int Y = 1;
+    const int Z = 2;
+    const int YAW = 3;
     /*
     Small class to act as a circular buffer to store old x,y,z,yaw,timestamps. To be passed to process-function
     */
@@ -33,7 +37,11 @@ namespace marton{
         circBuff(int);//Constructor
         int add(const cv::Mat_<float>&,float,float); //Add x,y,x, yaw and timestamp
         int read_t(double*);
+        int read_t_normed(double*);
+        float read_T_offset(void);
         int read_p(double*);    // Functions to fill a c style array with the buffer values as doubles
+
+        float read_P_offset(int);
     };
 /*
  Can this be done without a class but as just free functions?
@@ -47,7 +55,7 @@ namespace marton{
                     const std::vector<cv::Mat_<float>>& q,
                     cv::Mat_<float>& position,
                     float& yaw,
-                    float pitch,float roll);
+                    float pitch,float roll, float t,const circBuff&);
 //    private:
         int nlinear_lsqr_solve_2deg(void);     //Perform the nonlinear least square optimization Add arguments when known
 //    };
