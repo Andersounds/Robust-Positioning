@@ -350,7 +350,15 @@ int marton::circBuff::read_p(double* p2){
     return 1;
 }
 
-
+int marton::circBuff::read_p_normed(double* p2){
+    marton::circBuff(p2);//Read p array
+    size_t size = p.size();
+    double ofset[4] = {p2[0],p2[1],p2[2],p2[3]}; // Four offsets
+    for(size_t i=0;i<size;i++){
+        p2[i] -= ofset[i%4];
+    }
+    return 1;
+}
 
 /* Functions for defining roll, pitch, and yaw rotation matrices
  * Increase speed by passing reference and edit in place?

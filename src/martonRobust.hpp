@@ -40,7 +40,7 @@ namespace marton{
         int read_t_normed(double*);
         float read_T_offset(void);
         int read_p(double*);    // Functions to fill a c style array with the buffer values as doubles
-
+        int read_p_normed(double*);
         float read_P_offset(int);
     };
 /*
