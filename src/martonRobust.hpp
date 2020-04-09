@@ -57,15 +57,17 @@ namespace marton{
                     float& yaw,
                     float pitch,float roll, float t,circBuff&);
 //    private:
+
         int nlinear_lsqr_solve_2deg(void);     //Perform the nonlinear least square optimization Add arguments when known
 //    };
 
 
 // Free cost and jacobian of cost frunctions
+    struct nlinear_lsqr_param;
     struct poly2_data; // Data struct for gsl containing n: t: y:
     int poly2_f (const gsl_vector * x, void *data, gsl_vector * f); // Cost function for gsl_multifit_nlinear (2nd order polynomial)
     int poly2_df (const gsl_vector * x, void *data, gsl_matrix * J);// Jacobian of cost function for gsl-multifit_nlinear (2nd order polynomial)
-
+    int nlinear_lsqr_solve_2deg(nlinear_lsqr_param,poly2_data);     //Perform the nonlinear least square optimization Add arguments when known
 
     cv::Mat getXRot(float);
     cv::Mat getYRot(float);

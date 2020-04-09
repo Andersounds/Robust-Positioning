@@ -9,6 +9,28 @@ Methods for defining the input arguments are defined in the ang::angulation clas
 
 
 
+/*
+    Data struct with parameters that are given to solver
+*/
+struct marton::nlinear_lsqr_param {
+    double * x_init;     //Initial guess for variables
+    double * weights;    //Variable weights
+    double xtol;         //variable convergence criteria
+    double ftol;
+};
+/*
+    Data struct with parameters that are given to cost and jacobian functions later
+*/
+struct marton::poly2_data {
+    //size_t n;         //Use this to allow for more than one anchor later. then alpha can be passed as [sx1,sy1,sz1,vx1,vy1,vz1,sx2,sy2,sz2,vx2,vy2,vz2]
+    //size_t m;         //Use this to vary number of previous known positions that are passed to solver
+    double * p;         //Previous known positions [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...]
+    double * alpha;     //[sx,sy,sz,vx,vy] parameters to visible anchor.vx,vy is vector pointing towards anchor, in UAV frame! translate with T before passing.Maybe allow for more than one anchor later?
+    double * t;         //Timestamps previous [t1 t2 t3]
+    double tf;        //Timestamp current
+};
+
+
 
 /* This is the main process method that handles the estimation
  * Only first of the known anchors will be used in first implementation
@@ -30,12 +52,7 @@ Keep same interface as azipe. v,q,pos,yaw,pitch,roll
 Possibly keep list of previous positions here. or keep thet externally and give as argument?
 
 */
-void marton::process(void){
 
-
-    int status = marton::nlinear_lsqr_solve_2deg();
-    std::cout << "Status: " << status << std::endl;
-}
 void marton::process(const std::vector<cv::Mat_<float>>& v,
             const std::vector<cv::Mat_<float>>& q,
             cv::Mat_<float>& position,
@@ -76,13 +93,13 @@ void marton::process(const std::vector<cv::Mat_<float>>& v,
                 prevBuffer.read_t_normed(tPrev_N);
                 prevBuffer.read_p_normed(pPrev_N);
                 // Construct poly2_data
-                struct poly2_data d = {pPrev_N, alpha, tPrev_N,tf};
+                struct marton::poly2_data d = {pPrev_N, alpha, tPrev_N,tf};
                 // Construct solver parameters struct
                 double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
                 double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
                 double xtol = 1e-2;
                 double gtol = 1e-2;
-                struct nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
+                struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
 
                 // Perform optimization. pass d and param. Hur skicka structs som argument?
 
@@ -97,26 +114,7 @@ Below are function definitions for Marton robust positioning algorithm
 
 */
 
-/*
-    Data struct with parameters that are given to solver
-*/
-struct marton::nlinear_lsqr_param {
-    double * x_init;     //Initial guess for variables
-    double * weights;    //Variable weights
-    double xtol;         //variable convergence criteria
-    double ftol;
-};
-/*
-    Data struct with parameters that are given to cost and jacobian functions later
-*/
-struct marton::poly2_data {
-    //size_t n;         //Use this to allow for more than one anchor later. then alpha can be passed as [sx1,sy1,sz1,vx1,vy1,vz1,sx2,sy2,sz2,vx2,vy2,vz2]
-    //size_t m;         //Use this to vary number of previous known positions that are passed to solver
-    double * p;         //Previous known positions [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...]
-    double * alpha;     //[sx,sy,sz,vx,vy] parameters to visible anchor.vx,vy is vector pointing towards anchor, in UAV frame! translate with T before passing.Maybe allow for more than one anchor later?
-    double * t;         //Timestamps previous [t1 t2 t3]
-    double tf;        //Timestamp current
-};
+
 /*
     Cost function to be passed to solver.
     x: arguments (in this case the polynomial parameters a,b,c in f = a + bt + ct^2)
@@ -187,7 +185,7 @@ return GSL_SUCCESS;
     The function that sets up the problem and solves it using GSL nonlinear least square optimization method
     Code is adapted from first example at https://www.gnu.org/software/gsl/doc/html/nls.html
 */
-int marton::nlinear_lsqr_solve_2deg(void){
+int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data data){
 
     const gsl_multifit_nlinear_type *T = gsl_multifit_nlinear_trust;
     gsl_multifit_nlinear_workspace *w;
@@ -395,4 +393,40 @@ cv::Mat marton::getYRot(float pitch){
     R_y(2,0) = -sinY;
     R_y(2,2) = cosY;
     return R_y;
+}
+
+
+
+
+
+/*
+Test process function for tesitng
+
+
+*/
+
+void marton::process(void){
+
+//Conbstruct data struct
+    double p[12] = {0.4,1,1,0,
+                    9.4,2,2,0,
+                    26.4,3,3,0};
+    double alpha[5] = {0,0,0,0.4,0.3};
+    double t[4] = {0,1,2,3};
+    double tf = 4;
+    struct marton::poly2_data da = { p, alpha, t,tf};
+
+
+    // Construct solver parameters struct
+    double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+    double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    double xtol = 1e-2;
+    double gtol = 1e-2;
+    struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
+
+
+
+
+    int status = marton::nlinear_lsqr_solve_2deg(param,da);
+    std::cout << "Status: " << status << std::endl;
 }
