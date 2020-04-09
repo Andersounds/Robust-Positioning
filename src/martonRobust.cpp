@@ -41,7 +41,7 @@ void marton::process(const std::vector<cv::Mat_<float>>& v,
             cv::Mat_<float>& position,
             float& yaw,
             float pitch,float roll, float t,
-            const circBuff& prevBuffer){
+            circBuff& prevBuffer){
 
                 /*
                 X(0.)    Extract only first v and q. In future maybe allow more
@@ -351,7 +351,7 @@ int marton::circBuff::read_p(double* p2){
 }
 
 int marton::circBuff::read_p_normed(double* p2){
-    marton::circBuff(p2);//Read p array
+    marton::circBuff::read_p(p2);//Read p array
     size_t size = p.size();
     double ofset[4] = {p2[0],p2[1],p2[2],p2[3]}; // Four offsets
     for(size_t i=0;i<size;i++){

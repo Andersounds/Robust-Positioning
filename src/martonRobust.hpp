@@ -55,7 +55,7 @@ namespace marton{
                     const std::vector<cv::Mat_<float>>& q,
                     cv::Mat_<float>& position,
                     float& yaw,
-                    float pitch,float roll, float t,const circBuff&);
+                    float pitch,float roll, float t,circBuff&);
 //    private:
         int nlinear_lsqr_solve_2deg(void);     //Perform the nonlinear least square optimization Add arguments when known
 //    };
