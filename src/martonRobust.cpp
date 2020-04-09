@@ -40,18 +40,18 @@ void marton::process(const std::vector<cv::Mat_<float>>& v,
             const std::vector<cv::Mat_<float>>& q,
             cv::Mat_<float>& position,
             float& yaw,
-            float pitch,float roll, float t,
+            float pitch,float roll, float tf,
             circBuff& prevBuffer){
 
                 /*
                 X(0.)    Extract only first v and q. In future maybe allow more
                 X 1.     Derotate v using pitch and roll
                 X 2.     Construct alpha from v and q (cast to double also)
-                 3.     Norm previous timetamps so that oldest is 0. construct t
-                 4.     Norm x,y,z,yaw so that oldes is 0. This to get more consistent parameters in case we use as start guess construct p
-                 5.     construct poly2_data
-                 6.     Give initial guess via inputOutput argument.
-                 7.     possibly give weights,xtol,ftol, iterations via a struct
+                X 3.     Norm previous timetamps so that oldest is 0. construct t
+                X 4.     Norm x,y,z,yaw so that oldes is 0. This to get more consistent parameters in case we use as start guess construct p
+                X 5.     construct poly2_data
+                X 6.     Give initial guess via inputOutput argument.
+                X 7.     possibly give weights,xtol,ftol, iterations via a struct
                  8.     Perform nonlinear least square optimization
                  9.     If successful, pass back position and yaw estimation, otherwise some fail code
                 */
@@ -75,14 +75,16 @@ void marton::process(const std::vector<cv::Mat_<float>>& v,
                 double tPrev_N[3];double pPrev_N[12];
                 prevBuffer.read_t_normed(tPrev_N);
                 prevBuffer.read_p_normed(pPrev_N);
+                // Construct poly2_data
+                struct poly2_data d = {pPrev_N, alpha, tPrev_N,tf};
+                // Construct solver parameters struct
+                double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+                double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+                double xtol = 1e-2;
+                double gtol = 1e-2;
+                struct nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
 
-                /*
-                    - Is circBuff general, so that we can change its size easily?
-                    - How to shift values back from normalization? Do here in this process function
-                    X - Give current time as a separate argument. We dont have the current position so we cant add both current t and p
-
-
-                */
+                // Perform optimization. pass d and param. Hur skicka structs som argument?
 
 
 
@@ -95,6 +97,15 @@ Below are function definitions for Marton robust positioning algorithm
 
 */
 
+/*
+    Data struct with parameters that are given to solver
+*/
+struct marton::nlinear_lsqr_param {
+    double * x_init;     //Initial guess for variables
+    double * weights;    //Variable weights
+    double xtol;         //variable convergence criteria
+    double ftol;
+};
 /*
     Data struct with parameters that are given to cost and jacobian functions later
 */
