@@ -70,6 +70,7 @@ namespace pos{
     const int RETURN_MODE_INERTIA = 2;        //Visual odometry failed, assumed rotational speed kept
     const int RETURN_MODE_PROJ = 3;           //Visual odometry successful and estimation is projected onto v_tilde
     const int RETURN_MODE_AZIPE_FAILED = 4; //If only azipe is used and estimation fails
+    const int RETURN_MODE_MARTON = 5;
 
     /* Convenience structs for passing to positioning functions*/
     struct argStruct {
@@ -108,7 +109,7 @@ namespace pos{
 
         int process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat_<float>& pos, argStruct& arguments);
         int process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, VOargStruct& arguments);
-        int process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, float& yaw,MartonArgStruct arguments);
+        int process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, MartonArgStruct& arguments);
 
 
         //Illustration processing. Second mat argument is drawn upon.

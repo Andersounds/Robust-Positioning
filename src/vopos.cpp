@@ -112,8 +112,8 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
  * This one is azipe, but Marton as fallback if it fails. When implemented enough, some variable shall state degree of polynomial etc
  * It must be possible to force fallback method
  */
-int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, float& yaw,pos::MartonArgStruct arguments){
-/*    static marton::circBuff buffer(3); //Create a circular buffer with specified size for marton estimation
+int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos,pos::MartonArgStruct& arguments){
+    static marton::circBuff buffer(3); //Create a circular buffer with specified size for marton estimation
 
     ///////////// TRY AZIPE
         std::vector<int> ids;
@@ -125,12 +125,12 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         std::vector<bool> mask;
         int knownAnchors = dataBase2q(ids,q,mask);
         drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
-        std::vector<cv::Mat_<float>> v;//v and v_masked;
-        pix2uLOS(corners,v);
-        ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
-        ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
-        if(knownAnchors>=4 && mode != pos::MODE_FALLBACK){              //If enough anchors then do triangulation unless overridden
-            az::azipe(v,q,pos,yaw,arguments.pitch,arguments.roll);
+        if(knownAnchors>=4 && mode != pos::MODE_FALLBACK){                  //If enough anchors then do triangulation unless overridden
+            std::vector<cv::Mat_<float>> v;//v and v_masked;
+            pix2uLOS(corners,v);
+            ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+            ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+            az::azipe(v,q,pos,arguments.yaw,arguments.pitch,arguments.roll);
             returnMode = pos::RETURN_MODE_AZIPE;
         }else{
             //
@@ -140,16 +140,11 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
             //
         }
 
-
         //Add newest position estimation and yaw and time to circular buffer
-
-
-
-        buffer.add(pos,yaw,arguments.t);//Dont add if positioning failed
-
-
-*/
-        return 1;
+        if(returnMode==pos::RETURN_MODE_AZIPE || returnMode==pos::RETURN_MODE_MARTON){
+            buffer.add(pos,arguments.yaw,arguments.time);//Dont add if positioning failed
+        }
+        return returnMode;
 
 }
 

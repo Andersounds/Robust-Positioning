@@ -167,7 +167,13 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
                     break;
                 }
                 case ALG_MARTON:{
+                    pos::MartonArgStruct arguments = {dist,roll,pitch,0,timeStamp_data};
+                    int mode = P.process_Marton_Fallback(pos::MODE_AZIPE_AND_FALLBACK,frame, colorFrame, t,arguments);
                     std::cout << "azipe + marton..." << std::endl;
+                    if(true){
+                        std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+                        databin_LOG.dump(logData);
+                    }
                     break;
                 }
             }
