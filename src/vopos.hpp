@@ -7,6 +7,7 @@
 #include "opticalFlow.hpp"
 #include "homographyVO.hpp"
 #include "azipe.hpp"
+#include "martonRobust.hpp"
 /*
 This class implements a complete positioning functionality with fallback method, using Aruco as base and excluding Kalman fusing with IMU data
 
@@ -38,16 +39,58 @@ namespace pos{
     //Flags for Aruco dictionary. Can choose anone but this is an example
     const int ARUCO_DICT_DEFAULT    = cv::aruco::DICT_4X4_50;
     //Flags for process-function call.
-    const int MODE_AZIPE_AND_VO = 0;//Positioning using AZIPE estimation with VO as fallback
-    const int MODE_AZIPE = 1;       //Positioning estimation with only AZIPE angulation
-    const int MODE_VO = 2;          //Positioning estimation with only VO method
-    const int MODE_AZIPE_AND_PROJ = 3;//Positioning using AZIPE and proj as fallback
+    const int MODE_FALLBACK = 0;                //Positioning estimation with only VO method. For forcing fallback method
+    const int MODE_AZIPE_AND_FALLBACK = 1;      //Positioning estimation with AZIPE angulation and fallback if it fails
+
+
+    /*
+        2 flags for function call.
+            1 for switch/case statmennt in main function. assigns which function to call. azipe, azipe+VO, azipe+marton
+            1 for giving to azipe+VO or aipe+marton call. states of we shall override and force fallback
+
+
+
+    */
+
+
+    //remove these
+    const int MODE_AZIPE = 0;
+    //const int MODE_FALLBACK = 1;                //Positioning estimation with only VO method. For forcing fallback method
+    //const int MODE_AZIPE_AND_FALLBACK = 2;      //Positioning estimation with AZIPE angulation and fallback if it fails
+
+    const int MODE_VO =3;
+    const int MODE_AZIPE_AND_VO = 4;
+    const int MODE_AZIPE_AND_MARTON = 5;
+    const int MODE_MARTON = 6;
+
+
     //Return flags for what positioning algorithm was used
     const int RETURN_MODE_AZIPE = 0;        //Azipe angulation was used to estimate position
     const int RETURN_MODE_VO    = 1;        //Visual odometry was used to estimate position (from last)
     const int RETURN_MODE_INERTIA = 2;        //Visual odometry failed, assumed rotational speed kept
     const int RETURN_MODE_PROJ = 3;           //Visual odometry successful and estimation is projected onto v_tilde
     const int RETURN_MODE_AZIPE_FAILED = 4; //If only azipe is used and estimation fails
+
+    /* Convenience structs for passing to positioning functions*/
+    struct argStruct {
+        float dist;
+        float roll;
+        float pitch;
+        float yaw;
+    };
+    struct VOargStruct {
+        float dist;
+        float roll;
+        float pitch;
+        float yaw;
+    };
+    struct MartonArgStruct{
+        float dist;
+        float roll;
+        float pitch;
+        float yaw;
+        float time;
+    };
 
     class positioning: public ang::angulation, of::opticalFlow, vo::planarHomographyVO{
         cv::Ptr<cv::aruco::Dictionary> dictionary;//Pointer to Aruco dictionary
@@ -62,6 +105,12 @@ namespace pos{
                 );
         //ASAP processing. No illustration
         int process(int,cv::Mat&,float,float,float,float&,cv::Mat_<float>&);//Perform processing. return value indicates what kind of estimation is done
+
+        int process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat_<float>& pos, argStruct& arguments);
+        int process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, float& yaw, VOargStruct& arguments);
+        int process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, float& yaw,MartonArgStruct arguments);
+
+
         //Illustration processing. Second mat argument is drawn upon.
         int processAndIllustrate(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Perform processing, but also illustrate by drawing on the second argument matrix
         int processAz(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Only azipe aipe

@@ -16,6 +16,11 @@
 
 #include <typeinfo>
 
+//
+const int ALG_AZIPE = 0;
+const int ALG_VO = 1;
+const int ALG_MARTON = 2;
+
 int main(int argc, char** argv){
 timestamp::timeStamp_ms stamp;
 //Can these two rows be written as stamp.get(double timeStamp); is timeStamp available in this scope then?
@@ -70,8 +75,8 @@ cv::Mat_<float> T;          bpu::assign(vm,T,"T_MAT");
 */
 int of_mode;    std::string of_mode_str;    bpu::assign(vm,of_mode_str,"OF_MODE");
 int vo_mode;    std::string vo_mode_str;    bpu::assign(vm,vo_mode_str,"VO_MODE");
-int pos_mode;   std::string pos_mode_str;   bpu::assign(vm,pos_mode_str,"POS_MODE");
-/*--------KLT--------*/
+int pos_alg;   std::string pos_alg_str;   bpu::assign(vm,pos_alg_str,"POS_ALG");
+/*--------Optical Flow--------*/
 if(of_mode_str=="KLT"){
     std::cout << "Starting positioning object using KLT based optical flow." << std::endl;
     of_mode = pos::OF_MODE_KLT;}
@@ -87,17 +92,19 @@ else if(vo_mode_str=="AFFINE"){
     std::cout << "Starting positioning object using Affine based Visual odometry." << std::endl;
     vo_mode = pos::VO_MODE_AFFINE;}
 else{std::cout << "Unknown --VO_MODE argument" << std::endl;return 0;}
-/*-------Positioning mode----------*/
-if(pos_mode_str=="AZIPE"){
+/*-------Positioning algorithm----------*/
+if(pos_alg_str=="AZIPE"){
     std::cout << "Starting positioning object using Azipe mode" << std::endl;
-    pos_mode = pos::MODE_AZIPE;}
-else if(pos_mode_str == "VO"){
-    std::cout << "Starting positioning object using Visual Odometry mode" << std::endl;
-    pos_mode = pos::MODE_VO;}
-else if(pos_mode_str == "AZIPE_AND_VO"){
-    std::cout << "Starting positioning object using Visual Odometry mode" << std::endl;
-    pos_mode = pos::MODE_AZIPE_AND_VO;}
-else{std::cout << "Unknown --POS_MODE argument" << std::endl;return 0;}
+    pos_alg = ALG_AZIPE;}
+else if(pos_alg_str == "VO"){
+    std::cout << "Starting positioning object using Visual Odometry as fallback" << std::endl;
+    pos_alg = ALG_VO;
+}
+else if(pos_alg_str == "MARTON"){
+    std::cout << "Starting positioning object using MARTON as fallback" << std::endl;
+    pos_alg = ALG_MARTON;
+}
+else{std::cout << "Unknown --POS_ALG argument" << std::endl;return 0;}
 
 pos::positioning P(of_mode,
                     vo_mode,
@@ -136,14 +143,37 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
             if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
 
-            int mode = P.processAndIllustrate(pos_mode,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
+            //int mode = P.processAndIllustrate(pos_alg,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
+            switch(pos_alg){
+                case ALG_AZIPE:{
+                    pos::argStruct arguments = {dist,roll,pitch,0};
+                    int mode = P.process_AZIPE(frame, colorFrame,t,arguments);
+                    std::cout << "azipe..." << std::endl;
+                    if(true){
+                        std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+                        databin_LOG.dump(logData);
+                    }
+                    break;
+                }
+                case ALG_VO:{
+//                    pos::VOargStruct arguments
+                    std::cout << "azipe+vo..." << std::endl;
+                    break;
+                }
+                case ALG_MARTON:{
+                    std::cout << "azipe + marton..." << std::endl;
+                    break;
+                }
+            }
+
+
 
             //int mode = P.processAz(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
             //Log data
-            if(true){
-                std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),roll,pitch,yaw,nmbrOfAnchors,(float)mode};
-                databin_LOG.dump(logData);
-            }
+//            if(true){
+//                std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+//                databin_LOG.dump(logData);
+//            }
             std::cout << "X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll<<", pitch: " << pitch << "yaw: " << yaw<< std::endl;
             cv::imshow("showit",colorFrame);
             //cv::waitKey(0);
@@ -240,7 +270,7 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
          ("STREAM_DATA_FILE",po::value<std::string>(),"Path to data file from config file path")
          ("OF_MODE",po::value<std::string>(),"Mode of Optical flow algorithm. KLT or CORR")
          ("VO_MODE",po::value<std::string>(),"Mode of Visual Odometry algorithm. HOMOGRAPHY or AFFINE")
-         ("POS_MODE",po::value<std::string>(),"Positioning mode | AZIPE or VO or AZIPE_AND_VO")
+         ("POS_ALG",po::value<std::string>(),"Positioning algorithm | AZIPE or VO or MARTON")
          ;
 
      // Parse command line

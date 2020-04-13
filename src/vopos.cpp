@@ -36,6 +36,129 @@ pos::positioning::positioning(int opticalFlow_mode,
     vo::planarHomographyVO::setTmat(T);
     vo::planarHomographyVO::setDefaultSettings();
 }
+
+
+//New master positioning functions. With illustration
+
+/*
+ *
+ * This one is purely azipe. keep it separate so we know that no other estimation is done by accident
+ */
+int pos::positioning::process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat_<float>& pos, pos::argStruct& arguments){
+
+//Aruco detect
+    std::vector<int> ids;
+    std::vector<std::vector<cv::Point2f> > corners;
+    int returnMode = -1;
+    std::vector<cv::Mat_<float>> q_m,v_m;// q_masked and v_masked
+    cv::aruco::detectMarkers(frame, dictionary, corners, ids);//Detect markers
+    std::vector<cv::Mat_<float>> q;//q and q_masked
+    std::vector<bool> mask;
+    int knownAnchors = dataBase2q(ids,q,mask);
+    drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+    if(knownAnchors>=4){                                                //If enough anchors then do triangulation and break
+        std::vector<cv::Mat_<float>> v;//v and v_masked;
+        pix2uLOS(corners,v);
+        ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+        ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+        az::azipe(v,q,pos,arguments.yaw,arguments.pitch,arguments.roll);
+        returnMode = pos::RETURN_MODE_AZIPE;
+    }else{
+        returnMode = pos::RETURN_MODE_AZIPE_FAILED;
+    }
+    return returnMode;
+}
+/*
+ * This one is azipe, but VO as fallback if it fails. Either arguments or positoning object initialization states
+ *  if we should use homography or affine, and KLT or correlation based flow.
+ *  It must be possible to force fallback method
+ */
+int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, float& yaw, pos::VOargStruct& arguments){
+/*    static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field estimation
+
+///////////// TRY AZIPE
+    std::vector<int> ids;
+    std::vector<std::vector<cv::Point2f> > corners;
+    int returnMode = -1;
+    std::vector<cv::Mat_<float>> q_m,v_m;// q_masked and v_masked
+    cv::aruco::detectMarkers(frame, dictionary, corners, ids);//Detect markers
+    std::vector<cv::Mat_<float>> q;//q and q_masked
+    std::vector<bool> mask;
+    int knownAnchors = dataBase2q(ids,q,mask);
+    drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+    if(knownAnchors>=4 && mode != pos::MODE_FALLBACK){                  //If enough anchors then do triangulation unless overridden
+        std::vector<cv::Mat_<float>> v;//v and v_masked;
+        pix2uLOS(corners,v);
+        ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+        ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+        az::azipe(v,q,pos,yaw,arguments.pitch,arguments.roll);
+        returnMode = pos::RETURN_MODE_AZIPE;
+    }else{
+        /////////// VO Estimation
+        std::vector<cv::Point2f> features;                                  //Must declare these before every calculation doe to being manipulated on
+        std::vector<cv::Point2f> updatedFeatures;                           //The new positions estimated from KLT
+        of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures); //Get flow field
+        float scale = 5;                                                    //Illustrate
+        cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
+        drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
+        cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
+        bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,arguments.roll,arguments.pitch,arguments.dist,pos,yaw);
+        if(!vo_success){returnMode = pos::RETURN_MODE_INERTIA;}
+        else{returnMode = pos::RETURN_MODE_VO;}
+    }
+    frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
+    return returnMode;*/
+    return 1;
+}
+/*
+ * This one is azipe, but Marton as fallback if it fails. When implemented enough, some variable shall state degree of polynomial etc
+ * It must be possible to force fallback method
+ */
+int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, float& yaw,pos::MartonArgStruct arguments){
+/*    static marton::circBuff buffer(3); //Create a circular buffer with specified size for marton estimation
+
+    ///////////// TRY AZIPE
+        std::vector<int> ids;
+        std::vector<std::vector<cv::Point2f> > corners;
+        int returnMode = -1;
+        std::vector<cv::Mat_<float>> q_m,v_m;// q_masked and v_masked
+        cv::aruco::detectMarkers(frame, dictionary, corners, ids);//Detect markers
+        std::vector<cv::Mat_<float>> q;//q and q_masked
+        std::vector<bool> mask;
+        int knownAnchors = dataBase2q(ids,q,mask);
+        drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+        std::vector<cv::Mat_<float>> v;//v and v_masked;
+        pix2uLOS(corners,v);
+        ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+        ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+        if(knownAnchors>=4 && mode != pos::MODE_FALLBACK){              //If enough anchors then do triangulation unless overridden
+            az::azipe(v,q,pos,yaw,arguments.pitch,arguments.roll);
+            returnMode = pos::RETURN_MODE_AZIPE;
+        }else{
+            //
+            //
+            // Marton code here
+            //
+            //
+        }
+
+
+        //Add newest position estimation and yaw and time to circular buffer
+
+
+
+        buffer.add(pos,yaw,arguments.t);//Dont add if positioning failed
+
+
+*/
+        return 1;
+
+}
+
+
+
+
+
 /*
 Process the given data and update the position and yaw
 */
@@ -92,7 +215,7 @@ int pos::positioning::process(int mode,cv::Mat& frame, float dist,float roll, fl
                 bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
                 std::vector<cv::Mat_<float>> v;
                 pix2uLOS(corners,v);
-                projectionFusing(pos,q,v,mask,yaw,roll,pitch);
+                //projectionFusing(pos,q,v,mask,yaw,roll,pitch);
                 returnMode = pos::RETURN_MODE_PROJ;
             } else{//Do pure Azipe
                 pix2uLOS(corners,v);
@@ -133,31 +256,78 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
     int knownAnchors;
-    int returnMode;
+    int returnMode = -1;
 
+    std::vector<cv::Mat_<float>> q_m,v_m;// q_masked and v_masked
+    std::vector<cv::Mat_<float>> q;//q and q_masked
+    std::vector<bool> mask;
 
-    switch (mode) {
-        case pos::MODE_AZIPE_AND_VO:{
-        }
-        case pos::MODE_AZIPE:{
-            cv::aruco::detectMarkers(frame, dictionary, corners, ids);//Detect markers
-            std::vector<cv::Mat_<float>> q,q_m;//q and q_masked
-            std::vector<bool> mask;
-            knownAnchors = dataBase2q(ids,q,mask);
-            noOfAnchors = (float)knownAnchors;
-            drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+    if(mode!=pos::MODE_VO){//The only case where we do not start with aruco detection
+        cv::aruco::detectMarkers(frame, dictionary, corners, ids);//Detect markers
+
+        knownAnchors = dataBase2q(ids,q,mask);
+        noOfAnchors = (float)knownAnchors;
+        drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+    }
+    switch(mode){
+        case pos::MODE_AZIPE:{  //Perform only AZIPE estimation
             if(knownAnchors>=4){                                                //If enough anchors then do triangulation and break
-                std::vector<cv::Mat_<float>> v,v_m;//v and v_masked;
+                std::vector<cv::Mat_<float>> v;//v and v_masked;
                 pix2uLOS(corners,v);
                 ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
                 ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
                 az::azipe(v,q,pos,yaw,pitch,roll);
                 returnMode = pos::RETURN_MODE_AZIPE;
-                break;
+            }else{
+                returnMode = pos::RETURN_MODE_AZIPE_FAILED;
             }
-            if(mode!=pos::MODE_AZIPE_AND_VO){break;}                            //If we do not want fallback then break.
+            break;
+        }
+
+        case pos::MODE_AZIPE_AND_VO:{//Try Azipe and fall back to VO
+            if(knownAnchors>=4){                                                //If enough anchors then do triangulation and break
+                /////////// AZIPE Estimation
+                std::vector<cv::Mat_<float>> v;//v and v_masked;
+                pix2uLOS(corners,v);
+                ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+                ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+                az::azipe(v,q,pos,yaw,pitch,roll);
+                returnMode = pos::RETURN_MODE_AZIPE;
+            }else{
+                /////////// VO Estimation
+                std::vector<cv::Point2f> features;                                  //Must declare these before every calculation doe to being manipulated on
+                std::vector<cv::Point2f> updatedFeatures;                           //The new positions estimated from KLT
+                of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures); //Get flow field
+                float scale = 5;                                                    //Illustrate
+                cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
+                drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
+                cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
+                bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,roll,pitch,dist,pos,yaw);
+                if(!vo_success){returnMode = pos::RETURN_MODE_INERTIA;}
+                else{returnMode = pos::RETURN_MODE_VO;}
+            }
+            break;
+        }
+        case pos::MODE_AZIPE_AND_MARTON:{
+            if(knownAnchors>=4){                                                //If enough anchors then do triangulation and break
+                /////////// AZIPE Estimation
+                std::vector<cv::Mat_<float>> v;//v and v_masked;
+                pix2uLOS(corners,v);
+                ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+                ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
+                az::azipe(v,q,pos,yaw,pitch,roll);
+                returnMode = pos::RETURN_MODE_AZIPE;
+            }else{
+                /*
+                 *
+                 *  Marton code here
+                 *
+                 */
+            }
+            break;
         }
         case pos::MODE_VO:{
+            /////////// VO Estimation
             std::vector<cv::Point2f> features;                                  //Must declare these before every calculation doe to being manipulated on
             std::vector<cv::Point2f> updatedFeatures;                           //The new positions estimated from KLT
             of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures); //Get flow field
@@ -170,8 +340,24 @@ int pos::positioning::processAndIllustrate(int mode,cv::Mat& frame, cv::Mat& out
             else{returnMode = pos::RETURN_MODE_VO;}
             break;
         }
+        case pos::MODE_MARTON:{
+            /*
+             *
+             *  Marton code here
+             *
+             */
+        }
+        default:{
+            std::cerr << "INVALID MODE GIVEN TO vopos.cpp processAndIllustrate" << std::endl;
+        }
+
+
+
+
 
     }
+
+
     std::cout << std::endl;
     /* Below example of how proj fallback was written
     case pos::RETURN_MODE_PROJ:{
@@ -306,38 +492,6 @@ void pos::positioning::drawLines(cv::Mat& img,std::vector<cv::Point2f> points,cv
 
 
 
-/* Fuses the VO position estimation with incomplete angulation measurement (Angular measurement to single anchor)
- * This is done by obtaining an expression for a possible 3D line where the vehicle can be positioned, assuming known pose, anchor position and angular measurement to anchor
- * (Pose obtained from IMU (Roll, Pitch), VO-algorithm (Yaw))
- * The initial 3d coordinate estimation from VO is projected onto the 3D line.
- * Theory wise will this prevent drift. But is sensitive of roll, pitch, yaw errors. Yaw may be pretty good estimated with VO. roll, pitch
- * is obtained from Gyro + Accelerometer to improve quality
- *
-
-    cv::Mat_<float>& pos  : Inputoutputarray: Contains VO pos estimation. Will be updated with improved estimation
-    std::vector<cv::Mat_<float>> q: Input array containing coordinate of known anchor.
-    std::vector<cv::Mat_<float>> v; Input array containging uLOS vectors from vehicle to known anchor(s)
-    std::vector<uchar> mask       : Input array containing a mask to choose which element of q to use. (Will choose first 1)
-    float yaw, roll, pitch: Input floats :Pose info
- */
-void pos::positioning::projectionFusing(cv::Mat_<float>& pos,std::vector<cv::Mat_<float>> q, std::vector<cv::Mat_<float>> v, std::vector<bool> mask,
-                        float yaw, float roll,float pitch){
-    //Create R mat describing the pose of the vehicle (Instead directly create inverted R-mat)
-    //cv::Mat_<float> R = getXRot(roll)*getYRot(pitch)*getZRot(yaw);
-    cv::Mat_<float> R_t = getZRot(-yaw)*getYRot(-pitch)*getXRot(-roll);
-    //Find first element with known anchor
-    std::vector<bool>::iterator it = std::find(mask.begin(), mask.end(), true);
-    if(it!=mask.end()){
-        int index = std::distance(mask.begin(), it);
-        //Calculate v_tilde, which is the uLos vector expressed in global frame in negative direction. I.e vector pointing from anchor to vehicle
-        cv::Mat_<float> v_tilde = -R_t*v[index];
-        cv::Mat_<float> qt = pos-q[index];//Vector from q to t (Anchor to estimated vehicle position)
-        cv::Mat_<float> proj = q[index] + qt.dot(v_tilde)/v_tilde.dot(v_tilde) * v_tilde;//Projected coordinate
-        proj.copyTo(pos);
-    }
-    //std::cout << "ProjectionFusing: no known anchor" << std::endl;
-
-}
 /* Functions for defining roll, pitch, and yaw rotation matrices
  * Increase speed by passing reference and edit in place?
  */
