@@ -112,7 +112,7 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
  * This one is azipe, but Marton as fallback if it fails. When implemented enough, some variable shall state degree of polynomial etc
  * It must be possible to force fallback method
  */
-int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos,pos::MartonArgStruct& arguments){
+int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos,pos::MartonArgStruct arguments){
     static marton::circBuff buffer(3); //Create a circular buffer with specified size for marton estimation
 
     ///////////// TRY AZIPE
@@ -125,46 +125,28 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         std::vector<bool> mask;
         int knownAnchors = dataBase2q(ids,q,mask);
         drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+        std::vector<cv::Mat_<float>> v;//v and v_masked;
+        pix2uLOS(corners,v);
+        ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
+        ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
         if(knownAnchors>=4 && mode != pos::MODE_FALLBACK){                  //If enough anchors then do triangulation unless overridden
-            std::vector<cv::Mat_<float>> v;//v and v_masked;
-            pix2uLOS(corners,v);
-            ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
-            ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
             az::azipe(v,q,pos,arguments.yaw,arguments.pitch,arguments.roll);
             returnMode = pos::RETURN_MODE_AZIPE;
+        }else if(knownAnchors>1){
+
+            int status = marton::process(v_m,q_m,pos,arguments.yaw, arguments.pitch, arguments.roll,arguments.time,buffer);
+
+            //
+            //
         }else{
-            //
-            //
-            // Marton code here
-            //Conbstruct data struct
-            double p[12] = {0.4,1,1,0,
-                            9.4,2,2,0,
-                            26.4,3,3,0};
-            double alpha[5] = {0,0,0,0.4,0.3};
-            double t[4] = {0,1,2,3};
-            double tf = 4;
-            struct marton::poly2_data da = { p, alpha, t,tf};
-            // Construct solver parameters struct
-            double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
-            double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-            double xtol = 1e-2;
-            double gtol = 1e-2;
-            struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
-            int status = marton::nlinear_lsqr_solve_2deg(param,da);
-
-
-
-
-
-
-            //
-            //
+            returnMode = pos::RETURN_MODE_AZIPE_FAILED;
         }
 
         //Add newest position estimation and yaw and time to circular buffer
         if(returnMode==pos::RETURN_MODE_AZIPE || returnMode==pos::RETURN_MODE_MARTON){
             buffer.add(pos,arguments.yaw,arguments.time);//Dont add if positioning failed
         }
+
         return returnMode;
 
 }

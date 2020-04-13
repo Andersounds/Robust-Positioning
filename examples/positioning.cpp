@@ -129,11 +129,11 @@ int distColumn;                 bpu::assign(vm,distColumn,"DIST_COLUMN");
 int pitchColumn;                bpu::assign(vm,pitchColumn,"PITCH_COLUMN");
 int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
     while(getData.get(data)){
+        std::cout << "New lap: data size: " << data.size() << std::endl;
         timeStamp_data = data[0];
         float dist = data[distColumn];//This is used as a subst as actual height is not in dataset
         float pitch = data[pitchColumn];
         float roll = data[rollColumn];
-
         //####TEMP EDIT. give correct
 
 //Get new image
@@ -144,11 +144,12 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
 
             //int mode = P.processAndIllustrate(pos_alg,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
+            std::cout << "SWITCH:::::::::" << std::endl;
             switch(pos_alg){
                 case ALG_AZIPE:{
+                    std::cout << "ALG_AZIPE:::" << std::endl;
                     pos::argStruct arguments = {dist,roll,pitch,0};
                     int mode = P.process_AZIPE(frame, colorFrame,t,arguments);
-                    std::cout << "azipe..." << std::endl;
                     if(true){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
@@ -156,10 +157,10 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
                     break;
                 }
                 case ALG_VO:{
+                    std::cout << "ALG_VO:::" << std::endl;
                     pos::VOargStruct arguments = {dist,roll,pitch,0};
                     //pos::MODE_AZIPE_AND_FALLBACK
                     int mode = P.process_VO_Fallback(pos::MODE_FALLBACK,frame, colorFrame, t,arguments);
-                    std::cout << "azipe+vo..." << std::endl;
                     if(true){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
@@ -167,9 +168,9 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
                     break;
                 }
                 case ALG_MARTON:{
-                    pos::MartonArgStruct arguments = {dist,roll,pitch,0,timeStamp_data};
+                    std::cout << "ALG_MARTON:::" << std::endl;
+                    pos::MartonArgStruct arguments = {roll,pitch,0,timeStamp_data};
                     int mode = P.process_Marton_Fallback(pos::MODE_AZIPE_AND_FALLBACK,frame, colorFrame, t,arguments);
-                    std::cout << "azipe + marton..." << std::endl;
                     if(true){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
@@ -177,7 +178,7 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
                     break;
                 }
             }
-
+            std::cout << ":::::::::::::::" << std::endl;
 
 
             //int mode = P.processAz(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);

@@ -44,11 +44,12 @@ namespace marton{
         float read_P_offset(int);
     };
     void process(void);// template for complete process method. add arguments and return type when clear
-    void process(const std::vector<cv::Mat_<float>>& v,
+
+    int process(const std::vector<cv::Mat_<float>>& v,
                     const std::vector<cv::Mat_<float>>& q,
                     cv::Mat_<float>& position,
                     float& yaw,
-                    float pitch,float roll, float t,circBuff&);
+                    float pitch,float roll, float t,circBuff);// Do not pass circBuff as reference.
 
     int nlinear_lsqr_solve_2deg(void);     //Perform the nonlinear least square optimization Add arguments when known
 

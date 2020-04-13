@@ -86,7 +86,7 @@ namespace pos{
         float yaw;
     };
     struct MartonArgStruct{
-        float dist;
+        //float dist;
         float roll;
         float pitch;
         float yaw;
@@ -109,7 +109,7 @@ namespace pos{
 
         int process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat_<float>& pos, argStruct& arguments);
         int process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, VOargStruct& arguments);
-        int process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, MartonArgStruct& arguments);
+        int process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, MartonArgStruct arguments);
 
 
         //Illustration processing. Second mat argument is drawn upon.

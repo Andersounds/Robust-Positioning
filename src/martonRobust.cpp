@@ -17,13 +17,12 @@ Methods for defining the input arguments are defined in the ang::angulation clas
 
  */
 
-
-void marton::process(const std::vector<cv::Mat_<float>>& v,
+int marton::process(const std::vector<cv::Mat_<float>>& v,
             const std::vector<cv::Mat_<float>>& q,
             cv::Mat_<float>& position,
             float& yaw,
             float pitch,float roll, float tf,
-            circBuff& prevBuffer){
+            circBuff prevBuffer){
 
                 /*
                 X(0.)    Extract only first v and q. In future maybe allow more
@@ -37,12 +36,11 @@ void marton::process(const std::vector<cv::Mat_<float>>& v,
                  8.     Perform nonlinear least square optimization
                  9.     If successful, pass back position and yaw estimation, otherwise some fail code
                 */
-
                 //1.
                 cv::Mat Rx = marton::getXRot(roll);
                 cv::Mat Ry = marton::getYRot(pitch);
-                cv::Mat_<float> v0 = Ry*Rx*v[0];//Derotate v vector back in reverse order. (roll-pitch-yaw instead of yaw-pitch-roll)
                 cv::Mat_<float> q0 = q[0];
+                cv::Mat_<float> v0 = Ry*Rx*v[0];//Derotate v vector back in reverse order. (roll-pitch-yaw instead of yaw-pitch-roll)
                 v0.reshape(1);//Reshape to column to make sure that we access corret elements below
                 q0.reshape(1);
                 double alpha[6];
@@ -52,24 +50,21 @@ void marton::process(const std::vector<cv::Mat_<float>>& v,
                 alpha[3] = (double)v0(0,0);
                 alpha[4] = (double)v0(1,0);
                 alpha[5] = (double)v0(2,0);
-
                 // Get values from prevBuffer and construct arrays
                 double tPrev_N[3];double pPrev_N[12];
                 prevBuffer.read_t_normed(tPrev_N);
                 prevBuffer.read_p_normed(pPrev_N);
                 // Construct poly2_data
-                struct marton::poly2_data d = {pPrev_N, alpha, tPrev_N,tf};
+                struct marton::poly2_data da = {pPrev_N, alpha, tPrev_N,tf};
                 // Construct solver parameters struct
                 double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
                 double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
                 double xtol = 1e-2;
                 double gtol = 1e-2;
                 struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
-
                 // Perform optimization. pass d and param. Hur skicka structs som argument?
-
-
-
+                int status = marton::nlinear_lsqr_solve_2deg(param,da);
+                return status;
             }
 
 /*
@@ -87,16 +82,16 @@ Below are function definitions for Marton robust positioning algorithm
     f: The results of all cost functions shall be passed back to the solver via this vector
 */
 int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
-// Read parameters from data-struct
-double *p = ((struct poly2_data *)data)->p;
-double *alpha = ((struct poly2_data *)data)->alpha;
-double *t = ((struct poly2_data *)data)->t;
-double tf = ((struct poly2_data *)data)->tf;
+    // Read parameters from data-struct
+    double *p = ((struct poly2_data *)data)->p;
+    double *alpha = ((struct poly2_data *)data)->alpha;
+    double *t = ((struct poly2_data *)data)->t;
+    double tf = ((struct poly2_data *)data)->tf;
 
-// Get arguments to a normal vector for easy access
-double x_[12];
-for(size_t i = 0;i<12;i++){
-    x_[i] = gsl_vector_get(x,i);
+    // Get arguments to a normal vector for easy access
+    double x_[12];
+    for(size_t i = 0;i<12;i++){
+        x_[i] = gsl_vector_get(x,i);
 }
 
 /* Equations 0-11 */
