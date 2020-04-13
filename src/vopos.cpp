@@ -73,9 +73,8 @@ int pos::positioning::process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat
  *  if we should use homography or affine, and KLT or correlation based flow.
  *  It must be possible to force fallback method
  */
-int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, float& yaw, pos::VOargStruct& arguments){
-/*    static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field estimation
-
+int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, pos::VOargStruct& arguments){
+    static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field estimation
 ///////////// TRY AZIPE
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
@@ -91,7 +90,7 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
         pix2uLOS(corners,v);
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
         ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
-        az::azipe(v,q,pos,yaw,arguments.pitch,arguments.roll);
+        az::azipe(v,q,pos,arguments.yaw,arguments.pitch,arguments.roll);
         returnMode = pos::RETURN_MODE_AZIPE;
     }else{
         /////////// VO Estimation
@@ -102,13 +101,12 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
         cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
         drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
         cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
-        bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,arguments.roll,arguments.pitch,arguments.dist,pos,yaw);
+        bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,arguments.roll,arguments.pitch,arguments.dist,pos,arguments.yaw);
         if(!vo_success){returnMode = pos::RETURN_MODE_INERTIA;}
         else{returnMode = pos::RETURN_MODE_VO;}
     }
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
-    return returnMode;*/
-    return 1;
+    return returnMode;
 }
 /*
  * This one is azipe, but Marton as fallback if it fails. When implemented enough, some variable shall state degree of polynomial etc

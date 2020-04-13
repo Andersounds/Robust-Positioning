@@ -156,8 +156,14 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
                     break;
                 }
                 case ALG_VO:{
-//                    pos::VOargStruct arguments
+                    pos::VOargStruct arguments = {dist,roll,pitch,0};
+                    //pos::MODE_AZIPE_AND_FALLBACK
+                    int mode = P.process_VO_Fallback(pos::MODE_FALLBACK,frame, colorFrame, t,arguments);
                     std::cout << "azipe+vo..." << std::endl;
+                    if(true){
+                        std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+                        databin_LOG.dump(logData);
+                    }
                     break;
                 }
                 case ALG_MARTON:{
