@@ -105,16 +105,16 @@ namespace pos{
                     cv::Mat_<float>,cv::Mat_<float> //Visual odometry paramters [K-mat, T-mat]
                 );
         //ASAP processing. No illustration
-        int process(int,cv::Mat&,float,float,float,float&,cv::Mat_<float>&);//Perform processing. return value indicates what kind of estimation is done
+        //int process(int,cv::Mat&,float,float,float,float&,cv::Mat_<float>&);//Perform processing. return value indicates what kind of estimation is done
 
         int process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat_<float>& pos, argStruct& arguments);
         int process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, VOargStruct& arguments);
-        int process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, MartonArgStruct arguments);
+        int process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, MartonArgStruct& arguments);
 
 
         //Illustration processing. Second mat argument is drawn upon.
-        int processAndIllustrate(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Perform processing, but also illustrate by drawing on the second argument matrix
-        int processAz(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Only azipe aipe
+        //int processAndIllustrate(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Perform processing, but also illustrate by drawing on the second argument matrix
+        //int processAz(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Only azipe aipe
         void illustrateDerotation(cv::Mat&,cv::Mat&,float,float&,float&,float&);//Only visualize derotation
     private:
         void drawLines(cv::Mat&,std::vector<cv::Point2f>,cv::Point2f);

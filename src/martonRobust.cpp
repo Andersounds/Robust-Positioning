@@ -64,8 +64,12 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
                 // Perform optimization. pass d and param. Hur skicka structs som argument?
                 int status = marton::nlinear_lsqr_solve_2deg(param,da);
+
+
+                // Calculate new position
                 return status;
-            }
+}
+
 
 /*
 Below are function definitions for Marton robust positioning algorithm
@@ -184,14 +188,12 @@ int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data da
     /* initialize solver with starting point and weights */
     gsl_multifit_nlinear_winit (&x.vector, &wts.vector, &fdf, w);
 
-    /* compute initial cost function */
-    //f = gsl_multifit_nlinear_residual(w);
-    //gsl_blas_ddot(f, f, &chisq0);
-
     /* solve the system with a maximum of 100 iterations */
     int status,info;
     status = gsl_multifit_nlinear_driver(100, xtol, gtol, ftol,
                                          NULL, NULL, &info, w);
+
+
 
 
     std::cout << "Polynomial: ";
@@ -202,14 +204,17 @@ int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data da
         std::cout << std::endl;
 
     switch(status){
+        /* Calculate new position using the polynomial */
         case(GSL_SUCCESS):{
             std::cout << " Success" << std::endl;
             std::cout << "Info: " << info <<  std::endl;
             std::cout << "Iterations: " << gsl_multifit_nlinear_niter(w) << std::endl;
+            status = 1;
             break;
         }
         case(GSL_ENOPROG):{
             std::cout << " Could not find" <<std::endl;
+            status = 0;
             break;
         }
     }
