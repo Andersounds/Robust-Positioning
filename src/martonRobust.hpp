@@ -43,28 +43,46 @@ namespace marton{
         int read_p_normed(double*);
         float read_P_offset(int);
     };
-/*
- Can this be done without a class but as just free functions?
-*/
-//class martonRobust{
-        //int polyParameters;//How many parameters? ie what degree should the polynomial be?
-        //int bufferSize; //How many previous locations are to be saved in circular buffer? (min value dep on polyParameters)
-//    public:
-        void process(void);// template for complete process method. add arguments and return type when clear
-        void process(const std::vector<cv::Mat_<float>>& v,
+    void process(void);// template for complete process method. add arguments and return type when clear
+    void process(const std::vector<cv::Mat_<float>>& v,
                     const std::vector<cv::Mat_<float>>& q,
                     cv::Mat_<float>& position,
                     float& yaw,
                     float pitch,float roll, float t,circBuff&);
-//    private:
 
-        int nlinear_lsqr_solve_2deg(void);     //Perform the nonlinear least square optimization Add arguments when known
-//    };
+    int nlinear_lsqr_solve_2deg(void);     //Perform the nonlinear least square optimization Add arguments when known
 
 
 // Free cost and jacobian of cost frunctions
-    struct nlinear_lsqr_param;
-    struct poly2_data; // Data struct for gsl containing n: t: y:
+
+
+/*
+    Data struct with parameters that are given to solver
+*/
+struct nlinear_lsqr_param {
+    double * x_init;     //Initial guess for variables
+    double * weights;    //Variable weights
+    double xtol;         //variable convergence criteria
+    double gtol;
+};
+/*
+    Data struct with parameters that are given to cost and jacobian functions later
+    double p[12] = {x_oldoldold,y_oldoldold,z_oldoldold,yaw_oldoldold,
+                    x_oldold,y_oldold,z_oldold,yaw_oldold,
+                    x_old,y_old,z_old,yaw_old}
+    double alpha[5] = {sx,sy,sz,vx,vy};
+    double t[4] = {t_oldoldold,t_oldold,t_old,t_now};
+*/
+struct poly2_data {
+    //size_t n;         //Use this to allow for more than one anchor later. then alpha can be passed as [sx1,sy1,sz1,vx1,vy1,vz1,sx2,sy2,sz2,vx2,vy2,vz2]
+    //size_t m;         //Use this to vary number of previous known positions that are passed to solver
+    double * p;         //Previous known positions [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...]
+    double * alpha;     //[sx,sy,sz,vx,vy] parameters to visible anchor.vx,vy is vector pointing towards anchor, in UAV frame! translate with T before passing.Maybe allow for more than one anchor later?
+    double * t;         //Timestamps previous [t1 t2 t3]
+    double tf;        //Timestamp current
+};
+
+
     int poly2_f (const gsl_vector * x, void *data, gsl_vector * f); // Cost function for gsl_multifit_nlinear (2nd order polynomial)
     int poly2_df (const gsl_vector * x, void *data, gsl_matrix * J);// Jacobian of cost function for gsl-multifit_nlinear (2nd order polynomial)
     int nlinear_lsqr_solve_2deg(nlinear_lsqr_param,poly2_data);     //Perform the nonlinear least square optimization Add arguments when known

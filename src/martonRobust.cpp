@@ -8,35 +8,6 @@ Methods for defining the input arguments are defined in the ang::angulation clas
 */
 
 
-
-/*
-    Data struct with parameters that are given to solver
-*/
-struct marton::nlinear_lsqr_param {
-    double * x_init;     //Initial guess for variables
-    double * weights;    //Variable weights
-    double xtol;         //variable convergence criteria
-    double gtol;
-};
-/*
-    Data struct with parameters that are given to cost and jacobian functions later
-    double p[12] = {x_oldoldold,y_oldoldold,z_oldoldold,yaw_oldoldold,
-                    x_oldold,y_oldold,z_oldold,yaw_oldold,
-                    x_old,y_old,z_old,yaw_old}
-    double alpha[5] = {sx,sy,sz,vx,vy};
-    double t[4] = {t_oldoldold,t_oldold,t_old,t_now};
-*/
-struct marton::poly2_data {
-    //size_t n;         //Use this to allow for more than one anchor later. then alpha can be passed as [sx1,sy1,sz1,vx1,vy1,vz1,sx2,sy2,sz2,vx2,vy2,vz2]
-    //size_t m;         //Use this to vary number of previous known positions that are passed to solver
-    double * p;         //Previous known positions [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...]
-    double * alpha;     //[sx,sy,sz,vx,vy] parameters to visible anchor.vx,vy is vector pointing towards anchor, in UAV frame! translate with T before passing.Maybe allow for more than one anchor later?
-    double * t;         //Timestamps previous [t1 t2 t3]
-    double tf;        //Timestamp current
-};
-
-
-
 /* This is the main process method that handles the estimation
  * Only first of the known anchors will be used in first implementation
  * vector<Mat> v        A set of unit-Line-of-Sight vectors in the vehicle frame (measured) to each of the visible anchors
@@ -45,18 +16,7 @@ struct marton::poly2_data {
  * float   pitch   A value representing the pitch of the vehicle as related to the global frame expressed in radians.
 
  */
-//void robustPositioning::martonRobust::process(const std::vector<cv::Mat_<float>>& q,const std::vector<bool>& mask,const std::vector<float>& angles, float roll, float pitch, float& yaw, cv::Mat_<float>& pos){
 
-    //Derotate (just subtract roll and pitch)
-    //
-
-//}
-
-/*
-Keep same interface as azipe. v,q,pos,yaw,pitch,roll
-Possibly keep list of previous positions here. or keep thet externally and give as argument?
-
-*/
 
 void marton::process(const std::vector<cv::Mat_<float>>& v,
             const std::vector<cv::Mat_<float>>& q,
@@ -268,8 +228,6 @@ int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data da
     Circular buffer implementation
 */
 
-
-
 marton::circBuff::circBuff(int size){
     //Initialize sie of vectors
     p = std::vector<float>(size*4);
@@ -376,7 +334,6 @@ Test process function for tesitng
 
 
 */
-
 void marton::process(void){
 
 //Conbstruct data struct
@@ -395,9 +352,6 @@ void marton::process(void){
     double xtol = 1e-2;
     double gtol = 1e-2;
     struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
-
-
-
 
     int status = marton::nlinear_lsqr_solve_2deg(param,da);
     std::cout << "Status: " << status << std::endl;

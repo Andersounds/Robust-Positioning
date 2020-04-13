@@ -136,6 +136,27 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
             //
             //
             // Marton code here
+            //Conbstruct data struct
+            double p[12] = {0.4,1,1,0,
+                            9.4,2,2,0,
+                            26.4,3,3,0};
+            double alpha[5] = {0,0,0,0.4,0.3};
+            double t[4] = {0,1,2,3};
+            double tf = 4;
+            struct marton::poly2_data da = { p, alpha, t,tf};
+            // Construct solver parameters struct
+            double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+            double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+            double xtol = 1e-2;
+            double gtol = 1e-2;
+            struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
+            int status = marton::nlinear_lsqr_solve_2deg(param,da);
+
+
+
+
+
+
             //
             //
         }
