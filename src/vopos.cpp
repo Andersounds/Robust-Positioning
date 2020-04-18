@@ -135,7 +135,7 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         if(knownAnchors>=4 && mode != pos::MODE_FALLBACK){                  //If enough anchors then do triangulation unless overridden
             az::azipe(v,q,pos,arguments.yaw,arguments.pitch,arguments.roll);
             returnMode = pos::RETURN_MODE_AZIPE;
-        }else if(knownAnchors>1){
+        }else if(knownAnchors>=1){
 
             std::vector<float> tPrev(3);
             std::vector<float> pPrev(12);
