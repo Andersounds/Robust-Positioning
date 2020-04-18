@@ -128,13 +128,19 @@ float rad2Grad = 57.2958;
 int distColumn;                 bpu::assign(vm,distColumn,"DIST_COLUMN");
 int pitchColumn;                bpu::assign(vm,pitchColumn,"PITCH_COLUMN");
 int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
+
+int algmode = pos::MODE_AZIPE_AND_FALLBACK;
+//marton::circBuff buffer(3);
+//marton::circBuff2 buffer2(5);
     while(getData.get(data)){
         std::cout << "New lap: data size: " << data.size() << std::endl;
         timeStamp_data = data[0];
         float dist = data[distColumn];//This is used as a subst as actual height is not in dataset
         float pitch = data[pitchColumn];
         float roll = data[rollColumn];
-        //####TEMP EDIT. give correct
+
+        //if((counter%100)<3){algmode = pos::MODE_FALLBACK;}
+        //else{algmode = pos::MODE_AZIPE_AND_FALLBACK;}
 
 //Get new image
 //Separate processAndIllustrate with just process using switch statement
@@ -142,7 +148,7 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
             VStreamer.getImage(frame);
             if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-
+            std::cout << "Lap " << counter  << ", time: " << timeStamp_data<< std::endl;
             //int mode = P.processAndIllustrate(pos_alg,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
             std::cout << "SWITCH:::::::::" << std::endl;
             switch(pos_alg){
@@ -159,8 +165,7 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
                 case ALG_VO:{
                     std::cout << "ALG_VO:::" << std::endl;
                     pos::VOargStruct arguments = {dist,roll,pitch,0};
-                    //pos::MODE_AZIPE_AND_FALLBACK
-                    int mode = P.process_VO_Fallback(pos::MODE_FALLBACK,frame, colorFrame, t,arguments);
+                    int mode = P.process_VO_Fallback(algmode,frame, colorFrame, t,arguments);
                     if(true){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
@@ -170,11 +175,25 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
                 case ALG_MARTON:{
                     std::cout << "ALG_MARTON:::" << std::endl;
                     pos::MartonArgStruct arguments = {roll,pitch,0,timeStamp_data};
-                    int mode = P.process_Marton_Fallback(pos::MODE_AZIPE_AND_FALLBACK,frame, colorFrame, t,arguments);
+                    int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
                     if(true){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
                     }
+                    if((mode!=pos::RETURN_MODE_AZIPE_FAILED)&(mode!=pos::RETURN_MODE_MARTON_FAILED)){
+                    //    buffer.add(t,arguments.yaw,arguments.time);//Dont add if positioning failed
+                    //    buffer2.add(arguments.time); //test also with counter directly if not working
+                    //    std::cout << "Added " << arguments.time << " to buffer2" << std::endl;
+                    }
+                    //float toff = buffer.read_T_offset();
+                    //std::cout << "Marton T offset: " << toff<< std::endl;
+                    //double tX[3];
+                    //buffer.read_t(tX);
+                    //std::vector<float> tX(5);
+                    //buffer2.read(tX);
+                    //std::cout <<" T: [" << tX[0] << ", " << tX[1]<<", " << tX[2] << ", " << tX[3] << ", " << tX[4] <<"]" << std::endl;
+
+
                     break;
                 }
             }
@@ -189,10 +208,9 @@ int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
 //            }
             std::cout << "X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll<<", pitch: " << pitch << "yaw: " << yaw<< std::endl;
             cv::imshow("showit",colorFrame);
-            //cv::waitKey(0);
+            cv::waitKey(0);
             if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
-            std::cout << "Lap " << counter  << ", time: " << timeStamp_data/1000<< std::endl;
             counter++;
       }
 
