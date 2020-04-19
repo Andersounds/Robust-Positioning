@@ -1,5 +1,12 @@
 %close all
 clear all
+
+colors = [0.9290 0.6940 0.1250;
+        0 0.4470 0.7410;
+        0.4660 0.6740 0.1880;
+        0.6350 0.0780 0.1840;
+        0.8500 0.3250 0.0980;
+        0 0 0];
 %%SETTINGS%%%%
 basePath = '/Users/Fredrik/Datasets/Sim/20-04-19-1/';
 plotTrue = 1;
@@ -20,7 +27,6 @@ modeCol = 9;
 % Extract modes
 mode_est = d_est(:,modeCol);
 C = unique(mode_est);%Modes that are logged
-
 t_est = d_est(:,tcolE)./1000;
 x_est = d_est(:,xcolE);
 y_est = d_est(:,ycolE);
@@ -76,14 +82,17 @@ end
 
     figure
         if plotTrue
-        plot(x_ref,y_ref,'.');
+        plot(x_ref,y_ref,'Color',colors(1,:));
         hold on
         end
         % Plot est path in different colour depending on mode used
+        counter = 2;
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-             plot(x_est(indeces),y_est(indeces),'.');
-             hold on      
+            colorindex = mod(counter,length(colors));
+            plot(x_est(indeces),y_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
+            counter = counter+1;
+            hold on      
         end
         
         if plotTrue
@@ -93,6 +102,7 @@ end
                 Legend{i+1} = num2str(C(i));
              end
              legend(Legend);
+             grid on
         else
              %legendCell = cellstr(num2str(C', 'N=%-d'));
              %legend(legendCell);
