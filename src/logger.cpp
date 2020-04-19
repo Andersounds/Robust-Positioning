@@ -113,13 +113,14 @@ int robustPositioning::imageLogger::init(std::string dumpDir,std::string newDir)
     dumpDirName = newDir;
      //Try our best to interpret the user given path and add one more directory to it with name dumpDirName
     if(dumpDir==""){
-        dirPath = dumpDirName;
+        dirPath = dumpDirName;//In pwd. If we were to write to "/" + newDir then it would be in OS root dir
     }else if(std::regex_match(dumpDir,std::regex("(.*)(/)"))) {
-        dirPath = dumpDir + dumpDirName + "/images";
+        //dirPath = dumpDir + dumpDirName + "/images";
+        dirPath = dumpDir + dumpDirName;
     }else{
-        dirPath = dumpDir + "/" + dumpDirName + "/images";
+        //dirPath = dumpDir + "/" + dumpDirName + "/images";
+        dirPath = dumpDir + "/" + dumpDirName;
     }
-    std::cout << "LOGGER.CPP - ROW 122 - IF ABOVE ROW WORKED THEN REMOVE THIS COUT" << std::endl;
     //Create directory. mkdir takes a const char object in first argument and not std::string. So it has to be called by .c_str()
     if(mkdir(dirPath.c_str(), 0777) == 0){//Mode 0777 is a directory that is open for everyone for everything
         std::cout << "Created directory for dumping images." << std::endl;
