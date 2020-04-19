@@ -58,8 +58,8 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             //roll - phi
 
         //Define some per-position-constant quantities
-        float phi = -roll; //Note the sign on this!
-        float theta = -pitch;
+        float phi = roll; //Note the sign on this!
+        float theta = pitch;
         float h = cos(theta);
         float k = sin(phi)*sin(theta);
         float l = cos(phi);
