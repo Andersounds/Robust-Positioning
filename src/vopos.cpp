@@ -56,7 +56,7 @@ int pos::positioning::process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat
     std::vector<bool> mask;
     int knownAnchors = dataBase2q(ids,q,mask);
     drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
-    if(knownAnchors>=3){                                                //If enough anchors then do triangulation and break
+    if(knownAnchors>=minAnchors){                                                //If enough anchors then do triangulation and break
         std::vector<cv::Mat_<float>> v;//v and v_masked;
         pix2uLOS(corners,v);
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
@@ -85,7 +85,7 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
     std::vector<bool> mask;
     int knownAnchors = dataBase2q(ids,q,mask);
     drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
-    if(knownAnchors>=4 && mode != pos::MODE_FALLBACK){                  //If enough anchors then do triangulation unless overridden
+    if(knownAnchors>=minAnchors && mode != pos::MODE_FALLBACK){                  //If enough anchors then do triangulation unless overridden
         std::vector<cv::Mat_<float>> v;//v and v_masked;
         pix2uLOS(corners,v);
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
@@ -113,7 +113,14 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
  * It must be possible to force fallback method
  */
 int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos,pos::MartonArgStruct& arguments){
+    static bool init = false;
     static marton::circBuff tBuffer(3);    //For previous time stamps
+    if(!init){
+        init = true;
+        tBuffer.add(-700);//To prevent that marton starts before we even have azipe estimations
+        tBuffer.add(-700);
+        tBuffer.add(-700);
+    }
     static marton::circBuff pBuffer(12);   //For previous positions
 
 
@@ -131,19 +138,28 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         pix2uLOS(corners,v);
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
         ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
-        std::cout << "Known anchors: " << knownAnchors << std::endl;
-        if(knownAnchors>=4 && mode != pos::MODE_FALLBACK){                  //If enough anchors then do triangulation unless overridden
+        //std::cout << "Known anchors: " << knownAnchors << std::endl;
+        std::vector<float> tPrev(3);
+        tBuffer.read(tPrev);
+        float tspan = arguments.time - tPrev[0];
+        std::cout << "Tspan: " << tspan << std::endl;
+        if((knownAnchors>=minAnchors) && (mode != pos::MODE_FALLBACK)){                  //If enough anchors then do triangulation unless overridden
             az::azipe(v,q,pos,arguments.yaw,arguments.pitch,arguments.roll);
             returnMode = pos::RETURN_MODE_AZIPE;
-        }else if(knownAnchors>=1){
-
-            std::vector<float> tPrev(3);
+            std::cout << "Azipe:  X: "<< pos(0,0) << ", Y: "<< pos(1,0) << ", Z: " << pos(2,0) << ", yaw: " << arguments.yaw<< std::endl;
+        }else if(knownAnchors>=1 && tspan<500){//Only try marton if total time span is less than 500ms Should be closer to 100ms
+        //}if(knownAnchors>=1){
             std::vector<float> pPrev(12);
-            tBuffer.read(tPrev);
             pBuffer.read(pPrev);
-            returnMode = marton::process(v_m,q_m,pos,arguments.yaw, arguments.pitch, arguments.roll,arguments.time,pPrev,tPrev);
-
-        }else{
+            int _returnMode = marton::process(v_m,q_m,pos,arguments.yaw, arguments.pitch, arguments.roll,arguments.time,pPrev,tPrev);
+            switch(_returnMode){
+                case GSL_SUCCESS:{returnMode = pos::RETURN_MODE_MARTON;break;}
+                case GSL_ENOPROG:{returnMode = pos::RETURN_MODE_MARTON_FAILED;break;}
+                default:{std::cout << "Unknown return value from marton::process in vopos>process_Marton_Fallback" << std::endl;}
+            }
+            std::cout << "Marton: X: "<< pos(0,0) << ", Y: "<< pos(1,0) << ", Z: " << pos(2,0)  << ", yaw: " << arguments.yaw<< std::endl;
+        //}else{
+        } else if(knownAnchors < 3){
             returnMode = pos::RETURN_MODE_AZIPE_FAILED;
         }
 
@@ -155,7 +171,10 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
 
 
         //Add newest position estimation and yaw and time to circular buffer
-        if(returnMode!=pos::RETURN_MODE_AZIPE_FAILED){
+        //maybe add marton estimation as well?
+        std::cout << "Returnmode: " << returnMode << std::endl;
+        if(returnMode==pos::RETURN_MODE_AZIPE){
+//        if((returnMode==pos::RETURN_MODE_AZIPE)||(returnMode==pos::RETURN_MODE_MARTON)){
         //    std::cout << "Adding timestamp: " << arguments.time << " to buffer..." << std::endl;
         //    buffer.add(pos,arguments.yaw,arguments.time);//Dont add if positioning failed
             tBuffer.add(arguments.time); //test also with counter directly if not working
@@ -163,7 +182,7 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
             pBuffer.add(pos(1,0));
             pBuffer.add(pos(2,0));
             pBuffer.add(arguments.yaw);
-            std::cout << "Addedd " << arguments.time << " to buffer2" << std::endl;
+            std::cout << "Added " << arguments.time << " to buffer" << std::endl;
         }
 
         return returnMode;
