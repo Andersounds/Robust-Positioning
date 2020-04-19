@@ -32,9 +32,9 @@ corners = [2,   0.3,    -1.9,    0.8;
  for i=1:length(corners(:,1))  
     line = addLine(line,corners(i,1:3),fps,corners(i,4));
  end
- %Pad to allow filter risetime
+ %Pad to allow filter falltime
  for i=1:pad
-    line = [line; line(1,:)]; 
+    line = [line; line(end,:)]; 
  end
 %Apply lowpass filter
 LPline = lowpass(line,wpass,fps);
@@ -105,4 +105,4 @@ plot(t,roll)
 
 total = [t';LPline';roll';pitch';rad';dist']';% Write to csv file
 
-csvwrite('path-200331-1.csv',total)
+csvwrite('path-200419-1.csv',total)
