@@ -84,7 +84,7 @@ struct poly2_data {
 
     int poly2_f (const gsl_vector * x, void *data, gsl_vector * f); // Cost function for gsl_multifit_nlinear (2nd order polynomial)
     int poly2_df (const gsl_vector * x, void *data, gsl_matrix * J);// Jacobian of cost function for gsl-multifit_nlinear (2nd order polynomial)
-    int nlinear_lsqr_solve_2deg(nlinear_lsqr_param,poly2_data,cv::Mat_<float>&,float&);     //Perform the nonlinear least square optimization Add arguments when known
+    int nlinear_lsqr_solve_2deg(nlinear_lsqr_param,poly2_data,std::vector<float>& returnX);     //Perform the nonlinear least square optimization Add arguments when known
 
     cv::Mat getXRot(float);
     cv::Mat getYRot(float);

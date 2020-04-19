@@ -37,7 +37,7 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                  9.     If successful, pass back position and yaw estimation, otherwise some fail code
                 */
                 //1.
-                std::cout <<" T4: [" << tPrev[0] << ", " << tPrev[1]<<", " << tPrev[2] <<"]" << std::endl;
+                //std::cout <<" P4: [" << pPrev[0] << ", " << pPrev[1]<<", " << pPrev[2] << ", " << pPrev[3] <<", "<< pPrev[4] <<"]" << std::endl;
                 cv::Mat Rx = marton::getXRot(roll);
                 cv::Mat Ry = marton::getYRot(pitch);
                 cv::Mat_<float> q0 = q[0];
@@ -73,30 +73,50 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                     pPrev_normed[i] = (double)element;
                 }
 
-                std::cout <<" T4_normed: [" << tPrev_normed[0] << ", " << tPrev_normed[1]<<", " << tPrev_normed[2] <<"]" << std::endl;
-                // Get values from prevBuffer and construct arrays
-            //    double tPrev_N[3];double pPrev_N[12];
-            //    prevBuffer.read_t_normed(tPrev_N);
-            //    prevBuffer.read_p_normed(pPrev_N);
-                // Construct poly2_data
-                //float tf_normed = tf-prevBuffer.read_T_offset();
-                //std::cout << "TF NORMED::::::::::::::::::::::::::: " << tf_normed << std::endl;
-                //std::cout << "::::: [" << tPrev_N[0] << ", " << tPrev_N[1]<< ", " << tPrev_N[2] << std::endl;
 
-                //double tf_d_normed = (double)tf_normed;
 
                 struct marton::poly2_data da = {pPrev_normed, alpha, tPrev_normed,tf_d_normed};
                 // Construct solver parameters struct
-                double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
-                double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-                double xtol = 1e-2;
-                double gtol = 1e-2;
+                double x_init[12] = { 0.1, 0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+                //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
+                //double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1};
+                double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,0,0};
+                //double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+                double xtol = 1e-3;
+                double gtol = 1e-3;
                 struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
                 // Perform optimization. pass d and param. Hur skicka structs som argument?
-                int status = marton::nlinear_lsqr_solve_2deg(param,da,position,yaw);
+                std::vector<float> x_est(12); // Estimated polynomial parameters
+                int status = marton::nlinear_lsqr_solve_2deg(param,da, x_est);
 
-            //    std::cout << "Adapt offset here if successful" << std::endl;
+                if(status==GSL_SUCCESS){
+                    /*std::cout << "X: ";
+                    for(int j=0;j<12;j++){
+                        std::cout << x_est[j] << ", ";
+                    }
+                    std::cout << std::endl;*/
 
+                    float tf_normed_sqrd = tf_normed*tf_normed;
+                    cv::Mat_<float> po = cv::Mat_<float>::zeros(3,1);
+                    for(int i=0;i<3;i++){
+                        float delta_value = x_est[3*i] + x_est[3*i+1]*tf_normed + x_est[3*i+2]*tf_normed_sqrd;//Calculate value from polybnomial. But it is offset!
+                        po(i,0) = pPrev[i] + delta_value;// Add offset and update position
+                    //    po(i,0) = delta_value;
+                    }
+
+                    po.copyTo(position);
+
+                    float delta_yaw = x_est[9] + x_est[10]*tf_normed + x_est[11]*tf_normed_sqrd;
+                    float yaw_ = pPrev[3] + delta_yaw;
+
+                    double fractpart,intpart;
+                    fractpart = modf(yaw_/6.2832,&intpart);
+                    yaw = 6.2832*(float)fractpart;
+                    //std::cout << "TF: " << tf_normed << std::endl;
+                    //std::cout << "Marto1: X: "<< position(0,0) << ", Y: "<< position(1,0) << ", Z: " << position(2,0) << ", yaw: " << yaw<< std::endl;
+                }else{
+                    std::cout << "Failed Marton." << std::endl;
+                }
 
                 // Calculate new position
                 return status;
@@ -182,7 +202,7 @@ return GSL_SUCCESS;
     Code is adapted from first example at https://www.gnu.org/software/gsl/doc/html/nls.html
 */
 
-int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data data,cv::Mat_<float>& position,float& yaw){
+int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data data,std::vector<float>& returnX){
 
     const gsl_multifit_nlinear_type *T = gsl_multifit_nlinear_trust;
     gsl_multifit_nlinear_workspace *w;
@@ -223,13 +243,14 @@ int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data da
 
     /* solve the system with a maximum of 100 iterations */
     int status,info;
-    status = gsl_multifit_nlinear_driver(100, xtol, gtol, ftol,
+    size_t maxiter = 100;
+    status = gsl_multifit_nlinear_driver(maxiter, xtol, gtol, ftol,
                                          NULL, NULL, &info, w);
 
 
 
 
-    /*std::cout << "Polynomial: ";
+/*    std::cout << "Polynomial: ";
     for(size_t i=0;i<12;i++){
         double xi = gsl_vector_get(w->x, i);
         std::cout << xi << ", ";
@@ -239,24 +260,47 @@ int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data da
     switch(status){
         /* Calculate new position using the polynomial */
         case(GSL_SUCCESS):{
-            std::cout << " Success" << std::endl;
-            std::cout << "Info: " << info <<  std::endl;
-            std::cout << "Iterations: " << gsl_multifit_nlinear_niter(w) << std::endl;
-            double tf_d = data.tf;
+            //std::cout << " Success" << std::endl;
+            //std::cout << "Info: " << info <<  std::endl;
+            //std::cout << "Iterations: " << gsl_multifit_nlinear_niter(w) << std::endl;
+        /*    double tf_d = data.tf;
             double tf_d2 = tf_d*tf_d;
             double xf = gsl_vector_get(w->x, 0) + gsl_vector_get(w->x, 1)*tf_d + gsl_vector_get(w->x, 2)*tf_d2;
             double yf = gsl_vector_get(w->x, 3) + gsl_vector_get(w->x, 4)*tf_d + gsl_vector_get(w->x, 5)*tf_d2;
             double zf = gsl_vector_get(w->x, 6) + gsl_vector_get(w->x, 7)*tf_d + gsl_vector_get(w->x, 8)*tf_d2;
             double yawf = gsl_vector_get(w->x, 9) + gsl_vector_get(w->x, 10)*tf_d + gsl_vector_get(w->x, 11)*tf_d2;
-            position(0,0) = (float)xf;
+        */
+            returnX.clear();
+            for(int i=0;i<12;i++){
+                double element = gsl_vector_get(w->x, i);
+                returnX.push_back((float)element);
+            }
+
+
+            //std::cout << "Performed Marton. No update." << std::endl;
+            //std::cout << "TF: " << tf_d << std::endl;
+            //std::cout << "delta Pos: " << xf << ", " << yf << ", " << zf << ", "<< yawf << std::endl;
+            /*position(0,0) = (float)xf;
             position(1,0) = (float)yf;
             position(2,0) = (float)zf;
             yaw = (float)yawf;
+            */
             break;
         }
         case(GSL_ENOPROG):{
             std::cout << " Could not find" <<std::endl;
+            std::cout << "Info: " << info <<  std::endl;
             break;
+        }case(GSL_EMAXITER):{
+            std::cout << "Max iterations" << std::endl;
+            std::cout << "Iterations: " << gsl_multifit_nlinear_niter(w) << std::endl;
+            std::cout << "Info: " << info <<  std::endl;
+            break;
+        }
+        default:{
+            std::cout << "nlinear other status code: " << status << std::endl;
+            std::cout << "Iterations: " << gsl_multifit_nlinear_niter(w) << std::endl;
+            std::cout << "Info: " << info <<  std::endl;
         }
     }
     return status;
@@ -372,6 +416,7 @@ void marton::process(void){
 
     cv::Mat_<float> position = cv::Mat_<float>::ones(3,1);
     float yaw = 0;
-    int status = marton::nlinear_lsqr_solve_2deg(param,da,position,yaw);
+    std::vector<float> Xest(12);
+    int status = marton::nlinear_lsqr_solve_2deg(param,da,Xest);
     std::cout << "Status: " << status << std::endl;
 }
