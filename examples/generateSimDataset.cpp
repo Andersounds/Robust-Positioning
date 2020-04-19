@@ -102,7 +102,7 @@ std::vector<float> data;
 
         //Dump image
         if(log){
-            timeStamp_ms = (double)(data[timeCol]*1000);
+            timeStamp_ms = (double)(data[timeCol]);
             imagebin.dump(timeStamp_ms,frame);
             std::cout << "timestamp: " <<timeStamp_ms << std::endl;
         }
