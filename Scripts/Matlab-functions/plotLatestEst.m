@@ -1,6 +1,6 @@
 %close all
 clear all
-d_est= csvread('../azipe.csv',1,0);
+d_est= csvread('../../outFile.csv',1,0);
 %d_est= csvread('../VOAffine.csv',1,0);
 %d_est= csvread('../AzAndVOAffine.csv',1,0);
 %d_est= csvread('../VOAffine_noderot.csv',1,0);
