@@ -133,13 +133,13 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
 //marton::circBuff buffer(3);
 //marton::circBuff2 buffer2(5);
     while(getData.get(data)){
-        std::cout << "New lap: data size: " << data.size() << std::endl;
+
         timeStamp_data = data[0];
         float dist = data[distColumn];//This is used as a subst as actual height is not in dataset
         float pitch = data[pitchColumn];
         float roll = data[rollColumn];
 
-        //if((counter%100)<3){algmode = pos::MODE_FALLBACK;}
+        //if((counter%10)<3){algmode = pos::MODE_FALLBACK;}
         //else{algmode = pos::MODE_AZIPE_AND_FALLBACK;}
 
 //Get new image
@@ -150,7 +150,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
             cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
             std::cout << "Lap " << counter  << ", time: " << timeStamp_data<< std::endl;
             //int mode = P.processAndIllustrate(pos_alg,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
-            std::cout << "SWITCH:::::::::" << std::endl;
+            //std::cout << "SWITCH:::::::::" << std::endl;
             switch(pos_alg){
                 case ALG_AZIPE:{
                     std::cout << "ALG_AZIPE:::" << std::endl;
@@ -174,8 +174,9 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                 }
                 case ALG_MARTON:{
                     std::cout << "ALG_MARTON:::" << std::endl;
-                    pos::MartonArgStruct arguments = {roll,pitch,0,timeStamp_data};
+                    pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data};
                     int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
+                    yaw = arguments.yaw;
                     if(true){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
@@ -197,7 +198,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                     break;
                 }
             }
-            std::cout << ":::::::::::::::" << std::endl;
+
 
 
             //int mode = P.processAz(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
@@ -206,12 +207,13 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
 //                std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
 //                databin_LOG.dump(logData);
 //            }
-            std::cout << "X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll<<", pitch: " << pitch << "yaw: " << yaw<< std::endl;
+            //std::cout << "Main:   X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll<<", pitch: " << pitch << "yaw: " << yaw<< std::endl;
             cv::imshow("showit",colorFrame);
             cv::waitKey(0);
             if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
             counter++;
+            std::cout << ":::::::::::::::" << std::endl;
       }
 
 
@@ -292,7 +294,6 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
      modes.add_options()
          ("OUT,o",   po::value<std::string>()->default_value("log.csv"), "Write output data to specified file.")// Single string argument
          ("OUT_TO_PWD",   po::value<std::string>()->default_value("YES"), "Write output file pwd instead of to BASEPATH (NO or YES)")// Single string argument
-         ("TILT_COLUMNS", po::value<std::string>()->default_value("[4,3]"),"Specifies which columns of csv file that contains [roll,pitch] data (0-indexed)")
          ("DIST_COLUMN", po::value<int>(),  "Specifies which column of csv file that contains distance (lidar) data")
          ("ROLL_COLUMN", po::value<int>(),  "Specifies which column of csv file that contains roll data")
          ("PITCH_COLUMN", po::value<int>(),  "Specifies which column of csv file that contains pitch data")
@@ -345,7 +346,6 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
         if(!bpu::checkDimOfCVMatOption(vm,"T_MAT",3, 3)){return 0;}
         if(!bpu::checkDimOfCVMatOption(vm,"K_MAT",3, 3)){return 0;}
         if(!bpu::checkDimOfCVMatOption(vm,"CAMERA_BARREL_DISTORTION",1, 3)){return 0;}
-        if(!bpu::checkDimOfCVMatOption(vm,"TILT_COLUMNS",1, 2)){return 0;}
 
 
      return 1;
