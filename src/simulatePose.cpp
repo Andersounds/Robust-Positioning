@@ -172,7 +172,12 @@ int simulatePose::init(void){
 Takes global coordinates x,y,z and angles yaw,pitch,roll (in that order) OF UAV. and simulates a camera capture
 */
 cv::Mat simulatePose::simulateView(std::vector<float> angles,std::vector<float>t){
-    std::cout << "simulatepose::simulateView. todo: check dim of input" << std::endl;
+
+    if((angles.size()!=3)||(t.size()!=3)){
+        std::cout << "simulatepose::simulateView.Wrong input" << std::endl;
+        cv::Mat X;
+        return X;
+    }
     //Warp image to simulate view
     cv::Mat fullScaleImage = uav2BasePose(angles,t);
     //Scale image to resolution of camera
