@@ -54,8 +54,13 @@ if(vm["OUT_TO_PWD"].as<std::string>()=="YES"){
 }else{
     outFile = vm["BASE_PATH"].as<std::string>() + vm["OUT"].as<std::string>();
 }
-std::cout << "Writing output file to " << outFile << std::endl;
-if(!databin_LOG.init(outFile,std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []","Mode"})) return 0;
+const int log = vm["LOG"].as<int>();
+if(log){
+    std::cout << "Writing output file to " << outFile << std::endl;
+    if(!databin_LOG.init(outFile,std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []","Mode"})) return 0;
+}else{
+    std::cout << "Will not log values" << std::endl;
+}
 
 
 
@@ -156,7 +161,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                     std::cout << "ALG_AZIPE:::" << std::endl;
                     pos::argStruct arguments = {dist,roll,pitch,0};
                     int mode = P.process_AZIPE(frame, colorFrame,t,arguments);
-                    if(true){
+                    if(log){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
                     }
@@ -166,7 +171,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                     std::cout << "ALG_VO:::" << std::endl;
                     pos::VOargStruct arguments = {dist,roll,pitch,0};
                     int mode = P.process_VO_Fallback(algmode,frame, colorFrame, t,arguments);
-                    if(true){
+                    if(log){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
                     }
@@ -177,7 +182,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                     pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data};
                     int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
                     yaw = arguments.yaw;
-                    if(true){
+                    if(log){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
                     }
@@ -294,6 +299,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
      modes.add_options()
          ("OUT,o",   po::value<std::string>()->default_value("log.csv"), "Write output data to specified file.")// Single string argument
          ("OUT_TO_PWD",   po::value<std::string>()->default_value("YES"), "Write output file pwd instead of to BASEPATH (NO or YES)")// Single string argument
+         ("LOG",   po::value<int>()->default_value(0), "Output log file 0 (NO) / 1 (YES)")
          ("DIST_COLUMN", po::value<int>(),  "Specifies which column of csv file that contains distance (lidar) data")
          ("ROLL_COLUMN", po::value<int>(),  "Specifies which column of csv file that contains roll data")
          ("PITCH_COLUMN", po::value<int>(),  "Specifies which column of csv file that contains pitch data")
