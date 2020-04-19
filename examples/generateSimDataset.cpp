@@ -11,9 +11,9 @@
 
 
 int main(int argc, char** argv){
-timestamp::timeStamp_ms stamp;
-double timeStamp;
-stamp.get(timeStamp);
+//timestamp::timeStamp_ms stamp;
+double timeStamp_ms;
+//stamp.get(timeStamp);
 
 
 //Initialize settings
@@ -30,6 +30,7 @@ int yawCol = rpy_cols[0];int pitchCol = rpy_cols[1];int rollCol = rpy_cols[2];
 int timeCol = vm["TIMESTAMP_COL"].as<int>();
 int distCol = vm["DIST_COLUMN"].as<int>();
 cv::Mat_<float> K;              bpu::assign(vm,K,"K_MAT");
+float yawOffset = vm["YAW_OFFSET"].as<float>();
 std::string baseScene = vm["BASESCENE"].as<std::string>();
 float baseSceneWidth = vm["BASESCENE_WIDTH"].as<float>();
 int boxWidth = vm["CHESSBASE_BOXWIDTH"].as<int>();
@@ -79,8 +80,10 @@ if(baseScene == ""){// If no base scene defined go with default
     //cv::cvtColor(floor, floor8U, cv::COLOR_BGR2GRAY);
     warper.setBaseScene(floor);
 }
+
 warper.setBaseSceneWidth(baseSceneWidth);
 warper.setKMat(K);
+warper.setYawOffset(yawOffset);
 warper.init();//Initialize with configuration 0
 
 
@@ -99,8 +102,9 @@ std::vector<float> data;
 
         //Dump image
         if(log){
-            timeStamp = (double)data[timeCol];
-            imagebin.dump(timeStamp,frame);
+            timeStamp_ms = (double)(data[timeCol]*1000);
+            imagebin.dump(timeStamp_ms,frame);
+            std::cout << "timestamp: " <<timeStamp_ms << std::endl;
         }
         if(step){
             cv::waitKey(0);
@@ -143,6 +147,7 @@ int boostParserUtilites::readCommandLine(int argc, char** argv,boost::program_op
         ("BASESCENE",           po::value<std::string>()->default_value(""),   "Path to the base scene image that is to be warped. Defaults to chess board")
         ("BASESCENE_WIDTH",     po::value<float>(),        "Physical width of base scene in meter (x-dir)")
         ("K_MAT",               po::value<std::string>(),                "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator")
+        ("YAW_OFFSET",          po::value<float>()->default_value(0),"Relative yaw between image coordinate system and UAV. -pi/2 for UAV x axis == neg image y axis")
         ("CHESSBASE_BOXWIDTH",     po::value<int>()->default_value(11),     "Size of each chessbox if not custom --BASESCENE is used")
         ("CHESSBASE_ROWS",         po::value<int>()->default_value(30),         "Number of chessbox rows if not custom --BASESCENE is used")
         ("CHESSBASE_COLS",         po::value<int>()->default_value(60),         "Number of chessbox cols if not custom --BASESCENE is used")
