@@ -1,12 +1,10 @@
 %close all
 clear all
-d_est= csvread('../../azipe.csv',1,0);
-%d_est= csvread('../../VOAffine.csv',1,0);
-%d_est= csvread('../../AzAndVOAffine.csv',1,0);
-%d_est= csvread('../../VOAffine_noderot.csv',1,0);
-%d_est= csvread('../../VOAffine_noderot.csv',1,0);
+%% Estimation File and parameters
+d_est_file = '../outFile.csv';
+d_est= csvread(d_est_file,1,0);
 
-    
+   
     t_est = d_est(:,1)./1000;
     x_est = d_est(:,2);
     y_est = d_est(:,3);
