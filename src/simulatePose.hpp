@@ -11,6 +11,7 @@ public:
     void setBaseSceneWidth(float);//Set width in x dir of base scene [m]
     void setKMat(cv::Mat_<float>);  //Set K mat of camera
     void setTMat(cv::Mat_<float>);  //Set T mat of UAV/camera.
+    void setYawOffset(float);//Used instead of T mat. only yaw offset between camera and UAV
     int init(void);                          //Initialize physical simulation environment with the specified configuration
 
 
@@ -27,6 +28,7 @@ private:
     cv::Mat_<float> t1;                     //Base coordinate of CAMERA
     cv::Mat_<float> T_z;                    //T matrix. Camera orientation as related to UAV orientation
     float d;                                //d in base plane definition.
+    float yaw_offset;
     float sceneWidth;                       //Scene width in x-direction       [m]
     cv::Mat_<float> v;                      //base plane normal. (as expressed in camera 1:s coordinate system) - always same per definition
     int camera_res_x;

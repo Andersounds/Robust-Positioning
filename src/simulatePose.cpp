@@ -44,6 +44,7 @@ simulatePose::simulatePose(void){
     //base plane normal in global sys
     v = cv::Mat_<float>::zeros(3,1);
     v(2,0) = 1;
+    yaw_offset = 0;
 }
 
     /*Sets the default chessboard pattern as base scene
@@ -66,6 +67,9 @@ void simulatePose::setKMat(cv::Mat_<float>K_){
 }
 void simulatePose::setTMat(cv::Mat_<float>T_){
     T_.copyTo(T_z);
+}
+void simulatePose::setYawOffset(float offset){
+    yaw_offset = offset;
 }
 /*
 This function will be used to define the relationship between the global coordinate system and the base pose
@@ -147,7 +151,7 @@ int simulatePose::init(void){
         //distance to base scene in base pose using similar triangles half resolution in x, focal length in pixles, and half scene width in m gives distance in m
         d = x0*K(0,0)/K(0,2);
         float z0 = -d;
-        float yaw0 = 0; //Image coordinate system is comletely aligned with base scene (global) coordinate system
+        float yaw0 = yaw_offset; //Image coordinate system is comletely aligned with base scene (global) coordinate system
         std::cout << "Simulatepose::init TODO: yaw0 is 0. what do?" << std::endl;
         std::cout << "x0: " << x0 << std::endl;
         std::cout << "y0: " << y0 << std::endl;
