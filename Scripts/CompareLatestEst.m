@@ -15,7 +15,12 @@ zcolE = 4;
 rollcolE = 5;
 pitchcolE = 6;
 yawcolE = 7;
+modeCol = 9;
 % Create data vectors 
+% Extract modes
+mode_est = d_est(:,modeCol);
+C = unique(mode_est);%Modes that are logged
+
 t_est = d_est(:,tcolE)./1000;
 x_est = d_est(:,xcolE);
 y_est = d_est(:,ycolE);
@@ -23,6 +28,9 @@ z_est = d_est(:,zcolE);
 roll_est = d_est(:,rollcolE);
 pitch_est = d_est(:,pitchcolE);
 yaw_est = d_est(:,yawcolE);
+mode_est = d_est(:,modeCol);
+
+
 
 %% True path file and parameters
 if plotTrue
@@ -67,12 +75,32 @@ end
         title('Y direction');
 
     figure
-        plot(x_est,y_est,'.');
-        legend('Estimated position')
         if plotTrue
-        hold on
         plot(x_ref,y_ref,'.');
-        legend('Estimated position','Ref position')
+        hold on
+        end
+        % Plot est path in different colour depending on mode used
+        for i=C' %Must be row vector to loop through it like this
+            indeces = find(mode_est==i);%Find indices where algorithm used mode i
+             plot(x_est(indeces),y_est(indeces),'.');
+             hold on      
+        end
+        
+        if plotTrue
+             Legend = cell(length(C)+1,1);
+             Legend{1} = 'Reference';
+             for i=1:length(C)
+                Legend{i+1} = num2str(C(i));
+             end
+             legend(Legend);
+        else
+             %legendCell = cellstr(num2str(C', 'N=%-d'));
+             %legend(legendCell);
+             Legend = cell(length(C),1);
+             for i=1:length(C)
+                Legend{i} = num2str(C(i));
+             end
+             legend(Legend);
         end
         xlabel('X dir [m]');
         ylabel('Y dir [m]');
