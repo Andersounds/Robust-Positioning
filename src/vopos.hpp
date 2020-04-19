@@ -70,8 +70,8 @@ namespace pos{
     const int RETURN_MODE_INERTIA = 2;        //Visual odometry failed, assumed rotational speed kept
     const int RETURN_MODE_PROJ = 3;           //Visual odometry successful and estimation is projected onto v_tilde
     const int RETURN_MODE_AZIPE_FAILED = 4; //If only azipe is used and estimation fails
-    const int RETURN_MODE_MARTON = GSL_SUCCESS;
-    const int RETURN_MODE_MARTON_FAILED = GSL_ENOPROG;
+    const int RETURN_MODE_MARTON = 5;
+    const int RETURN_MODE_MARTON_FAILED = 6;
 
     /* Convenience structs for passing to positioning functions*/
     struct argStruct {
