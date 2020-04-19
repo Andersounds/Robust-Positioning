@@ -61,7 +61,7 @@ if(log){
 }else{
     std::cout << "Will not log values" << std::endl;
 }
-
+const int step = vm["STEP"].as<int>();
 
 
 //Initialize positioning object
@@ -144,8 +144,8 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
         float pitch = data[pitchColumn];
         float roll = data[rollColumn];
 
-        //if((counter%10)<3){algmode = pos::MODE_FALLBACK;}
-        //else{algmode = pos::MODE_AZIPE_AND_FALLBACK;}
+        if((counter%10)<3){algmode = pos::MODE_FALLBACK;}
+        else{algmode = pos::MODE_AZIPE_AND_FALLBACK;}
 
 //Get new image
 //Separate processAndIllustrate with just process using switch statement
@@ -159,7 +159,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
             switch(pos_alg){
                 case ALG_AZIPE:{
                     std::cout << "ALG_AZIPE:::" << std::endl;
-                    pos::argStruct arguments = {dist,roll,pitch,0};
+                    pos::argStruct arguments = {dist,roll,pitch,yaw};
                     int mode = P.process_AZIPE(frame, colorFrame,t,arguments);
                     if(log){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
@@ -169,8 +169,9 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                 }
                 case ALG_VO:{
                     std::cout << "ALG_VO:::" << std::endl;
-                    pos::VOargStruct arguments = {dist,roll,pitch,0};
+                    pos::VOargStruct arguments = {dist,roll,pitch,yaw};
                     int mode = P.process_VO_Fallback(algmode,frame, colorFrame, t,arguments);
+                    yaw = arguments.yaw;
                     if(log){
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
@@ -214,7 +215,9 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
 //            }
             //std::cout << "Main:   X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll<<", pitch: " << pitch << "yaw: " << yaw<< std::endl;
             cv::imshow("showit",colorFrame);
-            cv::waitKey(0);
+            if(step){
+                cv::waitKey(0);
+            }
             if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
             counter++;
@@ -300,6 +303,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
          ("OUT,o",   po::value<std::string>()->default_value("log.csv"), "Write output data to specified file.")// Single string argument
          ("OUT_TO_PWD",   po::value<std::string>()->default_value("YES"), "Write output file pwd instead of to BASEPATH (NO or YES)")// Single string argument
          ("LOG",   po::value<int>()->default_value(0), "Output log file 0 (NO) / 1 (YES)")
+         ("STEP",   po::value<int>()->default_value(0), "Wait for keypress between each image? 0 (NO) / 1 (YES)")
          ("DIST_COLUMN", po::value<int>(),  "Specifies which column of csv file that contains distance (lidar) data")
          ("ROLL_COLUMN", po::value<int>(),  "Specifies which column of csv file that contains roll data")
          ("PITCH_COLUMN", po::value<int>(),  "Specifies which column of csv file that contains pitch data")
