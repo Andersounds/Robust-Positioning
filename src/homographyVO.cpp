@@ -189,9 +189,11 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
         return false;
     }
     //De-rotate
-    std::cout << "Bug in odometryAffine: Derotation" << std::endl;
-    deRotateFlowField(p1, roll_prev, pitch_prev);
-    deRotateFlowField(p2, roll, pitch);
+    //std::cout << "Bug in odometryAffine: Derotation" << std::endl;
+    if(activateDerotation){
+        deRotateFlowField(p1, roll_prev, pitch_prev);
+        deRotateFlowField(p2, roll, pitch);
+    }
     //Translate flow field to camera coordinate system. ie origin is in the middle
     //cv::Point2f offset(K(0,2),K(1,2));
     cv::Point2f offset(K(0,2),K(1,2));
@@ -460,19 +462,14 @@ cv::Mat_<float> vo::planarHomographyVO::deRotateHomography(cv::Mat_<float>& H_ro
  * It achieves this directly on the coordinates by
  * 1. Perspective transformation. Illustrated as a warp of the coordinates around the x-axis of image
  * 2. Shift of rotation center.
- * 3? adapt height
+ * 3? adapt height - Not needed. Independent of height
 
- * TODO:::: implement roll compensation as well. Also some general way to pass roll and pitch if camera-UAV relationship changes
- * PASS INVERSE OF DeROT???
+ * NOTE: the function -DE-rotates the given angles. i.e rotates the field by -roll, then -pitch
  */
 void vo::planarHomographyVO::deRotateFlowField(std::vector<cv::Point2f>& src, float roll, float pitch){
     std::vector<cv::Point2f> dst;
-    cv::Mat R_x = getXRot(roll);
-    cv::Mat R_y = getYRot(pitch);
-    //std::cout << "obs Y rot not X rot now" << std::endl;
-//cv::Mat H = K*R_x*K_inv;//Transpose to flip the pitch back
-//std::cout << "mat types: "<<K.type() << ", " << R_y.type() << ", " << T_inv.type() << ", " << K_inv.type() << std::endl;
-//std::cout << "mat sizes: "<<K.size() << ", " << R_y.size() << ", " << T_inv.size() << ", " << K_inv.size() << std::endl;
+    cv::Mat R_x = getXRot(-roll);
+    cv::Mat R_y = getYRot(-pitch);
     cv::Mat H = K*T* R_y*R_x* T_inv*K_inv;//Right to left: pixel to camera, camera to UAV, roll, pitch, UAV to camera, camera to pixel
 //cv::Mat H = T*K *R_y*R_x* K_inv*T_inv;
     VOperspectiveTransform(src,dst,H);
