@@ -62,6 +62,7 @@ if(log){
     std::cout << "Will not log values" << std::endl;
 }
 const int step = vm["STEP"].as<int>();
+bool derotate = vm["DEROTATE_OF"].as<bool>();
 
 
 //Initialize positioning object
@@ -115,6 +116,7 @@ pos::positioning P(of_mode,
                     vo_mode,
                     cv::aruco::DICT_4X4_50,
                     maxIdAruco,basePath+anchorPath,flowGrid,roiSize,K,T);
+P.activateDerotation = derotate;
 //Init values of position and yaw
 cv::Mat_<float> t;          bpu::assign(vm,t,"XYZ_INIT");
 float yaw;                  bpu::assign(vm, yaw,"YAW_INIT");
@@ -144,7 +146,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
         float pitch = data[pitchColumn];
         float roll = data[rollColumn];
 
-        if((counter%10)<3){algmode = pos::MODE_FALLBACK;}
+        if((counter%15)<5){algmode = pos::MODE_FALLBACK;}
         else{algmode = pos::MODE_AZIPE_AND_FALLBACK;}
 
 //Get new image
@@ -165,6 +167,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                         std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
                     }
+                    yaw = arguments.yaw;
                     break;
                 }
                 case ALG_VO:{
@@ -313,6 +316,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
          ("OF_MODE",po::value<std::string>(),"Mode of Optical flow algorithm. KLT or CORR")
          ("VO_MODE",po::value<std::string>(),"Mode of Visual Odometry algorithm. HOMOGRAPHY or AFFINE")
          ("POS_ALG",po::value<std::string>(),"Positioning algorithm | AZIPE or VO or MARTON")
+         ("DEROTATE_OF",   po::value<bool>()->default_value(true), "Derotate optical flow field using roll/pitch? true / false or 1 / 0")
          ;
 
      // Parse command line
