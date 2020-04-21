@@ -8,11 +8,17 @@ colors = [0.9290 0.6940 0.1250;
         0.8500 0.3250 0.0980;
         0 0 0];
 %%SETTINGS%%%%
-basePath = '/Users/Fredrik/Datasets/Sim/20-04-19-1/';
+%basePath = '/Users/Fredrik/Datasets/Sim/20-04-19-3-updatedsrc/';
+%basePath = '/Users/Fredrik/Datasets/Sim/20-04-19-3/';
+basePath = '/Users/Fredrik/Datasets/20-04-09/20-04-09-22/';
+d_est_file = [basePath,'outFile.csv'];
+d_true_file = [basePath,'outAZIPE.csv'];
+%d_true_file = [basePath,'path-200419-3.csv'];
+%d_true_file = [basePath,'path-200419-3.csv'];
 plotTrue = 1;
 %% Estimation File and parameters
 %Read file
-d_est_file = [basePath,'outFile.csv'];
+
 d_est= csvread(d_est_file,1,0);
 %Data columns
 tcolE = 1;
@@ -42,7 +48,7 @@ mode_est = d_est(:,modeCol);
 if plotTrue
 disp('Reading true path file...');
 %Read file
-d_true_file = [basePath,'path-200419-1.csv'];
+
 d_ref= csvread(d_true_file,1,0);
 % data columns in file
 tcolR = 1;
@@ -66,19 +72,58 @@ end
 %%Plot
 
      figure
-    subplot(3,1,1);
+    subplot(4,1,1);
         plot(t_est,roll_est,'.');
         hold on
         plot(t_est,pitch_est,'.');
         title('Roll/pitch');
         legend('Roll','Pitch');
         %axis([0,80,-2.5,2.5]);
-    subplot(3,1,2);
-        plot(t_est,x_est,'.');
+    subplot(4,1,2);
+        if plotTrue
+            plot(t_ref,x_ref,'Color',colors(1,:));
+            hold on
+        end
+  %%% Plot in different colors depending on method   
+        counter = 2;
+        for i=C' %Must be row vector to loop through it like this
+            indeces = find(mode_est==i);%Find indices where algorithm used mode i
+            colorindex = mod(counter,length(colors));
+            plot(t_est(indeces),x_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
+            counter = counter+1;
+            hold on      
+        end
         title('X direction');
-    subplot(3,1,3);
-        plot(t_est,y_est,'.');
+    subplot(4,1,3);
+        if plotTrue
+            plot(t_ref,y_ref,'Color',colors(1,:));
+            hold on
+        end   
+       %%% Plot in different colors depending on method   
+        counter = 2;
+        for i=C' %Must be row vector to loop through it like this
+            indeces = find(mode_est==i);%Find indices where algorithm used mode i
+            colorindex = mod(counter,length(colors));
+            plot(t_est(indeces),y_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
+            counter = counter+1;
+            hold on      
+        end
         title('Y direction');
+    subplot(4,1,4);
+        if plotTrue
+            plot(t_ref,yaw_ref,'Color',colors(1,:));
+            hold on
+        end
+        %%% Plot in different colors depending on method   
+        counter = 2;
+        for i=C' %Must be row vector to loop through it like this
+            indeces = find(mode_est==i);%Find indices where algorithm used mode i
+            colorindex = mod(counter,length(colors));
+            plot(t_est(indeces),yaw_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
+            counter = counter+1;
+            hold on      
+        end
+        title('Yaw');
 
     figure
         if plotTrue
