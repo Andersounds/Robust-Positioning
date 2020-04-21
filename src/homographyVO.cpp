@@ -547,14 +547,14 @@ cv::Mat vo::planarHomographyVO::getYRot(float pitch){
     R_y(2,2) = cosY;
     return R_y;
 }
-cv::Mat vo::planarHomographyVO::getZRot(float pitch){
-    float sinY = std::sin(pitch);
-    float cosY = std::cos(pitch);
-    cv::Mat_<float> R_y = cv::Mat_<float>::zeros(3,3);
-    R_y(0,0) = cosY;
-    R_y(0,1) = -sinY;
-    R_y(1,0) = sinY;
-    R_y(1,1) = cosY;
-    R_y(2,2) = 1;
-    return R_y;
+cv::Mat vo::planarHomographyVO::getZRot(float yaw){
+    float sinZ = std::sin(yaw);
+    float cosZ = std::cos(yaw);
+    cv::Mat_<float> R_z = cv::Mat_<float>::zeros(3,3);
+    R_z(0,0) = cosZ;
+    R_z(0,1) = -sinZ;
+    R_z(1,0) = sinZ;
+    R_z(1,1) = cosZ;
+    R_z(2,2) = 1;
+    return R_z;
 }
