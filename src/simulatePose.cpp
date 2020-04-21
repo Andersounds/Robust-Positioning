@@ -210,6 +210,7 @@ cv::Mat simulatePose::uav2BasePose(std::vector<float> angles,std::vector<float> 
 /*Perform the warping of the image
  * Input: Coordinate and Rotation matrix of the camera as related to the base pose
  */
+ /*
 cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float> t){
     cv::Mat out;
     if((angles.size()!=3) ||t.size()!=3){
@@ -246,7 +247,7 @@ cv::Mat simulatePose::getWarpedImage(std::vector<float> angles,std::vector<float
     //cv::Mat_<float> H = K  *T.inv()*R_z.t()*R_y.t()*R_x.t()* K_inv;
     //cv::warpPerspective(baseScene,out,H,baseScene.size(),cv::WARP_INVERSE_MAP,cv::BORDER_CONSTANT,0);
     return out;
-}
+}*/
 /* Overloaded version of warp perspective that accepts arguments in matrix form
 */
 cv::Mat simulatePose::getWarpedImage(cv::Mat_<float> R2,cv::Mat_<float> t2){
