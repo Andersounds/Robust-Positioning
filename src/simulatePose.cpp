@@ -199,7 +199,41 @@ cv::Mat simulatePose::uav2BasePose(std::vector<float> angles,std::vector<float> 
     float yaw = angles[0];
     float pitch = angles[1];
     float roll = angles[2];
-    cv::Mat_<float> R_shifted = R1.t()*getTotRot(yaw,pitch,roll);
+    /*  Hardcoded relationship between image coordinate system and UAV coordinate system
+        UAV shall be rotated in order yaw->pitch->roll
+
+        |_UAV_direction_|_Image_direction_|   -> |_UAV_Rotation_|_Image_rotation_|
+        |       +X      |        -Y       |   -> |     Rroll    |    Ry(-roll)   |
+        |       +Y      |        +X       |   -> |     Rpitch   |    Rx(pitch)   |
+        |_______+Z______|________+Z_______|   -> |_____Ryaw_____|____Rz(yaw)_____|
+
+        To apply a rotation Rz(yaw)*Rx(pitch)*Ry(-roll) = R_image on the image is
+        equivalent with applying R_image.inv()=R_scene on the scene, which is what cv::warpPerspective does
+
+        1. R_image.inv() = R_image.t()                 ...due to being a rotation matrix
+        2. (Rz*Ry*Rx).t() = Rx.t()*Ry.t()*Rz.t()       ...basic algebra. note that order reverses
+        Using property 1 again we can state that we shall apply
+
+                            Rtot = R_roll.t()*R_pitch.t()*R_yaw.t()
+                                 = Ry(roll)*Rx(-pitch)*Rz(-yaw)
+
+        to perspective transformation.
+
+
+        --Absolute first we should do is to rotate uav with R1.invers
+        R1.inv*Rz*Rx*Ry.inv
+
+        Ry*Rx.inv*Rz.inv*R1
+    */
+    cv::Mat R_yaw = getZRot(-yaw);
+    cv::Mat R_pitch = getXRot(-pitch);
+    cv::Mat R_roll = getYRot(roll);
+    //cv::Mat R_shifted = R_roll*R_pitch*R_yaw;
+    cv::Mat R_shifted = R_roll*R_pitch*R_yaw*R1;
+
+
+
+    //cv::Mat_<float> R_shifted = R1.t()*getTotRot(yaw,pitch,roll);
     float x = t[0];
     float y = t[1];
     float z = t[2];
