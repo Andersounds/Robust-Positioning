@@ -94,7 +94,7 @@ namespace pos{
         float time;
     };
 
-    class positioning: public ang::angulation, of::opticalFlow, vo::planarHomographyVO{
+    class positioning: public ang::angulation, of::opticalFlow, public vo::planarHomographyVO{
         cv::Ptr<cv::aruco::Dictionary> dictionary;//Pointer to Aruco dictionary
         cv::Rect2f roi;//The region of interest that is to be considered in
         int minAnchors;
