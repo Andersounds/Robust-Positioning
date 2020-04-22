@@ -77,7 +77,8 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
 
                 struct marton::poly2_data da = {pPrev_normed, alpha, tPrev_normed,tf_d_normed};
                 // Construct solver parameters struct
-                double x_init[12] = { 0.1, 0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+                //double x_init[12] = { 0.1, 0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+                double x_init[12] = { 0.1, 0.01, 0, 0.1, 0.01, 0, 0.1, 0.01, 0, 0.01, 0, 0};
                 //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
                 //double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1};
                 double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,0,0};
@@ -138,7 +139,7 @@ Below are function definitions for Marton robust positioning algorithm
     f: The results of all cost functions shall be passed back to the solver via this vector
 */
 int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
-    // Read parameters from data-struct
+    // Read parameters from data-struct (arrays are given as pointers)
     double *p = ((struct poly2_data *)data)->p;
     double *alpha = ((struct poly2_data *)data)->alpha;
     double *t = ((struct poly2_data *)data)->t;
@@ -166,6 +167,7 @@ int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
     }
 /*Equation 12 - Hardcoded position 13. keep counter if allow for more previous data points*/
     double c = (pow(alpha[3],(double)2) + pow(alpha[4],(double)2))/(pow(alpha[5],(double)2)); // to use in cone equation x^2+y^2 = c*z^2
+    double c = rotenur(alpha[3]*alpha[3]+alpha[4]*alpha[4])/-alpha[5]; //obs minus alpha[5] för rätt tecken. sqrt(x^2+y^2) = c*z KONEKVATION
     double t_f = tf;      //Current time stamp (tf = time of failure)
     double t_f_sqrd = pow(t_f,(double)2);
     //Evaluate coordinate with current provided sigma-parameters
