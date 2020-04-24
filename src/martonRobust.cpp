@@ -38,21 +38,21 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 */
                 //1.
                 //std::cout <<" P4: [" << pPrev[0] << ", " << pPrev[1]<<", " << pPrev[2] << ", " << pPrev[3] <<", "<< pPrev[4] <<"]" << std::endl;
-                cv::Mat Rx = marton::getXRot(roll);
-                cv::Mat Ry = marton::getYRot(pitch);
+                cv::Mat Rx = marton::getXRot(-roll); // Derotation (negative). V is in UAV frame so we can use x for roll, y for pitch
+                cv::Mat Ry = marton::getYRot(-pitch);
                 cv::Mat_<float> q0 = q[0];
                 cv::Mat_<float> v0 = Ry*Rx*v[0];//Derotate v vector back in reverse order. (roll-pitch-yaw instead of yaw-pitch-roll)
                 v0.reshape(1);//Reshape to column to make sure that we access corret elements below
                 q0.reshape(1);
+
+                double offset[3] = {(double)pPrev[0], (double)pPrev[1], (double)pPrev[2]};
                 double alpha[6];
-                alpha[0] = (double)q0(0,0);
-                alpha[1] = (double)q0(1,0);
-                alpha[2] = (double)q0(2,0);
+                alpha[0] = (double)q0(0,0)-offset[0];//Norm shift marker position
+                alpha[1] = (double)q0(1,0)-offset[1];
+                alpha[2] = (double)q0(2,0)-offset[2];
                 alpha[3] = (double)v0(0,0);
                 alpha[4] = (double)v0(1,0);
                 alpha[5] = (double)v0(2,0);
-
-
                 // Convert vector<float> of previous values to normalized double array and save offsets
                 int size_tPrev = tPrev.size();
                 double tPrev_normed[size_tPrev];
@@ -78,17 +78,16 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 struct marton::poly2_data da = {pPrev_normed, alpha, tPrev_normed,tf_d_normed};
                 // Construct solver parameters struct
                 //double x_init[12] = { 0.1, 0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
-                double x_init[12] = { 0.1, 0.01, 0, 0.1, 0.01, 0, 0.1, 0.01, 0, 0.01, 0, 0};
+                double x_init[12] = { 0.1, 0.01, 0, 0.1, 0.01, 0, 0.1, 0.01, 0, 0.01, 0, 0};//3*x, 3*y, 3*z, 4*yaw
                 //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
-                //double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1};
-                double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,0,0};
-                //double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+                double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,0.1,0};
+                //double weights[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0.01,0};
                 double xtol = 1e-3;
                 double gtol = 1e-3;
                 struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
                 // Perform optimization. pass d and param. Hur skicka structs som argument?
                 std::vector<float> x_est(12); // Estimated polynomial parameters
-                int status = marton::nlinear_lsqr_solve_2deg(param,da, x_est);
+                int status = marton::nlinear_lsqr_solve_2deg(param,da , x_est);
 
                 if(status==GSL_SUCCESS){
                     /*std::cout << "X: ";
@@ -166,15 +165,16 @@ int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
         gsl_vector_set (f, 3+offset, x_[9]+x_[10]*t_i+x_[11]*t_i_sqrd - p[3+offset]); //Yaw for time i
     }
 /*Equation 12 - Hardcoded position 13. keep counter if allow for more previous data points*/
-    double c = (pow(alpha[3],(double)2) + pow(alpha[4],(double)2))/(pow(alpha[5],(double)2)); // to use in cone equation x^2+y^2 = c*z^2
-    double c = rotenur(alpha[3]*alpha[3]+alpha[4]*alpha[4])/-alpha[5]; //obs minus alpha[5] för rätt tecken. sqrt(x^2+y^2) = c*z KONEKVATION
+    double c_sqr = (alpha[3]*alpha[3]+alpha[4]*alpha[4])/(alpha[5]*alpha[5]); // to use in cone equation sqrt(x^2+y^2) = c*z
+    //double c = sqrt(c_sqr);
     double t_f = tf;      //Current time stamp (tf = time of failure)
     double t_f_sqrd = pow(t_f,(double)2);
     //Evaluate coordinate with current provided sigma-parameters
     double x_est = x_[0]+x_[1]*t_f+x_[2]*t_f_sqrd;
     double y_est = x_[3]+x_[4]*t_f+x_[5]*t_f_sqrd;
     double z_est = x_[6]+x_[7]*t_f+x_[8]*t_f_sqrd;
-    double f12 = pow(x_est-alpha[0],(double)2) + pow(y_est - alpha[1],(double)2) - c*pow(z_est - alpha[2],(double)2);
+    double f12_sqr = pow(x_est-alpha[0],(double)2) + pow(y_est - alpha[1],(double)2) - c_sqr*pow(z_est - alpha[2],(double)2);
+    double f12 = f12_sqr;//sqrt(abs(f12_sqr));
     gsl_vector_set (f, 12, f12);
 /*Equation 13 - Hardcoded position 14. keep counter if allow for more previous data points*/
     double yaw_est = x_[9]+x_[10]*t_f+x_[11]*t_f_sqrd;
@@ -186,7 +186,7 @@ int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
     double v_est_x = cos_*alpha[3] - sin_*alpha[4];//v vector rotated with the estimated yaw
     double v_est_y = sin_*alpha[3] + cos_*alpha[4];
     double f13 = pow(x_est/est_norm  + v_est_x/v_norm,(double)2) + pow(y_est/est_norm + v_est_y/v_norm,(double)2);
-    gsl_vector_set (f, 12, f13);
+    gsl_vector_set (f, 13, f13);
     return GSL_SUCCESS;
 }
 
