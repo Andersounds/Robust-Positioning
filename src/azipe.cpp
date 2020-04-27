@@ -480,8 +480,11 @@ bool az::aipe_solvable(const std::vector<cv::Mat_<float>>& q, float sqrdLim){
     does not do anything except mirror the argument.
 */
 float az::limitYawRange(float yawCandidate){
-    return yawCandidate;
-    float div = yawCandidate/az::PI;
-    float yawLim = (div - floor(div))*az::PI;
-    //return yawLim;
+    //return yawCandidate;
+    // Cast yaw to +-pi
+    float yaw_new = yawCandidate;
+    while(yaw_new>az::PI){
+        yaw_new-=2*az::PI;
+    }
+    return yaw_new;
 }

@@ -294,6 +294,10 @@ void vo::planarHomographyVO::updateGlobalPosition(bool VOSuccess,
 
     t_new = t+t_d;
     float yaw_new = yaw + yaw_d;
+    // Cast yaw to +-pi
+    while(yaw_new>vo::PI){
+        yaw_new-=2*vo::PI;
+    }
     //Update pose
     t = t_new;
     yaw = yaw_new;

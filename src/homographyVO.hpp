@@ -20,6 +20,7 @@
 namespace vo{
     const int USE_HOMOGRAPHY = 1;
     const int USE_AFFINETRANSFORM = 2;
+    const float PI = 3.1416;
 
     class planarHomographyVO{
     public:
