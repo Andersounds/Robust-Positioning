@@ -61,7 +61,7 @@ int pos::positioning::process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat
         pix2uLOS(corners,v);
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
         ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
-        az::azipe(v,q,pos,arguments.yaw,arguments.pitch,arguments.roll);
+        az::azipe(v_m,q_m,pos,arguments.yaw,arguments.pitch,arguments.roll);
         returnMode = pos::RETURN_MODE_AZIPE;
     }else{
         returnMode = pos::RETURN_MODE_AZIPE_FAILED;
@@ -90,7 +90,7 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
         pix2uLOS(corners,v);
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
         ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
-        az::azipe(v,q,pos,arguments.yaw,arguments.pitch,arguments.roll);
+        az::azipe(v_m,q_m,pos,arguments.yaw,arguments.pitch,arguments.roll);
         returnMode = pos::RETURN_MODE_AZIPE;
     }else{
         /////////// VO Estimation
@@ -144,7 +144,7 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         float tspan = arguments.time - tPrev[0];
         std::cout << "Tspan: " << tspan << std::endl;
         if((knownAnchors>=minAnchors) && (mode != pos::MODE_FALLBACK)){                  //If enough anchors then do triangulation unless overridden
-            az::azipe(v,q,pos,arguments.yaw,arguments.pitch,arguments.roll);
+            az::azipe(v_m,q_m,pos,arguments.yaw,arguments.pitch,arguments.roll);
             returnMode = pos::RETURN_MODE_AZIPE;
             std::cout << "Azipe:  X: "<< pos(0,0) << ", Y: "<< pos(1,0) << ", Z: " << pos(2,0) << ", yaw: " << arguments.yaw<< std::endl;
         }else if(knownAnchors>=1 && tspan<500){//Only try marton if total time span is less than 500ms Should be closer to 100ms
