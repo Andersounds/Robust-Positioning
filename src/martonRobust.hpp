@@ -25,6 +25,7 @@ namespace marton{
     const int Y = 1;
     const int Z = 2;
     const int YAW = 3;
+    const float PI = 3.1416;
     /*
     Small class to act as a circular buffer to store old x,y,z,yaw,timestamps.
     */

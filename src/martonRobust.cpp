@@ -37,11 +37,14 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                  9.     If successful, pass back position and yaw estimation, otherwise some fail code
                 */
                 //1.
-                //std::cout <<" P4: [" << pPrev[0] << ", " << pPrev[1]<<", " << pPrev[2] << ", " << pPrev[3] <<", "<< pPrev[4] <<"]" << std::endl;
-                cv::Mat Rx = marton::getXRot(-roll); // Derotation (negative). V is in UAV frame so we can use x for roll, y for pitch
-                cv::Mat Ry = marton::getYRot(-pitch);
+                /*
+                    Rotate V is same as Derotate UAV. To undo (+)pitch->(+)roll of UAV we do (-)roll -> (-)pitch.
+                    I.e to derotate v we apply (-)(-)roll -> (-)(-)pitch = (+)roll->(+)pitch
+                */
+                cv::Mat Rx = marton::getXRot(roll);
+                cv::Mat Ry = marton::getYRot(pitch);
                 cv::Mat_<float> q0 = q[0];
-                cv::Mat_<float> v0 = Ry*Rx*v[0];//Derotate v vector back in reverse order. (roll-pitch-yaw instead of yaw-pitch-roll)
+                cv::Mat_<float> v0 = Ry*Rx*v[0];//Apply from right
                 v0.reshape(1);//Reshape to column to make sure that we access corret elements below
                 q0.reshape(1);
 
@@ -69,7 +72,11 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 double pPrev_normed[size_pPrev];
                 //Offset?
                 for(int i=0;i<size_pPrev;i++){
-                    float element = pPrev[i] - pPrev[i%4];//Offset with first 4 values
+                    float element = pPrev[i];
+                    int offsetindex = i%4;
+                    if(offsetindex!=3){// index 3 i e yaw shall not be offset
+                        element -= pPrev[offsetindex];//Offset with first x y z values
+                    }
                     pPrev_normed[i] = (double)element;
                 }
 
@@ -78,10 +85,12 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 struct marton::poly2_data da = {pPrev_normed, alpha, tPrev_normed,tf_d_normed};
                 // Construct solver parameters struct
                 //double x_init[12] = { 0.1, 0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
-                double x_init[12] = { 0.1, 0.01, 0, 0.1, 0.01, 0, 0.1, 0.01, 0, 0.01, 0, 0};//3*x, 3*y, 3*z, 4*yaw
+                double x_init[12] = { 0.1, 0.01, 0, 0.1, 0.01, 0, 0.1, 0.01, 0, 0.0, 0.001, 0};//3*x, 3*y, 3*z, 4*yaw
                 //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
-                double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,0.1,0};
-                //double weights[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0.01,0};
+                //Weights:  xold,yold,zold,yawolsd, x,y,z,yaw
+                double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1};
+                //double weights[14] = {1,1,1,0,1,1,1,0,1,1,1,0,0,0};//only x,y,z
+                //double weights[14] = {1,1,1,0,1,1,1,0,1,1,1,0,1,1};
                 double xtol = 1e-3;
                 double gtol = 1e-3;
                 struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
@@ -107,11 +116,20 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                     po.copyTo(position);
 
                     float delta_yaw = x_est[9] + x_est[10]*tf_normed + x_est[11]*tf_normed_sqrd;
-                    float yaw_ = pPrev[3] + delta_yaw;
+                    //float yaw_ = pPrev[3] + delta_yaw;
+                    float yaw_ = delta_yaw;
+                    //double fractpart,intpart;
+                    //fractpart = modf(yaw_/6.2832,&intpart);
+                    //yaw = 6.2832*(float)fractpart;
 
-                    double fractpart,intpart;
-                    fractpart = modf(yaw_/6.2832,&intpart);
-                    yaw = 6.2832*(float)fractpart;
+                    // Cast yaw to +-pi
+                    while(yaw_>marton::PI){
+                        yaw_-=2*marton::PI;
+                    }
+                    while(yaw_<-marton::PI){
+                        yaw_+=2*marton::PI;
+                    }
+                    yaw = yaw_;
                     //std::cout << "TF: " << tf_normed << std::endl;
                     //std::cout << "Marto1: X: "<< position(0,0) << ", Y: "<< position(1,0) << ", Z: " << position(2,0) << ", yaw: " << yaw<< std::endl;
                 }else{
@@ -177,16 +195,22 @@ int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
     double f12 = f12_sqr;//sqrt(abs(f12_sqr));
     gsl_vector_set (f, 12, f12);
 /*Equation 13 - Hardcoded position 14. keep counter if allow for more previous data points*/
+
+//x-y of v vector in uav frame towards anchor, rotated wit estimated yaw UNIT
+//x-y of vector between anchor and estimated UAV global pos UNIT
+//norm of difference should be zero.
+std::cout << "hardocded elements last known pos eq 13 ploly2_f"<< std::endl;
     double yaw_est = x_[9]+x_[10]*t_f+x_[11]*t_f_sqrd;
-    double est_norm = sqrt(pow(x_est,(double)2)+pow(y_est,(double)2));
+    //double est_norm = sqrt(pow(x_est-alpha[0],(double)2)+pow(y_est-alpha[1],(double)2));//magnitude of vector from angchor to uav (only x-y plane)
+    double est_norm = sqrt(pow(p[8]-alpha[0],(double)2)+pow(p[9]-alpha[1],(double)2));
     double v_norm = sqrt(pow(alpha[3],(double)2) + pow(alpha[4],(double)2));
     double cos_ = cos(yaw_est);
     double sin_ = sin(yaw_est);
 
-    double v_est_x = cos_*alpha[3] - sin_*alpha[4];//v vector rotated with the estimated yaw
+    double v_est_x = cos_*alpha[3] - sin_*alpha[4];//v(x,y) vector rotated with the estimated yaw
     double v_est_y = sin_*alpha[3] + cos_*alpha[4];
-    double f13 = pow(x_est/est_norm  + v_est_x/v_norm,(double)2) + pow(y_est/est_norm + v_est_y/v_norm,(double)2);
-    gsl_vector_set (f, 13, f13);
+    double f13 = pow((p[8]-alpha[0])/est_norm  + (v_est_x/v_norm),(double)2) + pow((p[9]-alpha[1])/est_norm + v_est_y/v_norm,(double)2);
+    gsl_vector_set (f, 13, sqrt(f13));
     return GSL_SUCCESS;
 }
 
