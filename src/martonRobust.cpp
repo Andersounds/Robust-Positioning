@@ -41,39 +41,49 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                     Rotate V is same as Derotate UAV. To undo (+)pitch->(+)roll of UAV we do (-)roll -> (-)pitch.
                     I.e to derotate v we apply (-)(-)roll -> (-)(-)pitch = (+)roll->(+)pitch
                 */
+
+                /* Descide size of problem. Number of parameters is constant, but number of cost equations is 4*bufferSize+2*anchorSize*/
+                int bufferSize = tPrev.size();//Number of previously logged points
+                int anchorSize = std::min((int)v.size(),(int)2);//Number of uLOS vector available. Use max two anchors
+                int costEquationSize = 4*bufferSize+2*anchorSize;
+
+
                 cv::Mat Rx = marton::getXRot(roll);
                 cv::Mat Ry = marton::getYRot(pitch);
-                cv::Mat_<float> q0 = q[0];
-                cv::Mat_<float> v0 = Ry*Rx*v[0];//Apply from right
-                v0.reshape(1);//Reshape to column to make sure that we access corret elements below
-                q0.reshape(1);
+
 
                 double offset[3] = {(double)pPrev[0], (double)pPrev[1], (double)pPrev[2]};
-                double alpha[6];
-                alpha[0] = (double)q0(0,0)-offset[0];//Norm shift marker position
-                alpha[1] = (double)q0(1,0)-offset[1];
-                alpha[2] = (double)q0(2,0)-offset[2];
-                alpha[3] = (double)v0(0,0);
-                alpha[4] = (double)v0(1,0);
-                alpha[5] = (double)v0(2,0);
-                // Convert vector<float> of previous values to normalized double array and save offsets
-                int size_tPrev = tPrev.size();
-                double tPrev_normed[size_tPrev];
-                //float t_offset = tPrev[0];
-                for(int i=0;i<size_tPrev;i++){
+                double alpha[6*anchorSize];//Make space for anchorSize anchors. 6 numbers each (anchor coordinate + uLos vector)
+                for(int i=0;i<anchorSize;i++){
+                    /* Define q and v vectors, (and adapt v vector to current roll/pitch) */
+                    cv::Mat_<float> qi = q[i];qi.reshape(1);          //Reshape to column vector so be sure that direct element access below is correct
+                    cv::Mat_<float> v_i_unrot = v[i];v_i_unrot.reshape(1);
+                    cv::Mat_<float> vi = Ry*Rx*v_i_unrot;//Apply from right
+                    /*Set values in alpha array.*/
+                    alpha[i*6+0] = (double)qi(0,0)-offset[0];//Norm shift marker position
+                    alpha[i*6+1] = (double)qi(1,0)-offset[1];
+                    alpha[i*6+2] = (double)qi(2,0)-offset[2];
+                    alpha[i*6+3] = (double)vi(0,0);
+                    alpha[i*6+4] = (double)vi(1,0);
+                    alpha[i*6+5] = (double)vi(2,0);
+                }
+                /* Timeshift t vector so that oldest buffer sample has time stamp 0*/
+                double tPrev_normed[bufferSize];
+                for(int i=0;i<bufferSize;i++){
                     float element = tPrev[i]-tPrev[0];//Offset with first value
                     tPrev_normed[i] = (double)element;
                 }
+                /* Also timeshift time of failure (tf) with same amount*/
                 float tf_normed = tf-tPrev[0];
                 double tf_d_normed = (double)tf_normed;
 
-
+                /* Shift x,y,z values from buffer so that oldest point is at [0,0,0]. NOTE: do not shift yaw, ie every fourth value of pPrev */
                 int size_pPrev = pPrev.size();
                 double pPrev_normed[size_pPrev];
                 //Offset?
                 for(int i=0;i<size_pPrev;i++){
                     float element = pPrev[i];
-                    int offsetindex = i%4;
+                    int offsetindex = i%4;//The first four values correspond to oldest
                     if(offsetindex!=3){// index 3 i e yaw shall not be offset
                         element -= pPrev[offsetindex];//Offset with first x y z values
                     }
@@ -82,13 +92,27 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
 
 
 
-                struct marton::poly2_data da = {pPrev_normed, alpha, tPrev_normed,tf_d_normed};
+                struct marton::poly2_data da = {pPrev_normed, alpha, tPrev_normed,tf_d_normed,bufferSize,anchorSize};
                 // Construct solver parameters struct
-                //double x_init[12] = { 0.1, 0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0, 0.1, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
                 double x_init[12] = { 0.1, 0.01, 0, 0.1, 0.01, 0, 0.1, 0.01, 0, 0.0, 0.001, 0};//3*x, 3*y, 3*z, 4*yaw
                 //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
+                /* Construct weight array. different weights for different equation types*/
                 //Weights:  xold,yold,zold,yawolsd, x,y,z,yaw
-                double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1};
+                double pPrevWeight = 1;
+                double coneWeight = 4/anchorSize;
+                double yawWeight = 1/anchorSize;
+                double weights[costEquationSize];
+                for(int i=0;i<costEquationSize;i++){
+                    if(i<4*bufferSize){
+                        weights[i]=pPrevWeight;
+                    }else if(i<(4*bufferSize+anchorSize)){
+                        weights[i]=coneWeight;
+                    }else if(i<(4*bufferSize+2*anchorSize)){
+                        weights[i]=yawWeight;
+                    }
+                }
+
+                //double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1};
                 //double weights[14] = {1,1,1,0,1,1,1,0,1,1,1,0,0,0};//only x,y,z
                 //double weights[14] = {1,1,1,0,1,1,1,0,1,1,1,0,1,1};
                 double xtol = 1e-3;
@@ -96,7 +120,7 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
                 // Perform optimization. pass d and param. Hur skicka structs som argument?
                 std::vector<float> x_est(12); // Estimated polynomial parameters
-                int status = marton::nlinear_lsqr_solve_2deg(param,da , x_est);
+                int status = marton::nlinear_lsqr_solve_2deg(param,da, x_est);
 
                 if(status==GSL_SUCCESS){
                     /*std::cout << "X: ";
@@ -161,6 +185,8 @@ int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
     double *alpha = ((struct poly2_data *)data)->alpha;
     double *t = ((struct poly2_data *)data)->t;
     double tf = ((struct poly2_data *)data)->tf;
+    int bufferSize = ((struct poly2_data *)data)->bufferSize;
+    int anchorSize = ((struct poly2_data *)data)->anchorSize;
 
     // Get arguments to a normal vector for easy access
     double x_[12];
@@ -168,49 +194,63 @@ int marton::poly2_f (const gsl_vector * x, void *data, gsl_vector * f){
         x_[i] = gsl_vector_get(x,i);
     }
 
-/* Equations 0-11 */
+/* First cost equations. Distance between polynomial estimations and measured points */
 // T order: [t1,t2,t3,tf]  kronologisk
 // p order: [x1,y1,z1,yaw1,x2,y2,z2,yaw2,...] Yttre ordning: kronologisk, inre ordning: x,y,z,yaw
 // x order: [sigmax0,sigmax1,sigmax2,sigmay0,sigmay1,sigmay2...]  Yttre ordgning: x,y,z,yaw, inre ordnnig: stigande grad
-    for (size_t i = 0;i < 3; i++){
+int f_nmbr=0;//Counter to keep track of f vector position
+    for (int i=0;i < bufferSize; i++){
         // Calculate time stamp powers
         double t_i = t[i];
         double t_i_sqrd = pow(t_i,(double)2);
+
         int offset = i*4;
         gsl_vector_set (f, 0+offset, x_[0]+x_[1]*t_i+x_[2]*t_i_sqrd - p[0+offset]); //X for time i
         gsl_vector_set (f, 1+offset, x_[3]+x_[4]*t_i+x_[5]*t_i_sqrd - p[1+offset]); //Y for time i
         gsl_vector_set (f, 2+offset, x_[6]+x_[7]*t_i+x_[8]*t_i_sqrd - p[2+offset]); //Z for time i
         gsl_vector_set (f, 3+offset, x_[9]+x_[10]*t_i+x_[11]*t_i_sqrd - p[3+offset]); //Yaw for time i
+
     }
-/*Equation 12 - Hardcoded position 13. keep counter if allow for more previous data points*/
-    double c_sqr = (alpha[3]*alpha[3]+alpha[4]*alpha[4])/(alpha[5]*alpha[5]); // to use in cone equation sqrt(x^2+y^2) = c*z
-    //double c = sqrt(c_sqr);
+/* Cone equation */
+    f_nmbr = bufferSize*4;
     double t_f = tf;      //Current time stamp (tf = time of failure)
     double t_f_sqrd = pow(t_f,(double)2);
     //Evaluate coordinate with current provided sigma-parameters
     double x_est = x_[0]+x_[1]*t_f+x_[2]*t_f_sqrd;
     double y_est = x_[3]+x_[4]*t_f+x_[5]*t_f_sqrd;
     double z_est = x_[6]+x_[7]*t_f+x_[8]*t_f_sqrd;
-    double f12_sqr = pow(x_est-alpha[0],(double)2) + pow(y_est - alpha[1],(double)2) - c_sqr*pow(z_est - alpha[2],(double)2);
-    double f12 = f12_sqr;//sqrt(abs(f12_sqr));
-    gsl_vector_set (f, 12, f12);
+    for(int i=0;i<anchorSize;i++){
+        int offset = i*6;
+        double c_sqr = (alpha[3+offset]*alpha[3+offset]+alpha[4+offset]*alpha[4+offset])/(alpha[5+offset]*alpha[5+offset]); // to use in cone equation sqrt(x^2+y^2) = c*z
+        //double c = sqrt(c_sqr);
+        double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_est - alpha[2+offset],(double)2);
+        double f12 = sqrt(abs(f12_sqr));//f12_sqr;//sqrt(abs(f12_sqr));
+        gsl_vector_set (f, f_nmbr, f12);
+        f_nmbr++;
+    }
 /*Equation 13 - Hardcoded position 14. keep counter if allow for more previous data points*/
 
 //x-y of v vector in uav frame towards anchor, rotated wit estimated yaw UNIT
 //x-y of vector between anchor and estimated UAV global pos UNIT
 //norm of difference should be zero.
-std::cout << "hardocded elements last known pos eq 13 ploly2_f"<< std::endl;
-    double yaw_est = x_[9]+x_[10]*t_f+x_[11]*t_f_sqrd;
-    //double est_norm = sqrt(pow(x_est-alpha[0],(double)2)+pow(y_est-alpha[1],(double)2));//magnitude of vector from angchor to uav (only x-y plane)
-    double est_norm = sqrt(pow(p[8]-alpha[0],(double)2)+pow(p[9]-alpha[1],(double)2));
-    double v_norm = sqrt(pow(alpha[3],(double)2) + pow(alpha[4],(double)2));
+
+    double yaw_est = x_[9]+x_[10]*t_f+x_[11]*t_f_sqrd;//Yaw est is constant for all anchors f course
     double cos_ = cos(yaw_est);
     double sin_ = sin(yaw_est);
+    double x_last = p[4*(bufferSize-1)];// vector from uav to anchor is calculated from last known position. Thus this cost equation wll not affect pos estimation
+    double y_last = p[4*bufferSize];
+    for(int i=0;i<anchorSize;i++){
+        int offset = i*6;
+        double est_norm = sqrt(pow(x_last-alpha[0+offset],(double)2)+pow(y_last-alpha[1+offset],(double)2));//norm of vector from anchor to last known position (only x,y)
+        double v_norm = sqrt(pow(alpha[3+offset],(double)2) + pow(alpha[4+offset],(double)2));          //norm of ulos vector from uav to anchor (only x,y)
 
-    double v_est_x = cos_*alpha[3] - sin_*alpha[4];//v(x,y) vector rotated with the estimated yaw
-    double v_est_y = sin_*alpha[3] + cos_*alpha[4];
-    double f13 = pow((p[8]-alpha[0])/est_norm  + (v_est_x/v_norm),(double)2) + pow((p[9]-alpha[1])/est_norm + v_est_y/v_norm,(double)2);
-    gsl_vector_set (f, 13, sqrt(f13));
+        double v_est_x = cos_*alpha[3+offset] - sin_*alpha[4+offset];//v(x,y) vector rotated with the estimated yaw
+        double v_est_y = sin_*alpha[3+offset] + cos_*alpha[4+offset];
+        double f13 = pow((x_last-alpha[0+offset])/est_norm  + (v_est_x/v_norm),(double)2) + pow((y_last-alpha[1+offset])/est_norm + v_est_y/v_norm,(double)2);
+        gsl_vector_set (f, f_nmbr, sqrt(f13));
+        f_nmbr++;
+    }
+    std::cout << "F NUMBER: " << f_nmbr << std::endl;
     return GSL_SUCCESS;
 }
 
@@ -234,16 +274,11 @@ int marton::nlinear_lsqr_solve_2deg(nlinear_lsqr_param parameters, poly2_data da
     gsl_multifit_nlinear_workspace *w;
     gsl_multifit_nlinear_fdf fdf;
     gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();
-    const size_t n = 14; //N is number of data points
+    const size_t n = 4*data.bufferSize+2*data.anchorSize; //n is number of data points
     const size_t par = 12; // p is i guess number of parameters to solve for
 
-    //gsl_vector *f;
-    //gsl_matrix *J;
-
-    //struct poly2_data d = { p, alpha, t,tf};
-    //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
     double *x_init = parameters.x_init;
-    //double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
     double *weights = parameters.weights;
     gsl_vector_view x = gsl_vector_view_array (x_init, par);
     gsl_vector_view wts = gsl_vector_view_array(weights, n);
@@ -429,11 +464,13 @@ void marton::process(void){
     double alpha[5] = {0,0,0,0.4,0.3};
     double t[4] = {0,1,2,3};
     double tf = 4;
-    struct marton::poly2_data da = { p, alpha, t,tf};
+    int n=12;
+    struct marton::poly2_data da = { p, alpha, t,tf,n};
 
 
     // Construct solver parameters struct
     double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0}; /* starting values. Maybe init these as last solution*/
+
     double weights[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     double xtol = 1e-2;
     double gtol = 1e-2;

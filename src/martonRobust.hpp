@@ -80,6 +80,8 @@ struct poly2_data {
     double * alpha;     //[sx,sy,sz,vx,vy] parameters to visible anchor.vx,vy is vector pointing towards anchor, in UAV frame! translate with T before passing.Maybe allow for more than one anchor later?
     double * t;         //Timestamps previous [t1 t2 t3]
     double tf;        //Timestamp current
+    int bufferSize;   //
+    int anchorSize;
 };
 
 
