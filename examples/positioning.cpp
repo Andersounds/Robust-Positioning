@@ -146,8 +146,8 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
         float pitch = data[pitchColumn];
         float roll = data[rollColumn];
 
-        if((counter%15)<5){algmode = pos::MODE_FALLBACK;}
-        else{algmode = pos::MODE_AZIPE_AND_FALLBACK;}
+        if((counter%22)<11){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
+        else{algmode = pos::MODE_FALLBACK;}
 
 //Get new image
 //Separate processAndIllustrate with just process using switch statement
@@ -164,7 +164,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                     pos::argStruct arguments = {dist,roll,pitch,yaw};
                     int mode = P.process_AZIPE(frame, colorFrame,t,arguments);
                     if(log){
-                        std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
                     }
                     yaw = arguments.yaw;
@@ -176,7 +176,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                     int mode = P.process_VO_Fallback(algmode,frame, colorFrame, t,arguments);
                     yaw = arguments.yaw;
                     if(log){
-                        std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
                     }
                     break;
@@ -187,7 +187,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                     int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
                     yaw = arguments.yaw;
                     if(log){
-                        std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
                     }
                     if((mode!=pos::RETURN_MODE_AZIPE_FAILED)&(mode!=pos::RETURN_MODE_MARTON_FAILED)){
