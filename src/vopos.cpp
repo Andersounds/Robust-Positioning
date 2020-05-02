@@ -117,9 +117,9 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
     static marton::circBuff tBuffer(3);    //For previous time stamps
     if(!init){
         init = true;
-        tBuffer.add(-700);//To prevent that marton starts before we even have azipe estimations
-        tBuffer.add(-700);
-        tBuffer.add(-700);
+        tBuffer.add(-3*TSPAN_MAX);//To prevent that marton starts before we even have azipe estimations
+        tBuffer.add(-2*TSPAN_MAX);
+        tBuffer.add(-1*TSPAN_MAX);
     }
     static marton::circBuff pBuffer(12);   //For previous positions
 
@@ -147,7 +147,7 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
             az::azipe(v_m,q_m,pos,arguments.yaw,arguments.pitch,arguments.roll);
             returnMode = pos::RETURN_MODE_AZIPE;
             std::cout << "Azipe:  X: "<< pos(0,0) << ", Y: "<< pos(1,0) << ", Z: " << pos(2,0) << ", yaw: " << arguments.yaw<< std::endl;
-        }else if(knownAnchors>=1 && tspan<500){//Only try marton if total time span is less than 500ms Should be closer to 100ms
+        }else if(knownAnchors>=1 && tspan<TSPAN_MAX){//Only try marton if total time span is less than 2000ms Should be closer to 100ms
         //}if(knownAnchors>=1){
             std::vector<float> pPrev(12);
             pBuffer.read(pPrev);
@@ -161,6 +161,8 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         //}else{
         } else if(knownAnchors < 3){
             returnMode = pos::RETURN_MODE_AZIPE_FAILED;
+        } else{
+            returnMode = pos::RETURN_MODE_MARTON_OLD;
         }
 
         //int size = 5;

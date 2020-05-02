@@ -72,7 +72,10 @@ namespace pos{
     const int RETURN_MODE_AZIPE_FAILED = 4; //If only azipe is used and estimation fails
     const int RETURN_MODE_MARTON = 5;
     const int RETURN_MODE_MARTON_FAILED = 6;
+    const int RETURN_MODE_MARTON_OLD = 7;
 
+
+    #define TSPAN_MAX 3000
     /* Convenience structs for passing to positioning functions*/
     struct argStruct {
         float dist;
