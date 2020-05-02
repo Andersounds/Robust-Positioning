@@ -43,9 +43,9 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 */
 
                 /* Descide size of problem. Number of parameters is constant, but number of cost equations is 4*bufferSize+2*anchorSize*/
-                int bufferSize = tPrev.size();//Number of previously logged points
-                int anchorSize = std::min((int)v.size(),(int)2);//Number of uLOS vector available. Use max two anchors
-                int costEquationSize = 4*bufferSize+2*anchorSize;
+                int bufferSize = tPrev.size();                      //Number of previously logged points
+                int anchorSize = std::min((int)v.size(),(int)2);    //Number of uLOS vector available. Use max two anchors
+                int costEquationSize = 4*bufferSize+2*anchorSize; //x,y,z,yaw (=4) times bufferSize, cone equation and yaw equation and symmetric cone penalty for FS (=3)
 
 
                 cv::Mat Rx = marton::getXRot(roll);
@@ -93,14 +93,24 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
 
 
                 struct marton::poly2_data da = {pPrev_normed, alpha, tPrev_normed,tf_d_normed,bufferSize,anchorSize};
-                // Construct solver parameters struct
-                double x_init[12] = { 0.1, 0.01, 0, 0.1, 0.01, 0, 0.1, 0.01, 0, 0.0, 0.001, 0};//3*x, 3*y, 3*z, 4*yaw
+                /* ########Construct solver parameters struct####### */
+                // Choose initial polynomial to stright line between oldest and newest buffered data points
+                // Possible adaptations to noisy data:
+                //  - Instead of just taking straight line between oldest and newest point, do linear regression
+                double deltaT = tPrev_normed[bufferSize-1]-tPrev_normed[0];//Delta T value
+                double deltaX = pPrev_normed[4*(bufferSize-1) + 0] - pPrev_normed[0];
+                double deltaY = pPrev_normed[4*(bufferSize-1) + 1] - pPrev_normed[1];
+                double deltaZ = pPrev_normed[4*(bufferSize-1) + 2] - pPrev_normed[2];
+                double deltaYAW = pPrev_normed[4*(bufferSize-1) + 3] - pPrev_normed[3];
+                double x_init[12] = { 0, deltaX/deltaT, 0, 0,deltaY/deltaT, 0, 0, deltaZ/deltaT, 0, 0, deltaYAW/deltaT, 0};
+                //double x_init[12] = { 0.1, 0.01, 0, 0.1, 0.01, 0, 0.1, 0.01, 0, 0.0, 0.001, 0};//3*x, 3*y, 3*z, 4*yaw
                 //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
                 /* Construct weight array. different weights for different equation types*/
                 //Weights:  xold,yold,zold,yawolsd, x,y,z,yaw
                 double pPrevWeight = 1;
-                double coneWeight = 4/anchorSize;
+                double coneWeight = 2;//2/anchorSize;
                 double yawWeight = 1/anchorSize;
+                double symmetryWeight = 0;
                 double weights[costEquationSize];
                 for(int i=0;i<costEquationSize;i++){
                     if(i<4*bufferSize){
@@ -115,8 +125,8 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 //double weights[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1};
                 //double weights[14] = {1,1,1,0,1,1,1,0,1,1,1,0,0,0};//only x,y,z
                 //double weights[14] = {1,1,1,0,1,1,1,0,1,1,1,0,1,1};
-                double xtol = 1e-3;
-                double gtol = 1e-3;
+                double xtol = 1e-4;
+                double gtol = 1e-4;
                 struct marton::nlinear_lsqr_param param = {x_init,weights,xtol,gtol};
                 // Perform optimization. pass d and param. Hur skicka structs som argument?
                 std::vector<float> x_est(12); // Estimated polynomial parameters
@@ -220,10 +230,13 @@ int f_nmbr=0;//Counter to keep track of f vector position
     double y_est = x_[3]+x_[4]*t_f+x_[5]*t_f_sqrd;
     double z_est = x_[6]+x_[7]*t_f+x_[8]*t_f_sqrd;
     for(int i=0;i<anchorSize;i++){
-        int offset = i*6;
+        int offset = i*6; //Every anchor uses 6 elements in alpha
         double c_sqr = (alpha[3+offset]*alpha[3+offset]+alpha[4+offset]*alpha[4+offset])/(alpha[5+offset]*alpha[5+offset]); // to use in cone equation sqrt(x^2+y^2) = c*z
         //double c = sqrt(c_sqr);
-        double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_est - alpha[2+offset],(double)2);
+        //double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_est - alpha[2+offset],(double)2);//Original cost function. Vary x-y-z
+        double z_last =p[0] + 0.3*(p[(bufferSize-1)*4+2]-p[2])*(t_f-t[0])/(t[bufferSize-1]-t[0]); //Choose Z as linear continuation of buffered z values at tf. Scaled down with 0.3
+        //double z_last = p[(bufferSize-1)*4+2];
+        double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_last - alpha[2+offset],(double)2);//Can only modify in x-y to optimize this
         double f12 = sqrt(abs(f12_sqr));//f12_sqr;//sqrt(abs(f12_sqr));
         gsl_vector_set (f, f_nmbr, f12);
         f_nmbr++;
