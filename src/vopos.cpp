@@ -118,9 +118,9 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
     static marton::circBuff tBuffer(bufferSize);    //For previous time stamps
     if(!init){
         init = true;
-        tBuffer.add(-3*TSPAN_MAX);//To prevent that marton starts before we even have azipe estimations
+        tBuffer.add(-4*TSPAN_MAX);//To prevent that marton starts before we even have azipe estimations
+        tBuffer.add(-3*TSPAN_MAX);
         tBuffer.add(-2*TSPAN_MAX);
-        tBuffer.add(-1*TSPAN_MAX);
     }
     static marton::circBuff pBuffer(4*bufferSize);   //For previous positions (4 variables times buffersize)
 
@@ -148,19 +148,19 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
             az::azipe(v_m,q_m,pos,arguments.yaw,arguments.pitch,arguments.roll);
             returnMode = pos::RETURN_MODE_AZIPE;
             std::cout << "Azipe:  X: "<< pos(0,0) << ", Y: "<< pos(1,0) << ", Z: " << pos(2,0) << ", yaw: " << arguments.yaw<< std::endl;
-        }else if(knownAnchors>=1 && tspan<TSPAN_MAX){//Only try marton if total time span is less than 2000ms Should be closer to 100ms
+        }else if(knownAnchors>=1 && tspan<TSPAN_MAX){//Only try marton if total time span is less than TSPAN_MAX ms
         //}if(knownAnchors>=1){
-            std::vector<float> pPrev(12);
+            std::vector<float> pPrev(4*bufferSize);
             pBuffer.read(pPrev);
             int _returnMode = marton::process(v_m,q_m,pos,arguments.yaw, arguments.pitch, arguments.roll,arguments.time,pPrev,tPrev);
             switch(_returnMode){
                 case GSL_SUCCESS:{returnMode = pos::RETURN_MODE_MARTON;break;}
                 case GSL_ENOPROG:{returnMode = pos::RETURN_MODE_MARTON_FAILED;break;}
-                default:{std::cout << "Unknown return value from marton::process in vopos>process_Marton_Fallback" << std::endl;}
+                default:{std::cout << "Unknown return value from marton::process in vopos>process_Marton_Fallback" << std::endl; returnMode = -100;}
             }
             std::cout << "Marton: X: "<< pos(0,0) << ", Y: "<< pos(1,0) << ", Z: " << pos(2,0)  << ", yaw: " << arguments.yaw<< std::endl;
         //}else{
-        } else if(knownAnchors < 3){
+        } else if(knownAnchors < minAnchors){
             returnMode = pos::RETURN_MODE_AZIPE_FAILED;
         } else{
             returnMode = pos::RETURN_MODE_MARTON_OLD;
