@@ -76,6 +76,7 @@ cv::Rect2f roiSize = cv::Rect2f(roi_x,roi_y,roi_side,roi_side);;
 cv::Mat_<float> K;          bpu::assign(vm,K,"K_MAT");
 cv::Mat_<float> T;          bpu::assign(vm,T,"T_MAT");
 
+int marton_buffsize;                 bpu::assign(vm,marton_buffsize,"MARTON_BUFFERSIZE");
 /*
     Define execution modes
 */
@@ -183,8 +184,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                 }
                 case ALG_MARTON:{
                     std::cout << "ALG_MARTON:::" << std::endl;
-                    int buffSize = 30;
-                    pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data, buffSize};
+                    pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data, marton_buffsize};
                     int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
                     yaw = arguments.yaw;
                     if(log){
@@ -280,10 +280,9 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
      generic.add_options()
          ("help,h", "produce help message")
          ("file,f",po::value<std::string>(),"configuration file")// Possibly set this as first positional option?
-         //("BASE_PATH,p",po::value<std::string>(),"Base path from which I/O paths are relative. Defaults to pwd but may be overridden with this flag.\nGive as either absolute or relative path.")
      ;
 
-     po::options_description parameters("Parameters");
+     po::options_description parameters("UAV properties");
      parameters.add_options()
          //Parameters
          ("RES_X",  po::value<float>(), "Camera resolution in X direction")
@@ -291,8 +290,6 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
          ("K_MAT",  po::value<std::string>(), "Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator") //Tänk om man kan definiera denna direkt som en opencv mat och ge 9 argument på rad?
          ("T_MAT",  po::value<std::string>()->default_value("[0,-1,0;1,0,0;0,0,1]"), "UAV-to-Camera matrix. Default +90deg. Specified in matlab style")
          ("CAMERA_BARREL_DISTORTION",    po::value<std::string>()->default_value("[0.2486857357354474,-1.452670730319596,2.638858641887943]"), "Barrel distortion coefficients given as [K1,K2,K3]")
-         ("OPTICAL_FLOW_GRID",           po::value<int>()->default_value(4),"Sqrt of number of optical flow vectors")//Single int
-         ("ROI_SIZE",po::value<float>()->default_value(150), "Side length of VO ROI. Used to edit K mat of VO alg.")
          ;
 
      po::options_description initValues("Initial values");
@@ -314,15 +311,24 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
          ("PATH_TO_ARUCO_DATABASE", po::value<std::string>()->default_value("anchors.csv"),"Path to anchor database from base path")
          ("STREAM_IMAGES_INFO_FILE",po::value<std::string>(),"Path to images info file from config file path")
          ("STREAM_DATA_FILE",po::value<std::string>(),"Path to data file from config file path")
+         ("POS_ALG",po::value<std::string>(),"Positioning algorithm | AZIPE or VO or MARTON")
+         ;
+     po::options_description voSettings("Visual Odometry settings");
+     voSettings.add_options()
          ("OF_MODE",po::value<std::string>(),"Mode of Optical flow algorithm. KLT or CORR")
          ("VO_MODE",po::value<std::string>(),"Mode of Visual Odometry algorithm. HOMOGRAPHY or AFFINE")
-         ("POS_ALG",po::value<std::string>(),"Positioning algorithm | AZIPE or VO or MARTON")
-         ("DEROTATE_OF",   po::value<bool>()->default_value(true), "Derotate optical flow field using roll/pitch? true / false or 1 / 0")
+         ("OPTICAL_FLOW_GRID",           po::value<int>()->default_value(4),"Sqrt of number of optical flow vectors")//Single int
+         ("ROI_SIZE",po::value<float>()->default_value(150), "Side length of VO ROI. Used to edit K mat of VO alg.")
+         ("DEROTATE_OF",   po::value<bool>()->default_value(true), "Derotate optical flow field using roll/pitch? true/1 or false/0")
+         ;
+     po::options_description martonSettings("Marton robust settings");
+     martonSettings.add_options()
+         ("MARTON_BUFFERSIZE", po::value<int>()->default_value(3),  "Number of previous points to align marton polynomial to")
          ;
 
      // Parse command line
      po::options_description all("All options");
-     all.add(generic).add(parameters).add(initValues).add(modes);
+     all.add(generic).add(parameters).add(initValues).add(modes).add(voSettings).add(martonSettings);
      po::store(po::parse_command_line(argc, argv, all), vm);//Read command line
      po::notify(vm);
      /*Produce help message */
@@ -333,6 +339,8 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
          std::cout << parameters<< std::endl;
          std::cout << initValues<< std::endl;
          std::cout << modes << std::endl;
+         std::cout << voSettings << std::endl;
+         std::cout << martonSettings << std::endl;
          std::cout << "---------------" << std::endl;
          return 0;
      }
