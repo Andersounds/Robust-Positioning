@@ -172,7 +172,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                 }
                 case ALG_VO:{
                     std::cout << "ALG_VO:::" << std::endl;
-                    pos::VOargStruct arguments = {dist,roll,pitch,yaw};
+                    pos::VOargStruct arguments = {dist*100,roll,pitch,yaw};//Scale dist measurement to cm
                     int mode = P.process_VO_Fallback(algmode,frame, colorFrame, t,arguments);
                     yaw = arguments.yaw;
                     if(log){
