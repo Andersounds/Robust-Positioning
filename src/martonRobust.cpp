@@ -7,6 +7,8 @@ Methods for defining the input arguments are defined in the ang::angulation clas
     src/angulation.cpp
 */
 
+//Prototype
+double singleRegressor(double *x_array, double *y_array,int,int,int);
 
 /* This is the main process method that handles the estimation
  * Only first of the known anchors will be used in first implementation
@@ -94,15 +96,15 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
 
                 struct marton::poly2_data da = {pPrev_normed, alpha, tPrev_normed,tf_d_normed,bufferSize,anchorSize};
                 /* ########Construct solver parameters struct####### */
-                // Choose initial polynomial to stright line between oldest and newest buffered data points
-                // Possible adaptations to noisy data:
-                //  - Instead of just taking straight line between oldest and newest point, do linear regression
-                double deltaT = tPrev_normed[bufferSize-1]-tPrev_normed[0];//Delta T value
-                double deltaX = pPrev_normed[4*(bufferSize-1) + 0] - pPrev_normed[0];
-                double deltaY = pPrev_normed[4*(bufferSize-1) + 1] - pPrev_normed[1];
-                double deltaZ = pPrev_normed[4*(bufferSize-1) + 2] - pPrev_normed[2];
-                double deltaYAW = pPrev_normed[4*(bufferSize-1) + 3] - pPrev_normed[3];
-                double x_init[12] = { 0, deltaX/deltaT, 0, 0,deltaY/deltaT, 0, 0, deltaZ/deltaT, 0, 0, deltaYAW/deltaT, 0};
+                // Slope calculation from previous data for initial polynomial guess
+                double slopeX = singleRegressor(tPrev_normed, pPrev_normed, bufferSize, 0, 4);
+                double slopeY = singleRegressor(tPrev_normed, pPrev_normed, bufferSize, 1, 4);
+                double slopeZ = singleRegressor(tPrev_normed, pPrev_normed, bufferSize, 2, 4);
+                double slopeYAW = singleRegressor(tPrev_normed, pPrev_normed, bufferSize, 3, 4);
+                double x_init[12] = { 0, slopeX, 0, 0,slopeY, 0, 0, slopeZ, 0, 0, slopeYAW, 0};
+
+
+
                 //double x_init[12] = { 0.1, 0.01, 0, 0.1, 0.01, 0, 0.1, 0.01, 0, 0.0, 0.001, 0};//3*x, 3*y, 3*z, 4*yaw
                 //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
                 /* Construct weight array. different weights for different equation types*/
@@ -263,7 +265,6 @@ int f_nmbr=0;//Counter to keep track of f vector position
         gsl_vector_set (f, f_nmbr, sqrt(f13));
         f_nmbr++;
     }
-    std::cout << "F NUMBER: " << f_nmbr << std::endl;
     return GSL_SUCCESS;
 }
 
@@ -459,6 +460,30 @@ cv::Mat marton::getYRot(float pitch){
     return R_y;
 }
 
+
+// Code for calculating slope of points for initial direction of polynomial.
+//      Only calculate linear regression slope
+double singleRegressor(double *x_array, double *y_array,int size, int pStart, int pStep){
+    //Calculate mean value of x and y
+    double x_mean = 0;
+    double y_mean = 0;
+    for(int i=0;i<size;i++){
+        x_mean += x_array[i];
+        y_mean += y_array[pStart+i*pStep];
+    }
+    x_mean/=(double)size;
+    y_mean/=(double)size;
+
+    //Calculate lin regression slope
+    double slope_num = 0;
+    double slope_den = 0;
+    for(int i=0;i<size;i++){
+        slope_num += (x_array[i]-x_mean)*(y_array[pStart+i*pStep]-y_mean);
+        slope_den += (x_array[i]-x_mean)*(x_array[i]-x_mean);
+    }
+    double slope = slope_num/slope_den;
+    return slope;
+}
 
 
 
