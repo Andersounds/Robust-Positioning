@@ -114,7 +114,7 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
  */
 int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos,pos::MartonArgStruct& arguments){
     static bool init = false;
-    static int bufferSize = 3;
+    static int bufferSize = arguments.bufferSize;
     static marton::circBuff tBuffer(bufferSize);    //For previous time stamps
     if(!init){
         init = true;

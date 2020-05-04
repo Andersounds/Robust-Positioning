@@ -183,7 +183,8 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
                 }
                 case ALG_MARTON:{
                     std::cout << "ALG_MARTON:::" << std::endl;
-                    pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data};
+                    int buffSize = 30;
+                    pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data, buffSize};
                     int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
                     yaw = arguments.yaw;
                     if(log){
