@@ -79,19 +79,29 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 float tf_normed = tf-tPrev[0];
                 double tf_d_normed = (double)tf_normed;
 
-                /* Shift x,y,z values from buffer so that oldest point is at [0,0,0]. NOTE: do not shift yaw, ie every fourth value of pPrev */
+                /* Shift x,y,z values from buffer so that oldest point is at [0,0,0]. NOTE: shift also yaw*/
                 int size_pPrev = pPrev.size();
                 double pPrev_normed[size_pPrev];
-                //Offset?
+                //Offset
                 for(int i=0;i<size_pPrev;i++){
                     float element = pPrev[i];
                     int offsetindex = i%4;//The first four values correspond to oldest
-                    if(offsetindex!=3){// index 3 i e yaw shall not be offset
-                        element -= pPrev[offsetindex];//Offset with first x y z values
-                    }
+                    element -= pPrev[offsetindex];//Offset with first x y z yawvalues
                     pPrev_normed[i] = (double)element;
                 }
-
+                //Unwrap yaw
+                float yaw_last = pPrev_normed[3]; //Init yaw last to first
+                for(int i=3;i<size_pPrev;i+=4){
+                    yaw = pPrev_normed[i];
+                    while((yaw-yaw_last)<=-3.1){//If the angle did a large negative jump from +pi to -pi (angle increasing)
+                        yaw+=2*marton::PI;
+                    }
+                    while((yaw-yaw_last)>=3.1){//If the angle did a large positive jum from -pi to pi (angle decreasing)
+                        yaw-=2*marton::PI;
+                    }
+                    yaw_last = yaw;
+                    pPrev_normed[i] = yaw;
+                }
 
 
                 struct marton::poly2_data da = {pPrev_normed, alpha, tPrev_normed,tf_d_normed,bufferSize,anchorSize};
@@ -112,7 +122,6 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 double pPrevWeight = 1;
                 double coneWeight = 2;//2/anchorSize;
                 double yawWeight = 1/anchorSize;
-                double symmetryWeight = 0;
                 double weights[costEquationSize];
                 for(int i=0;i<costEquationSize;i++){
                     if(i<4*bufferSize){
@@ -148,16 +157,10 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                         po(i,0) = pPrev[i] + delta_value;// Add offset and update position
                     //    po(i,0) = delta_value;
                     }
-
                     po.copyTo(position);
 
                     float delta_yaw = x_est[9] + x_est[10]*tf_normed + x_est[11]*tf_normed_sqrd;
-                    //float yaw_ = pPrev[3] + delta_yaw;
-                    float yaw_ = delta_yaw;
-                    //double fractpart,intpart;
-                    //fractpart = modf(yaw_/6.2832,&intpart);
-                    //yaw = 6.2832*(float)fractpart;
-
+                    float yaw_ = pPrev[3] + delta_yaw; // Add offset
                     // Cast yaw to +-pi
                     while(yaw_>marton::PI){
                         yaw_-=2*marton::PI;
