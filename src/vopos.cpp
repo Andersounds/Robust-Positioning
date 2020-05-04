@@ -114,14 +114,15 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
  */
 int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos,pos::MartonArgStruct& arguments){
     static bool init = false;
-    static marton::circBuff tBuffer(3);    //For previous time stamps
+    static int bufferSize = 3;
+    static marton::circBuff tBuffer(bufferSize);    //For previous time stamps
     if(!init){
         init = true;
         tBuffer.add(-3*TSPAN_MAX);//To prevent that marton starts before we even have azipe estimations
         tBuffer.add(-2*TSPAN_MAX);
         tBuffer.add(-1*TSPAN_MAX);
     }
-    static marton::circBuff pBuffer(12);   //For previous positions
+    static marton::circBuff pBuffer(4*bufferSize);   //For previous positions (4 variables times buffersize)
 
 
     ///////////// TRY AZIPE
