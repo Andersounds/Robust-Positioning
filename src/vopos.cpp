@@ -140,7 +140,7 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
         ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
         //std::cout << "Known anchors: " << knownAnchors << std::endl;
-        std::vector<float> tPrev(3);
+        std::vector<float> tPrev(bufferSize);
         tBuffer.read(tPrev);
         float tspan = arguments.time - tPrev[0];
         std::cout << "Tspan: " << tspan << std::endl;
