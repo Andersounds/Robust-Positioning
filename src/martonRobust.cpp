@@ -234,11 +234,10 @@ int f_nmbr=0;//Counter to keep track of f vector position
     for(int i=0;i<anchorSize;i++){
         int offset = i*6; //Every anchor uses 6 elements in alpha
         double c_sqr = (alpha[3+offset]*alpha[3+offset]+alpha[4+offset]*alpha[4+offset])/(alpha[5+offset]*alpha[5+offset]); // to use in cone equation sqrt(x^2+y^2) = c*z
-        //double c = sqrt(c_sqr);
-        //double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_est - alpha[2+offset],(double)2);//Original cost function. Vary x-y-z
-        double z_last =p[0] + 0.3*(p[(bufferSize-1)*4+2]-p[2])*(t_f-t[0])/(t[bufferSize-1]-t[0]); //Choose Z as linear continuation of buffered z values at tf. Scaled down with 0.3
-        //double z_last = p[(bufferSize-1)*4+2];
-        double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_last - alpha[2+offset],(double)2);//Can only modify in x-y to optimize this
+        double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_est - alpha[2+offset],(double)2);//Original cost function. Vary x-y-z
+        //Replace f12_sqr with below two lines to only include x-y as optimization variables in cone equation
+        //double z_last =p[0] + 0.3*(p[(bufferSize-1)*4+2]-p[2])*(t_f-t[0])/(t[bufferSize-1]-t[0]); //Choose Z as linear continuation of buffered z values at tf. Scaled down with 0.3
+        //double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_last - alpha[2+offset],(double)2);//Can only modify in x-y to optimize this
         double f12 = sqrt(abs(f12_sqr));//f12_sqr;//sqrt(abs(f12_sqr));
         gsl_vector_set (f, f_nmbr, f12);
         f_nmbr++;
