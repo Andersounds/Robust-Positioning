@@ -92,6 +92,8 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
         ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
         az::azipe(v_m,q_m,pos,arguments.yaw,arguments.pitch,arguments.roll);
+        //az::aipe(v_m,q_m,pos,arguments.yaw,arguments.pitch,arguments.roll,0.01);
+
         returnMode = pos::RETURN_MODE_AZIPE;
     }else{
         /////////// VO Estimation
