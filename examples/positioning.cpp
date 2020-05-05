@@ -148,8 +148,8 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
         float pitch = 0;
         float roll = 0;
         if(useRollPitch){
-            float pitch = data[pitchColumn];
-            float roll = data[rollColumn];
+            pitch = data[pitchColumn];
+            roll = data[rollColumn];
         }
         if((counter%22)<11){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
         else{algmode = pos::MODE_FALLBACK;}
