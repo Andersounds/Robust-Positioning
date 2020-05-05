@@ -63,6 +63,7 @@ if(log){
 }
 const int step = vm["STEP"].as<int>();
 bool derotate = vm["DEROTATE_OF"].as<bool>();
+bool useRollPitch = vm["USE_ROLLPITCH"].as<bool>();
 
 
 //Initialize positioning object
@@ -144,9 +145,12 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
 
         timeStamp_data = data[0];
         float dist = data[distColumn];//This is used as a subst as actual height is not in dataset
-        float pitch = data[pitchColumn];
-        float roll = data[rollColumn];
-
+        float pitch = 0;
+        float roll = 0;
+        if(useRollPitch){
+            float pitch = data[pitchColumn];
+            float roll = data[rollColumn];
+        }
         if((counter%22)<11){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
         else{algmode = pos::MODE_FALLBACK;}
 
@@ -313,6 +317,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
          ("STREAM_IMAGES_INFO_FILE",po::value<std::string>(),"Path to images info file from config file path")
          ("STREAM_DATA_FILE",po::value<std::string>(),"Path to data file from config file path")
          ("POS_ALG",po::value<std::string>(),"Positioning algorithm | AZIPE or VO or MARTON")
+         ("USE_ROLLPITCH",   po::value<bool>()->default_value(true), "Use roll/pitch? otherwise set to 0. true/1 or false/0")
          ;
      po::options_description voSettings("Visual Odometry settings");
      voSettings.add_options()
