@@ -1,8 +1,8 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include "azipe.hpp"
-#include "../include/Quartic-master/quartic.h"
-
+//#include "../include/Quartic-master/quartic.h"
+#include <gsl/gsl_poly.h>
 
 /*
 AZIPE - AZImuth and Position Estimation
@@ -152,13 +152,27 @@ for(int i=0;i<n;i++){
         double A2 = S*S + C*C - A4;
         double A1 = -4*A*C - 2*B*S;
         double A0 = B*B - C*C;
+
         //Solve quartic function for x: cos(azimuth)
-        double a_quart = ((double)A3)/((double)A4);
+        /* Quartic root*/
+        /*double a_quart = ((double)A3)/((double)A4);
         double b_quart = ((double)A2)/((double)A4);
         double c_quart = ((double)A1)/((double)A4);
         double d_quart = ((double)A0)/((double)A4);
         std::complex<double>*  solutions = solve_quartic(a_quart, b_quart, c_quart, d_quart);
+        */
+        /* GSL root */
+        gsl_poly_complex_workspace * gsl_w = gsl_poly_complex_workspace_alloc (5);
+        double gsl_a[5] = {A0,A1,A2,A3,A4};
+        double gsl_root[8];//Alternating real and imaginary parts
+        gsl_poly_complex_solve (gsl_a, 5, gsl_w, gsl_root);
+        gsl_poly_complex_workspace_free(gsl_w);
+        std::complex<double> solutions[4];
+        for(int i=0;i<4;i++){
+            solutions[i] = std::complex<double>(gsl_root[2*i],gsl_root[2*i+1]);
+        }
 
+        /* ---GSL root end--- */
         //std::complex<double>*  solutions = solve_quartic(d_quart, c_quart, b_quart, a_quart);
         //Sort out any non-viable solutions (>1)
         double lowestCost = 1000;
@@ -221,21 +235,20 @@ for(int i=0;i<n;i++){
 
         //float delta_pos = std::abs((P_vehicle_pos(0,0)-position(0,0))) + std::abs((P_vehicle_pos(1,0)-position(1,0))) + std::abs((P_vehicle_pos(2,0)-position(2,0)));
         //float delta_neg = std::abs((P_vehicle_neg(0,0)-position(0,0))) + std::abs((P_vehicle_neg(1,0)-position(1,0))) + std::abs((P_vehicle_neg(2,0)-position(2,0)));
-        double scal  = 1;
         if(!isnan(delta_pos)){
             if(!isnan(delta_neg)){
                 if(delta_pos < delta_neg){
                     //P_vehicle_pos.copyTo(position);
                     position(0,0) = (float)P_vehicle_pos(0,0);
                     position(1,0) = (float)P_vehicle_pos(1,0);
-                    position(2,0) = (float)P_vehicle_pos(2,0)/scal;
+                    position(2,0) = (float)P_vehicle_pos(2,0);
                     yaw = (float)limitYawRange(azimuth_pos);
                     return az::AZIPE_SUCCESS;
                 }else{
                     //P_vehicle_neg.copyTo(position);
                     position(0,0) = (float)P_vehicle_neg(0,0);
                     position(1,0) = (float)P_vehicle_neg(1,0);
-                    position(2,0) = (float)P_vehicle_neg(2,0)/scal;
+                    position(2,0) = (float)P_vehicle_neg(2,0);
                     yaw = (float)limitYawRange(azimuth_neg);
                     return az::AZIPE_SUCCESS;
                 }
@@ -243,7 +256,7 @@ for(int i=0;i<n;i++){
                 //P_vehicle_pos.copyTo(position);
                 position(0,0) = (float)P_vehicle_pos(0,0);
                 position(1,0) = (float)P_vehicle_pos(1,0);
-                position(2,0) = (float)P_vehicle_pos(2,0)/scal;
+                position(2,0) = (float)P_vehicle_pos(2,0);
                 yaw = (float)limitYawRange(azimuth_pos);
                 return az::AZIPE_SUCCESS;
             }
@@ -251,7 +264,7 @@ for(int i=0;i<n;i++){
             //P_vehicle_neg.copyTo(position);
             position(0,0) = (float)P_vehicle_neg(0,0);
             position(1,0) = (float)P_vehicle_neg(1,0);
-            position(2,0) = (float)P_vehicle_neg(2,0)/scal;
+            position(2,0) = (float)P_vehicle_neg(2,0);
             yaw = (float)limitYawRange(azimuth_neg);
             return az::AZIPE_SUCCESS;
         }
