@@ -40,6 +40,9 @@ namespace ang{
         void pix2uLOS(const std::vector<cv::Point2f>&,std::vector<cv::Mat_<float>>&);//Converts image pixel coordinates to uLOS vectors in uav frame
         void pix2uLOS(const std::vector<std::vector<cv::Point2f>>&,std::vector<cv::Mat_<float>>&);//Overloaded version for corner locations of anchors instead of center locations
         int dataBase2q(const std::vector<int>&,std::vector<cv::Mat_<float>>&,std::vector<bool>&);//Retrieves Q vectors from database given the IDs
+        void deRotateULOS(std::vector<cv::Mat_<float>>&,float,float);
+        cv::Mat getXRot(float);
+        cv::Mat getYRot(float);
 
         //int calculate(std::vector<std::vector<cv::Point2f>>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float);// Overloaded. takes mean of pixel group first
         //int calculateQV(std::vector<cv::Point2f>&, std::vector<int>&,std::vector<bool>&,cv::Mat_<float>&,float&,float,float,std::vector<cv::Mat_<float>>,std::vector<cv::Mat_<float>>); //Take pixel coordinates and IDs of anchors and calculate AZIPE

@@ -124,14 +124,12 @@ void ang::angulation::pix2uLOS(const std::vector<cv::Point2f>& points,std::vecto
         point_mat(0,0) = undistortedPoint.x;
         point_mat(1,0) = undistortedPoint.y;
         //Transform to 3d image plane coordinates, then transfrom from image frame to uav frame
+        //std::cout << "K inv: " << K_inv << std::endl;
         cv::Mat_<float> direction = T * K_inv * point_mat;
+        //direction(2,0) = 0.001;
+        std::cout << "################Z 0" << std::endl;
         float v_norm = (float) cv::norm(direction,cv::NORM_L2);
         direction /= v_norm;
-        std::cout <<"Dir: " << direction <<std::endl;
-        //cv::Mat_<float> direction =  K_inv * point_mat;
-        //Normalize to length one
-        //cv::Mat_<float> norm = cv::Mat_<float>::ones(1,3)*direction;//Norm is evaluated to 1x1 mat
-        //direction /= std::sqrt(norm(0,0));
         //Add to uLOS vector
         uLOS.push_back(direction);
         //Iterate
@@ -174,6 +172,7 @@ int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_
         }
 
 
+
 /*
 
         std::vector<cv::Mat_<float>>::iterator ptr = dataBase.begin();// + i;//i is not an incremented variable. i takes the value if IDs at an incremented position
@@ -196,24 +195,25 @@ int ang::angulation::dataBase2q(const std::vector<int>& IDs,std::vector<cv::Mat_
  * Using the following formula: https://docs.opencv.org/3.4.0/d4/d94/tutorial_camera_calibration.html
  */
 cv::Point2f ang::angulation::unDistort(const cv::Point2f& point){
+    return point;
     //Shift coordinate system center to middle of image
     float x = point.x - K(0,2);
     float y = point.y - K(1,2);
-    std::cout << "shift point: [" << x<< ", "<<y << "]."<< std::endl;
+//    std::cout << "shift point: [" << x<< ", "<<y << "]."<< std::endl;
     //Perform undistortion
     float r2 = x*x + y*y;//Radius squared
 //    float A = (1 + k1_barrel*r2 + k2_barrel*r2*r2 + k3_barrel*r2*r2*r2);
     float A = 1;
     //cv::Point2f undistortedPoint(x/A,y/A);//SHOULD IT BE MULTIPLIED? docs are not definitive. Different in diferent version of docs
-    cv::Point2f undistortedPoint(x*A,y*A);// 
+    cv::Point2f undistortedPoint(x*A,y*A);//
     //Shift coordinates back to image
-    std::cout << "New point: [" << undistortedPoint.x<< ", "<<undistortedPoint.y << "]." <<std::endl;
+//    std::cout << "New point: [" << undistortedPoint.x<< ", "<<undistortedPoint.y << "]." <<std::endl;
     undistortedPoint.x += K(0,2);
     undistortedPoint.y += K(1,2);
 
-    return undistortedPoint;
-/*   Below is undistortion example using opencv.
-    cv::Mat from = cv::Mat(1,1,CV_32FC2);
+    //return undistortedPoint;
+  // Below is undistortion example using opencv.
+/*    cv::Mat from = cv::Mat(1,1,CV_32FC2);
     from.at<cv::Point2f>(0,0)=point;
     cv::Mat to = cv::Mat(1,1,CV_32FC2);
     std::vector<double> coeffs;
@@ -227,12 +227,22 @@ cv::Point2f ang::angulation::unDistort(const cv::Point2f& point){
     std::cout << "Raw point: [" << point.x<< ", "<<point.y << "]."<< std::endl;
     std::cout << "OCV point:" << to << std::endl;
     cv::Point2f newPoint = to.at<cv::Point2f>(0,0);
-
-//    return newPoint;
+    return newPoint;
 */
 }
 
 
+/*Derotate ULOS vectors
+*/
+void ang::angulation::deRotateULOS(std::vector<cv::Mat_<float>>& ulos,float roll,float pitch){
+    cv::Mat_<float> Rroll = getXRot(roll);//positive to rotate with the UAV
+    cv::Mat_<float> Rpitch = getYRot(pitch);
+    for(int i=0;i<ulos.size();i++){
+        cv::Mat_<float> derotated = Rpitch*Rroll*ulos[i];
+        derotated.copyTo(ulos[i]);
+    }
+
+}
 
 /* Interface mathod used to set K mat and calculate its inverse
  */
@@ -252,4 +262,29 @@ void ang::angulation::setDistortCoefficents(float k1, float k2, float k3){
     k1_barrel = k1;
     k2_barrel = k2;
     k3_barrel = k3;
+}
+/* Functions for defining roll, pitch, and yaw rotation matrices
+ * Increase speed by passing reference and edit in place?
+ */
+cv::Mat ang::angulation::getXRot(float roll){
+    float sinX = std::sin(roll);
+    float cosX = std::cos(roll);
+    cv::Mat_<float> R_x = cv::Mat_<float>::zeros(3,3);
+    R_x(0,0) = 1;
+    R_x(1,1) = cosX;
+    R_x(1,2) = -sinX;
+    R_x(2,1) = sinX;
+    R_x(2,2) = cosX;
+    return R_x;
+}
+cv::Mat ang::angulation::getYRot(float pitch){
+    float sinY = std::sin(pitch);
+    float cosY = std::cos(pitch);
+    cv::Mat_<float> R_y = cv::Mat_<float>::zeros(3,3);
+    R_y(0,0) = cosY;
+    R_y(0,2) = sinY;
+    R_y(1,1) = 1;
+    R_y(2,0) = -sinY;
+    R_y(2,2) = cosY;
+    return R_y;
 }
