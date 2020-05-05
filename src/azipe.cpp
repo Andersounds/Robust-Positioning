@@ -47,62 +47,77 @@ void p(std::string out_){
     std::cout << out_ << std::endl;
 }
 
-int az::azipe(const std::vector<cv::Mat_<float>>& v,
-            const std::vector<cv::Mat_<float>>& q,
+int az::azipe(const std::vector<cv::Mat_<float>>& v_float,
+            const std::vector<cv::Mat_<float>>& q_float,
             cv::Mat_<float>& position,
             float& yaw,
             float pitch,float roll){
 
+/*
+ Convert v and q vectors to double precision
+*/
+
+std::vector<cv::Mat_<double>> v,q;
+int n = v_float.size();
+
+for(int i=0;i<n;i++){
+    cv::Mat vi_d;
+    v_float[i].convertTo(vi_d,CV_64FC1);
+    v.push_back(vi_d);
+
+    cv::Mat qi_d;
+    q_float[i].convertTo(qi_d,CV_64FC1);
+    q.push_back(qi_d);
+}
+
             //Yaw - psi
             //pitch - theta
             //roll - phi
-
         //Define some per-position-constant quantities
-        float phi = roll; //Note the sign on this!
-        float theta = pitch;
-        float h = cos(theta);
-        float k = sin(phi)*sin(theta);
-        float l = cos(phi);
-        float u = cos(phi)*sin(theta);
-        float v_factor = sin(phi);
-        float a = sin(theta);
-        float b = sin(phi)*cos(theta);
-        float c = cos(phi)*cos(theta);
-        cv::Mat_<float> A_mat = cv::Mat_<float>::zeros(3,3);
-        cv::Mat_<float> AQ = cv::Mat_<float>::zeros(3,2);
-        cv::Mat_<float> As = cv::Mat_<float>::zeros(3,1);
+        double phi = (double)roll; //Note the sign on this!
+        double theta = (double)pitch;
+        double h = cos(theta);
+        double k = sin(phi)*sin(theta);
+        double l = cos(phi);
+        double u = cos(phi)*sin(theta);
+        double v_factor = sin(phi);
+        double a = sin(theta);
+        double b = sin(phi)*cos(theta);
+        double c = cos(phi)*cos(theta);
+        cv::Mat_<double> A_mat = cv::Mat_<double>::zeros(3,3);
+        cv::Mat_<double> AQ = cv::Mat_<double>::zeros(3,2);
+        cv::Mat_<double> As = cv::Mat_<double>::zeros(3,1);
         //Save incremental Q_i, s_i, and A_mat_i in these vectors so that they need not be recalculated
-        std::vector<cv::Mat_<float>> Q_saved;
-        std::vector<cv::Mat_<float>> s_saved;
-        std::vector<cv::Mat_<float>> A_mat_saved;
+        std::vector<cv::Mat_<double>> Q_saved;
+        std::vector<cv::Mat_<double>> s_saved;
+        std::vector<cv::Mat_<double>> A_mat_saved;
         for(int i=0;i<v.size();i++){
             // Equation 12. Calculate Qi, Si
-            cv::Mat_<float> Q_i = cv::Mat_<float>::zeros(3,2);
-            float q_ix = q[i](0,0);
-            float q_iy = q[i](1,0);
-            float q_iz = q[i](2,0);
+            cv::Mat_<double> Q_i = cv::Mat_<double>::zeros(3,2);
+            double q_ix = q[i](0,0);
+            double q_iy = q[i](1,0);
+            double q_iz = q[i](2,0);
             Q_i(0,0) = h*q_ix;          Q_i(0,1) = h*q_iy;
             Q_i(1,0) = k*q_ix + l*q_iy; Q_i(1,1) = -l*q_ix + k*q_iy;
             Q_i(2,0) = u*q_ix - v_factor*q_iy; Q_i(2,1) = v_factor*q_ix + u*q_iy;
-            cv::Mat_<float> s_i = cv::Mat_<float>::zeros(3,1);
+            cv::Mat_<double> s_i = cv::Mat_<double>::zeros(3,1);
             s_i(0,0) = -q_iz*a; s_i(1,0) = q_iz*b;  s_i(2,0) = q_iz*b;
             //Save Q_i and s_i
             Q_saved.push_back(Q_i);
             s_saved.push_back(s_i);
             //Calculate A_mat
             //Calc V. (Mentioned between equation 4 and 5)
-            cv::Mat_<float> V_i = v[i]*(v[i].t());
+            cv::Mat_<double> V_i = v[i]*(v[i].t());
             //Approximate d_i using last vehicle position (last row before 2.3)
-//std::cout << "position: " << position << std::endl;
-//std::cout << "q[i]: " << q[i] << std::endl;
-            cv::Mat_<float> delta = (position - q[i]);
-//std::cout << "delta: " << delta << std::endl;
-            cv::Mat_<float> d_i_sqrd = delta.t()*delta;//Distance squared
-//std::cout << "d_i_sqrd: " << d_i_sqrd << std::endl;
+            cv::Mat position_d;
+            position.convertTo(position_d,CV_64FC1);
+            cv::Mat_<double> delta = (position_d - q[i]);
+            cv::Mat_<double> d_i_sqrd = delta.t()*delta;//Distance squared
             if(d_i_sqrd(0,0)<1e-5){ d_i_sqrd = 0.1;}
 
             //Equation 6
-            cv::Mat_<float> A_mat_i = (cv::Mat_<float>::eye(3,3)-V_i)/(d_i_sqrd(0,0));
+
+            cv::Mat_<double> A_mat_i = (cv::Mat_<double>::eye(3,3)-V_i)/(d_i_sqrd(0,0));
             //Save A_mat_i
             A_mat_saved.push_back(A_mat_i);
             //Equation 8
@@ -112,56 +127,56 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
             As += A_mat_i*s_i;
         }
 
-
         //Equation 14
-        cv::Mat_<float> F = -A_mat.inv()*AQ;
-        cv::Mat_<float> w = -A_mat.inv()*As;
+        cv::Mat_<double> F = -A_mat.inv()*AQ;
+        cv::Mat_<double> w = -A_mat.inv()*As;
         //Second loop through to calculate M,m from equation 18,19
-        cv::Mat_<float> M = cv::Mat_<float>::zeros(2,2);
-        cv::Mat_<float> m = cv::Mat_<float>::zeros(2,1);
+        cv::Mat_<double> M = cv::Mat_<float>::zeros(2,2);
+        cv::Mat_<double> m = cv::Mat_<float>::zeros(2,1);
         for(int i=0;i<v.size();i++){
             //G_i, g_i from equation 16
-            cv::Mat_<float> G_i = F + Q_saved[i];
-            cv::Mat_<float> g_i = w + s_saved[i];
-            cv::Mat_<float> G_I_A_I_temp = G_i.t()*A_mat_saved[i];
+            cv::Mat_<double> G_i = F + Q_saved[i];
+            cv::Mat_<double> g_i = w + s_saved[i];
+            cv::Mat_<double> G_I_A_I_temp = G_i.t()*A_mat_saved[i];
             M += (G_I_A_I_temp*G_i);
             m += (G_I_A_I_temp*g_i);
         }
         //Coefficients for quartic Function. Equation 21
-        float A = M(0,0) - M(1,1);
-        float B = 2*M(0,1);
-        float C = 2*m(0,0);
-        float S = 2*m(1,0);
+        double A = M(0,0) - M(1,1);
+        double B = 2*M(0,1);
+        double C = 2*m(0,0);
+        double S = 2*m(1,0);
         //Finally define coefficents. Equation 24
-        float A4 = 4*(A*A + B*B);
-        float A3 = 4*(A*C + B*S);
-        float A2 = S*S + C*C - A4;
-        float A1 = -4*A*C - 2*B*S;
-        float A0 = B*B - C*C;
+        double A4 = 4*(A*A + B*B);
+        double A3 = 4*(A*C + B*S);
+        double A2 = S*S + C*C - A4;
+        double A1 = -4*A*C - 2*B*S;
+        double A0 = B*B - C*C;
         //Solve quartic function for x: cos(azimuth)
         double a_quart = ((double)A3)/((double)A4);
         double b_quart = ((double)A2)/((double)A4);
         double c_quart = ((double)A1)/((double)A4);
         double d_quart = ((double)A0)/((double)A4);
         std::complex<double>*  solutions = solve_quartic(a_quart, b_quart, c_quart, d_quart);
+
         //std::complex<double>*  solutions = solve_quartic(d_quart, c_quart, b_quart, a_quart);
         //Sort out any non-viable solutions (>1)
-        float lowestCost = 1000;
+        double lowestCost = 1000;
         int solutionID = 0;
-//std::cout << "-------" << std::endl;
+
         for(int i=0;i<4;i++){
-            float x = (float) solutions[i].real();//x = cos(aximuth)
+            double x = (double) solutions[i].real();//x = cos(aximuth)
             //Check if solution is even viable |cos(x)|<=1
             if(x<=1 && x>=-1){
 //std::cout << "x" << i << ": " << x << ", ";
                 //Calculate azimuth angle and e
-                float azimuth = std::acos(x);
+                double azimuth = std::acos(x);
                 //Calculate cost E (Equation 17) Disregarded constant d
-                cv::Mat_<float> e = cv::Mat_<float>::zeros(2,1);
+                cv::Mat_<double> e = cv::Mat_<double>::zeros(2,1);
                 e(0,0) = x;
                 e(1,0) = std::sin(azimuth);
                 //Cost with positive angle (cos(x)=cos(-x))
-                cv::Mat_<float> E_pos = e.t()*M*e + 2*m.t()*e;
+                cv::Mat_<double> E_pos = e.t()*M*e + 2*m.t()*e;
 //                e(1,0) = std::sin(-azimuth);
 //                cv::Mat_<float> E_neg = e.t()*M*e + 2*m.t()*e;
 //std::cout << "cost+: " << E_pos(0,0) << "        "<< "cost-: "<< E_neg(0,0)<<std::endl;//", angle: "<< azimuth <<std::endl;
@@ -172,80 +187,75 @@ int az::azipe(const std::vector<cv::Mat_<float>>& v,
                 }
             }
         }
-        /*  The cost E of the
-
-        */
-        float x = (float) solutions[solutionID].real();
-        float azimuth_pos = std::acos(x);
-        float azimuth_neg = azimuth_pos+PI;//-std::acos(-x);//Other possible angle corresponding to conjugate solution with same lowest cost
+        /*  The cost E of the*/
+        double x = (double) solutions[solutionID].real();
+        double azimuth_pos = std::acos(x);
+        double azimuth_neg = azimuth_pos+PI;//-std::acos(-x);//Other possible angle corresponding to conjugate solution with same lowest cost
         //Choose the correct angle
-        cv::Mat_<float> e_pos = cv::Mat_<float>::zeros(2,1);
+        cv::Mat_<double> e_pos = cv::Mat_<double>::zeros(2,1);
         e_pos(0,0) = x;
         e_pos(1,0) = std::sin(azimuth_pos);
-        cv::Mat_<float> e_neg = cv::Mat_<float>::zeros(2,1);
+        cv::Mat_<double> e_neg = cv::Mat_<double>::zeros(2,1);
         e_neg(0,0) = -x;
         e_neg(1,0) = std::sin(azimuth_neg);
         //Calculate optimal translation in vehicle frame (Equation 13)
-        cv::Mat_<float> t_opt_pos = F*e_pos + w;
-        cv::Mat_<float> t_opt_neg = F*e_neg + w;
+        cv::Mat_<double> t_opt_pos = F*e_pos + w;
+        cv::Mat_<double> t_opt_neg = F*e_neg + w;
         //Calculate rotational matrix (Equation 9)
         //For positive angle candidate
-        cv::Mat_<float> R_pos = cv::Mat_<float>::zeros(3,3);
+        cv::Mat_<double> R_pos = cv::Mat_<double>::zeros(3,3);
         R_pos(0,0) = h*e_pos(0,0);                      R_pos(0,1) = h*e_pos(1,0);                      R_pos(0,2) = -a;
         R_pos(1,0) = k*e_pos(0,0) - l*e_pos(1,0);       R_pos(1,1) = l*e_pos(0,0) + k*e_pos(1,0);       R_pos(1,2) = b;
         R_pos(2,0) = u*e_pos(0,0) + v_factor*e_pos(1,0);R_pos(2,1) = -v_factor*e_pos(0,0)+u*e_pos(1,0); R_pos(2,2) = c;
         //R for neg angle candidate
-        cv::Mat_<float> R_neg = cv::Mat_<float>::zeros(3,3);
+        cv::Mat_<double> R_neg = cv::Mat_<double>::zeros(3,3);
         R_neg(0,0) = h*e_neg(0,0);                      R_neg(0,1) = h*e_neg(1,0);                      R_neg(0,2) = -a;
         R_neg(1,0) = k*e_neg(0,0) - l*e_neg(1,0);       R_neg(1,1) = l*e_neg(0,0) + k*e_neg(1,0);       R_neg(1,2) = b;
         R_neg(2,0) = u*e_neg(0,0) + v_factor*e_neg(1,0);R_neg(2,1) = -v_factor*e_neg(0,0)+u*e_neg(1,0); R_neg(2,2) = c;
         //Calculate new vehicle position (Equation 25. Without mean shift offset)
-        cv::Mat_<float> P_vehicle_pos = -R_pos.t()*t_opt_pos;
-        cv::Mat_<float> P_vehicle_neg = -R_neg.t()*t_opt_neg;
+        cv::Mat_<double> P_vehicle_pos = -R_pos.t()*t_opt_pos;
+        cv::Mat_<double> P_vehicle_neg = -R_neg.t()*t_opt_neg;
         //Choose the correct angle based on z-coordinate
-        float delta_pos = std::abs((P_vehicle_pos(2,0)-position(2,0)));
-        float delta_neg = std::abs((P_vehicle_neg(2,0)-position(2,0)));
+        double delta_pos = std::abs((P_vehicle_pos(2,0)-position(2,0)));
+        double delta_neg = std::abs((P_vehicle_neg(2,0)-position(2,0)));
 
         //float delta_pos = std::abs((P_vehicle_pos(0,0)-position(0,0))) + std::abs((P_vehicle_pos(1,0)-position(1,0))) + std::abs((P_vehicle_pos(2,0)-position(2,0)));
         //float delta_neg = std::abs((P_vehicle_neg(0,0)-position(0,0))) + std::abs((P_vehicle_neg(1,0)-position(1,0))) + std::abs((P_vehicle_neg(2,0)-position(2,0)));
-
-
+        double scal  = 1;
         if(!isnan(delta_pos)){
             if(!isnan(delta_neg)){
                 if(delta_pos < delta_neg){
-                    P_vehicle_pos.copyTo(position);
-                    yaw = limitYawRange(azimuth_pos);
+                    //P_vehicle_pos.copyTo(position);
+                    position(0,0) = (float)P_vehicle_pos(0,0);
+                    position(1,0) = (float)P_vehicle_pos(1,0);
+                    position(2,0) = (float)P_vehicle_pos(2,0)/scal;
+                    yaw = (float)limitYawRange(azimuth_pos);
                     return az::AZIPE_SUCCESS;
                 }else{
-                    P_vehicle_neg.copyTo(position);
-                    yaw = limitYawRange(azimuth_neg);
+                    //P_vehicle_neg.copyTo(position);
+                    position(0,0) = (float)P_vehicle_neg(0,0);
+                    position(1,0) = (float)P_vehicle_neg(1,0);
+                    position(2,0) = (float)P_vehicle_neg(2,0)/scal;
+                    yaw = (float)limitYawRange(azimuth_neg);
                     return az::AZIPE_SUCCESS;
                 }
             }else{
-                P_vehicle_pos.copyTo(position);
-                yaw = limitYawRange(azimuth_pos);
+                //P_vehicle_pos.copyTo(position);
+                position(0,0) = (float)P_vehicle_pos(0,0);
+                position(1,0) = (float)P_vehicle_pos(1,0);
+                position(2,0) = (float)P_vehicle_pos(2,0)/scal;
+                yaw = (float)limitYawRange(azimuth_pos);
                 return az::AZIPE_SUCCESS;
             }
         }else if(!isnan(delta_neg)){
-            P_vehicle_neg.copyTo(position);
-            yaw = limitYawRange(azimuth_neg);
+            //P_vehicle_neg.copyTo(position);
+            position(0,0) = (float)P_vehicle_neg(0,0);
+            position(1,0) = (float)P_vehicle_neg(1,0);
+            position(2,0) = (float)P_vehicle_neg(2,0)/scal;
+            yaw = (float)limitYawRange(azimuth_neg);
             return az::AZIPE_SUCCESS;
         }
-/*
-        if(delta_pos < delta_neg && !isnan(delta_pos)){//Choose the angle that corresponds with smallest difference in z-coordinate since last calculation
-            if(v.size()>=2){//Demand a minimum of 2 active anchors
-                P_vehicle_pos.copyTo(position);
-                yaw = azimuth_pos;
-                return true;
-            }
-        }else if(!isnan(delta_neg)){
-            if(v.size()>=2){//Demand a minimum of 2 active anchors
-                P_vehicle_neg.copyTo(position);
-                yaw = azimuth_neg;
-                return true;
-            }
-        }
-*/
+
         //If return value is Nan
         return az::AZIPE_FAIL; //Should never reach this
 
