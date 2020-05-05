@@ -127,6 +127,7 @@ void ang::angulation::pix2uLOS(const std::vector<cv::Point2f>& points,std::vecto
         cv::Mat_<float> direction = T * K_inv * point_mat;
         float v_norm = (float) cv::norm(direction,cv::NORM_L2);
         direction /= v_norm;
+        std::cout <<"Dir: " << direction <<std::endl;
         //cv::Mat_<float> direction =  K_inv * point_mat;
         //Normalize to length one
         //cv::Mat_<float> norm = cv::Mat_<float>::ones(1,3)*direction;//Norm is evaluated to 1x1 mat
@@ -198,15 +199,37 @@ cv::Point2f ang::angulation::unDistort(const cv::Point2f& point){
     //Shift coordinate system center to middle of image
     float x = point.x - K(0,2);
     float y = point.y - K(1,2);
+    std::cout << "shift point: [" << x<< ", "<<y << "]."<< std::endl;
     //Perform undistortion
     float r2 = x*x + y*y;//Radius squared
-    float A = (1 + k1_barrel*r2 + k2_barrel*r2*r2 + k3_barrel*r2*r2*r2);
+//    float A = (1 + k1_barrel*r2 + k2_barrel*r2*r2 + k3_barrel*r2*r2*r2);
+    float A = 1;
     //cv::Point2f undistortedPoint(x/A,y/A);//SHOULD IT BE MULTIPLIED? docs are not definitive. Different in diferent version of docs
-    cv::Point2f undistortedPoint(x*A,y*A);// IT should be multiplied. docs are not definitive in different versions but multiplication is tested
+    cv::Point2f undistortedPoint(x*A,y*A);// 
     //Shift coordinates back to image
+    std::cout << "New point: [" << undistortedPoint.x<< ", "<<undistortedPoint.y << "]." <<std::endl;
     undistortedPoint.x += K(0,2);
     undistortedPoint.y += K(1,2);
+
     return undistortedPoint;
+/*   Below is undistortion example using opencv.
+    cv::Mat from = cv::Mat(1,1,CV_32FC2);
+    from.at<cv::Point2f>(0,0)=point;
+    cv::Mat to = cv::Mat(1,1,CV_32FC2);
+    std::vector<double> coeffs;
+    coeffs.push_back(0.2486);
+    coeffs.push_back(-1.4526);
+    coeffs.push_back(0);
+    coeffs.push_back(0);
+    coeffs.push_back(2.6388);
+    cv::Mat R;
+    cv::undistortPoints(from,to,K,coeffs,R,K);
+    std::cout << "Raw point: [" << point.x<< ", "<<point.y << "]."<< std::endl;
+    std::cout << "OCV point:" << to << std::endl;
+    cv::Point2f newPoint = to.at<cv::Point2f>(0,0);
+
+//    return newPoint;
+*/
 }
 
 
