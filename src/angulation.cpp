@@ -126,8 +126,6 @@ void ang::angulation::pix2uLOS(const std::vector<cv::Point2f>& points,std::vecto
         //Transform to 3d image plane coordinates, then transfrom from image frame to uav frame
         //std::cout << "K inv: " << K_inv << std::endl;
         cv::Mat_<float> direction = T * K_inv * point_mat;
-        //direction(2,0) = 0.001;
-        std::cout << "################Z 0" << std::endl;
         float v_norm = (float) cv::norm(direction,cv::NORM_L2);
         direction /= v_norm;
         //Add to uLOS vector
