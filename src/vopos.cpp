@@ -23,6 +23,7 @@ pos::positioning::positioning(int opticalFlow_mode,
         vo::planarHomographyVO(visualOdometry_mode),                //Homography constructor
         roi(roi_rect)                                               //Assign argument to positioning attribute
 {
+    T.copyTo(T_vopos);
     //Set some settings for angulation object
     ang::angulation::setKmat(K);
     ang::angulation::setTmat(T);
@@ -259,8 +260,27 @@ void pos::positioning::drawLines(cv::Mat& img,std::vector<cv::Point2f> points,cv
  }
 
 
+/* Method for illustrating the current yaw. The method adds an arrow pointing towards +x in global system
+*/
+void pos::positioning::illustrateYaw(cv::Mat& img,float yaw){
+    cv::Mat_<float> unitImg = cv::Mat_<float>::zeros(3,1);
+    unitImg(0,0) = 1;
+    float scale = 40;
+    cv::Mat_<float> dir = scale*getZRot(-yaw)*T_vopos.t()*unitImg;
 
+    cv::Point2f offset = cv::Point2f(320,50);
+    cv::Point2f to =  cv::Point2f(dir(0,0),dir(0,1)) + offset;
+    cv::Point2f txtPoint = offset + cv::Point2f(-scale*1.3,scale*1.3+5);
+    cv::circle(img, offset, scale*1.2, CV_RGB(200,50,0), 1, cv::LINE_8, 0);
+    cv::putText(img, "+X Global", txtPoint, cv::FONT_HERSHEY_PLAIN, 1, CV_RGB(200,50,0), 1, cv::LINE_8, false);
+    cv::arrowedLine(img,offset,to,CV_RGB(200,50,0),2,cv::LINE_8,0,0.1);
+/* X-create arrow +x
+    X-rotate using T
+    X-rotate with -yaw
+//Draw arrow. Must be 3 channel I guess
 
+*/
+}
 
 /* Functions for defining roll, pitch, and yaw rotation matrices
  * Increase speed by passing reference and edit in place?

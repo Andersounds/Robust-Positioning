@@ -121,6 +121,8 @@ namespace pos{
         //int processAndIllustrate(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Perform processing, but also illustrate by drawing on the second argument matrix
         //int processAz(int,cv::Mat&,cv::Mat&,int,float,float&,float&,float&,cv::Mat_<float>&,float&);//Only azipe aipe
         void illustrateDerotation(cv::Mat&,cv::Mat&,float,float&,float&,float&);//Only visualize derotation
+        void illustrateYaw(cv::Mat&,float);
+        cv::Mat_<float> T_vopos;
     private:
         void drawLines(cv::Mat&,std::vector<cv::Point2f>,cv::Point2f);
         void drawMarkers(cv::Mat&,std::vector<std::vector<cv::Point2f>>,std::vector<int>,std::vector<bool>);

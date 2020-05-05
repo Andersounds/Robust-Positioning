@@ -218,6 +218,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
 //                databin_LOG.dump(logData);
 //            }
             //std::cout << "Main:   X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll<<", pitch: " << pitch << "yaw: " << yaw<< std::endl;
+            P.illustrateYaw(colorFrame,yaw);
             cv::imshow("showit",colorFrame);
             if(step){
                 cv::waitKey(0);
