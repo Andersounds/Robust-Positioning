@@ -231,7 +231,7 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1_,
         R_.copyTo(A_(cv::Rect(0,0,2,2)));
         At(cv::Rect(2,0,1,2)).copyTo(b_(cv::Rect(0,0,1,2))); //Set x-y values
         //Scale seems to be not very good at estimating height. do it in some other way?
-        //b_(2,0) =dist*(1-s);//dist/s-dist;//Set delta-height according to dist and scale change
+        b_(2,0) =dist*(1-s);//dist/s-dist;//Set delta-height according to dist and scale change
         A_.copyTo(A);
         b_.copyTo(b);
     }/*else{
