@@ -240,15 +240,13 @@ for(int i=0;i<n;i++){
         double delta_pos = std::abs((newazimuth_pos-newyaw)) + std::abs((P_vehicle_pos(2,0)-position(2,0)));
         double delta_neg = std::abs((newazimuth_neg-newyaw)) + std::abs((P_vehicle_neg(2,0)-position(2,0)));
 */
-        //Choose the correct angle based on that it hsall only be positive
+        //Choose the correct solution based on that the two are conjugate in z and we only want negative z.
         double sign = -1;
         double delta_pos = P_vehicle_pos(2,0);
         double delta_neg = P_vehicle_neg(2,0);
         //if
         //double dirpos = std::abs(P_vehicle_pos(2,0)-sign);
         //double dirneg = std::abs(P_vehicle_neg(2,0)-sign);
-
-        std::cout << "[z+, z-]: [" <<  P_vehicle_pos(2,0) << ", " << P_vehicle_neg(2,0) << "]" << std::endl;
 
         //float delta_pos = std::abs((P_vehicle_pos(0,0)-position(0,0))) + std::abs((P_vehicle_pos(1,0)-position(1,0))) + std::abs((P_vehicle_pos(2,0)-position(2,0)));
         //float delta_neg = std::abs((P_vehicle_neg(0,0)-position(0,0))) + std::abs((P_vehicle_neg(1,0)-position(1,0))) + std::abs((P_vehicle_neg(2,0)-position(2,0)));
