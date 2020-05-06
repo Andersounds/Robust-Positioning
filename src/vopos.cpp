@@ -89,6 +89,7 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
     int knownAnchors = dataBase2q(ids,q,mask);
     drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
     if(knownAnchors>=minAnchors && mode != pos::MODE_FALLBACK){                  //If enough anchors then do triangulation unless overridden
+        std::cout << "  MODE: AZIPE"<< std::endl;
         std::vector<cv::Mat_<float>> v;//v and v_masked;
         pix2uLOS(corners,v);
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
@@ -107,8 +108,11 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
         cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
         drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
         cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
-        if(!vo_success){returnMode = pos::RETURN_MODE_INERTIA;}
-        else{returnMode = pos::RETURN_MODE_VO;}
+        if(!vo_success){
+            std::cout << "  MODE: VO (failed)"<< std::endl;
+            returnMode = pos::RETURN_MODE_INERTIA;}
+        else{std::cout << "  MODE: VO"<< std::endl;
+            returnMode = pos::RETURN_MODE_VO;}
     }
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
     prevRoll = arguments.roll;
@@ -152,11 +156,12 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         float tspan = arguments.time - tPrev[0];
         std::cout << "Tspan: " << tspan << std::endl;
         if((knownAnchors>=minAnchors) && (mode != pos::MODE_FALLBACK)){                  //If enough anchors then do triangulation unless overridden
+            std::cout << "  MODE: AZIPE." << std::endl;
             az::azipe(v_m,q_m,pos,arguments.yaw,arguments.pitch,arguments.roll);
             returnMode = pos::RETURN_MODE_AZIPE;
             std::cout << "Azipe:  X: "<< pos(0,0) << ", Y: "<< pos(1,0) << ", Z: " << pos(2,0) << ", yaw: " << arguments.yaw<< std::endl;
         }else if(knownAnchors>=1 && tspan<TSPAN_MAX){//Only try marton if total time span is less than TSPAN_MAX ms
-        //}if(knownAnchors>=1){
+            std::cout << "  MODE: MARTON." << std::endl;
             std::vector<float> pPrev(4*bufferSize);
             pBuffer.read(pPrev);
             int _returnMode = marton::process(v_m,q_m,pos,arguments.yaw, arguments.pitch, arguments.roll,arguments.time,pPrev,tPrev,arguments.coneWeight);
@@ -168,8 +173,10 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
             std::cout << "Marton: X: "<< pos(0,0) << ", Y: "<< pos(1,0) << ", Z: " << pos(2,0)  << ", yaw: " << arguments.yaw<< std::endl;
         //}else{
         } else if(knownAnchors < minAnchors){
+            std::cout << "  MODE: AZIPE (failed)" << std::endl;
             returnMode = pos::RETURN_MODE_AZIPE_FAILED;
         } else{
+            std::cout << "  MODE: MARTON (failed)" << std::endl;
             returnMode = pos::RETURN_MODE_MARTON_OLD;
         }
 
