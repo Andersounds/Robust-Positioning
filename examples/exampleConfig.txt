@@ -3,8 +3,7 @@ RES_X = 640         # Camera resolution in X direction
 RES_Y = 480         # Camera resolution in Y direction
 K_MAT = [607.136353,0,320;0,607.136353,240;0,0,1]	# Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator
 T_MAT = [0,-1,0;1,0,0;0,0,1]            # UAV-to-Camera matrix. Default +90deg. Specified in matlab style
-CAMERA_BARREL_DISTORTION  = [0.2486857357354474,-1.452670730319596,2.638858641887943]
-                                        # Barrel distortion coefficients given as [K1,K2,K3]
+CAMERA_BARREL_DISTORTION  = [0.2486,-1.4526,2.6388]# Barrel distortion coefficients given as [K1,K2,K3]
 
 ######### Initial values:
 XYZ_INIT =[0;50;-170]             #Initial position expressed as [X,Y,Z] coordinate floats
@@ -25,15 +24,14 @@ PATH_TO_ARUCO_DATABASE 	= anchors.csv   # Path to anchor database from base path
 STREAM_IMAGES_INFO_FILE = images/data.csv 	# Path to images info file from config file path
 STREAM_DATA_FILE 	= imudata.csv   # Path to data file from config file path
 POS_ALG 		= AZIPE         # Positioning algorithm | AZIPE or VO or MARTON
-
-
+USE_ROLLPITCH = true   			# Use roll/pitch? otherwise set to 0. true/1 or false/0
 ######## Visual Odometry settings
 OF_MODE = CORR                          # Mode of Optical flow algorithm. KLT or CORR
 VO_MODE = AFFINE                    	# Mode of Visual Odometry algorithm. HOMOGRAPHY or AFFINE
 OPTICAL_FLOW_GRID 	= 4             # Sqrt of number of optical flow vector
 ROI_SIZE 		= 150           # Side length of VO ROI. Used to edit K mat of VO alg.
 DEROTATE_OF = true			# Derotate optical flow field using roll/pitch? true/1 or false/0
-
+ROLLPITCH_FILT_WC = 15.0		# Cutoff frequency of first order LP filter applied on roll/pitch [rad/s]
 
 ######## Marton Robust settings
 MARTON_BUFFERSIZE 	= 3		# Number of previous points to align marton polynomial to
