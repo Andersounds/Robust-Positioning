@@ -90,18 +90,19 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
                                         std::vector<cv::Point2f>& p2,
                                         float roll,float pitch,float dist,
                                         cv::Mat_<float>& t,
-                                        float& yaw){
+                                        float& yaw,
+                                        float prevRoll,float prevPitch){
                                         //cv::Mat_<float>& R){
     cv::Mat_<double> b_double;//odometry estimation of translation in camera frame
     cv::Mat_<double> A_double;//odometry estimation of rotation in camera frame
     bool success;
     switch(mode){
         case USE_AFFINETRANSFORM:{
-            success = odometryAffine(p1,p2,roll,pitch,dist,b_double,A_double);
+            success = odometryAffine(p1,p2,roll,pitch,prevRoll,prevPitch,dist,b_double,A_double);
             break;
         }
         case USE_HOMOGRAPHY:{
-            success = odometryHom(p1,p2,roll,pitch,dist,b_double,A_double);
+            success = odometryHom(p1,p2,roll,pitch,prevRoll,prevPitch,dist,b_double,A_double);
             break;
         }
         default:{
@@ -133,7 +134,9 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
  */
 bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1_,
                 std::vector<cv::Point2f>& p2_,
-                float roll,float pitch, float dist,
+                float roll,float pitch,
+                float prevRoll,float prevPitch,
+                float dist,
                 cv::Mat_<double>& b,
                 cv::Mat_<double>& A){
     static float roll_prev = 0;
@@ -146,7 +149,7 @@ bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1_,
         return false;
     }
     if(activateDerotation){
-        deRotateFlowField(p1_, roll_prev, pitch_prev);
+        deRotateFlowField(p1_, prevRoll, prevPitch);
         deRotateFlowField(p2_, roll, pitch);
     }
     std::vector<cv::Point2f> p1 = p1_;
@@ -180,7 +183,9 @@ bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1_,
  */
 bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1_,
                 std::vector<cv::Point2f>& p2_,
-                float roll,float pitch, float dist,//height should rather be distance. not corresponding to coordinate system height
+                float roll,float pitch,
+                float prevRoll, float prevPitch,
+                float dist,//height should rather be distance. not corresponding to coordinate system height
                 cv::Mat_<double>& b,
                 cv::Mat_<double>& A){
     static float roll_prev = 0;
@@ -192,7 +197,7 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1_,
     }
     //De-rotate
     if(activateDerotation){
-        deRotateFlowField(p1_, roll_prev, pitch_prev);
+        deRotateFlowField(p1_, prevRoll, prevPitch);
         deRotateFlowField(p2_, roll, pitch);
     }
     //Translate flow field to camera coordinate system. ie origin is in the middle

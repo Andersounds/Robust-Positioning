@@ -65,7 +65,8 @@ namespace vo{
                         std::vector<cv::Point2f>&,
                             float,float,float,
                             cv::Mat_<float>&,
-                            float&);
+                            float&,
+                            float,float);
         /* Convenience method to print out decomposition returns
         */
         void printmats(std::vector<cv::Mat>,
@@ -82,7 +83,9 @@ namespace vo{
          */
         bool odometryHom(std::vector<cv::Point2f>&,
                         std::vector<cv::Point2f>&,
-                        float,float,float,
+                        float,float,
+                        float,float,
+                        float,
                         cv::Mat_<double>&,
                         cv::Mat_<double>&);
         /* Performs the odometry itself
@@ -93,7 +96,9 @@ namespace vo{
          */
         bool odometryAffine(std::vector<cv::Point2f>&,
                         std::vector<cv::Point2f>&,
-                        float,float,float,
+                        float,float,
+                        float,float,
+                        float,
                         cv::Mat_<double>&,
                         cv::Mat_<double>&);
         /* Updates the global coordinate and rotation from the given b and A matrices

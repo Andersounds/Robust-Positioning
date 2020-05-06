@@ -76,6 +76,8 @@ int pos::positioning::process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat
  */
 int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outputFrame, cv::Mat_<float>& pos, pos::VOargStruct& arguments){
     static cv::Mat subPrevFrame; //Static init of previous subframe for optical flow field estimation
+    static float prevRoll = arguments.roll;
+    static float prevPitch = arguments.pitch;
 ///////////// TRY AZIPE
     std::vector<int> ids;
     std::vector<std::vector<cv::Point2f> > corners;
@@ -100,7 +102,7 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
         std::vector<cv::Point2f> features;                                  //Must declare these before every calculation doe to being manipulated on
         std::vector<cv::Point2f> updatedFeatures;                           //The new positions estimated from KLT
         of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures); //Get flow field
-        bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,arguments.roll,arguments.pitch,arguments.dist,pos,arguments.yaw);
+        bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,arguments.roll,arguments.pitch,arguments.dist,pos,arguments.yaw,prevRoll,prevPitch);
         float scale = 5;                                                    //Illustrate
         cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
         drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
@@ -109,6 +111,8 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
         else{returnMode = pos::RETURN_MODE_VO;}
     }
     frame(roi).copyTo(subPrevFrame);//Copy the newest subframe to subPrevFrame for use in next function call
+    prevRoll = arguments.roll;
+    prevPitch = arguments.pitch;
     return returnMode;
 }
 /*
