@@ -68,13 +68,22 @@ std::string dataFile;   bpu::assign(vm,dataFile,"STREAM_DATA_FILE");
 int skipLines = 1;
 robustPositioning::dataStreamer getData(basePath + dataFile,skipLines);
 std::vector<float> data;
+
+/*
+    Define execution modes
+*/
+int of_mode;    std::string of_mode_str;    bpu::assign(vm,of_mode_str,"OF_MODE");
+int vo_mode;    std::string vo_mode_str;    bpu::assign(vm,vo_mode_str,"VO_MODE");
+int pos_alg;   std::string pos_alg_str;   bpu::assign(vm,pos_alg_str,"POS_ALG");
+
+
 //Initialize data logger
 robustPositioning::dataLogger databin_LOG;
 std::string outFile;
 if(vm["OUT_TO_PWD"].as<std::string>()=="YES"){
-    outFile = vm["OUT"].as<std::string>();
+    outFile = pos_alg_str + "_" + vm["OUT"].as<std::string>();
 }else{
-    outFile = vm["BASE_PATH"].as<std::string>() + vm["OUT"].as<std::string>();
+    outFile = vm["BASE_PATH"].as<std::string>() + pos_alg_str + "_" + vm["OUT"].as<std::string>();
 }
 const int log = vm["LOG"].as<int>();
 if(log){
@@ -106,12 +115,8 @@ cv::Mat_<float> T;          bpu::assign(vm,T,"T_MAT");
 /* Marton settings */
 int marton_buffsize;                 bpu::assign(vm,marton_buffsize,"MARTON_BUFFERSIZE");
 float marton_coneweight;             bpu::assign(vm,marton_coneweight,"MARTON_CONEWEIGHT");
-/*
-    Define execution modes
-*/
-int of_mode;    std::string of_mode_str;    bpu::assign(vm,of_mode_str,"OF_MODE");
-int vo_mode;    std::string vo_mode_str;    bpu::assign(vm,vo_mode_str,"VO_MODE");
-int pos_alg;   std::string pos_alg_str;   bpu::assign(vm,pos_alg_str,"POS_ALG");
+
+
 /*--------Optical Flow--------*/
 if(of_mode_str=="KLT"){
     std::cout << "Starting positioning object using KLT based optical flow." << std::endl;
