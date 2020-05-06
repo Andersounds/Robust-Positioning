@@ -24,7 +24,8 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
             cv::Mat_<float>& position,
             float& yaw,
             float pitch,float roll, float tf,
-            const std::vector<float>& pPrev, const std::vector<float>& tPrev){
+            const std::vector<float>& pPrev, const std::vector<float>& tPrev,
+            float coneWeight_f){
 
                 /*
                 X(0.)    Extract only first v and q. In future maybe allow more
@@ -120,7 +121,7 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 /* Construct weight array. different weights for different equation types*/
                 //Weights:  xold,yold,zold,yawolsd, x,y,z,yaw
                 double pPrevWeight = 1;
-                double coneWeight = 2;//2/anchorSize;
+                double coneWeight = ((double)coneWeight_f)/anchorSize;
                 double yawWeight = 1/anchorSize;
                 double weights[costEquationSize];
                 for(int i=0;i<costEquationSize;i++){

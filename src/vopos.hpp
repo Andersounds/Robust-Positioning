@@ -96,6 +96,7 @@ namespace pos{
         float yaw;
         float time;
         int bufferSize;
+        float coneWeight;
     };
 
     class positioning: public ang::angulation, of::opticalFlow, public vo::planarHomographyVO{

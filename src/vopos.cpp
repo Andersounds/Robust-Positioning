@@ -159,7 +159,7 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         //}if(knownAnchors>=1){
             std::vector<float> pPrev(4*bufferSize);
             pBuffer.read(pPrev);
-            int _returnMode = marton::process(v_m,q_m,pos,arguments.yaw, arguments.pitch, arguments.roll,arguments.time,pPrev,tPrev);
+            int _returnMode = marton::process(v_m,q_m,pos,arguments.yaw, arguments.pitch, arguments.roll,arguments.time,pPrev,tPrev,arguments.coneWeight);
             switch(_returnMode){
                 case GSL_SUCCESS:{returnMode = pos::RETURN_MODE_MARTON;break;}
                 case GSL_ENOPROG:{returnMode = pos::RETURN_MODE_MARTON_FAILED;break;}

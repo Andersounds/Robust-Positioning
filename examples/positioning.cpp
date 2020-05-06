@@ -103,7 +103,9 @@ cv::Rect2f roiSize = cv::Rect2f(roi_x,roi_y,roi_side,roi_side);;
 cv::Mat_<float> K;          bpu::assign(vm,K,"K_MAT");
 cv::Mat_<float> T;          bpu::assign(vm,T,"T_MAT");
 
+/* Marton settings */
 int marton_buffsize;                 bpu::assign(vm,marton_buffsize,"MARTON_BUFFERSIZE");
+float marton_coneweight;             bpu::assign(vm,marton_coneweight,"MARTON_CONEWEIGHT");
 /*
     Define execution modes
 */
@@ -219,27 +221,13 @@ Filter pitchFilter(wc);
                 }
                 case ALG_MARTON:{
                     std::cout << "ALG_MARTON:::" << std::endl;
-                    pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data, marton_buffsize};
+                    pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data, marton_buffsize,marton_coneweight};
                     int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
                     yaw = arguments.yaw;
                     if(log){
                         std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
                         databin_LOG.dump(logData);
                     }
-                    if((mode!=pos::RETURN_MODE_AZIPE_FAILED)&(mode!=pos::RETURN_MODE_MARTON_FAILED)){
-                    //    buffer.add(t,arguments.yaw,arguments.time);//Dont add if positioning failed
-                    //    buffer2.add(arguments.time); //test also with counter directly if not working
-                    //    std::cout << "Added " << arguments.time << " to buffer2" << std::endl;
-                    }
-                    //float toff = buffer.read_T_offset();
-                    //std::cout << "Marton T offset: " << toff<< std::endl;
-                    //double tX[3];
-                    //buffer.read_t(tX);
-                    //std::vector<float> tX(5);
-                    //buffer2.read(tX);
-                    //std::cout <<" T: [" << tX[0] << ", " << tX[1]<<", " << tX[2] << ", " << tX[3] << ", " << tX[4] <<"]" << std::endl;
-
-
                     break;
                 }
             }
@@ -363,6 +351,7 @@ Filter pitchFilter(wc);
      po::options_description martonSettings("Marton robust settings");
      martonSettings.add_options()
          ("MARTON_BUFFERSIZE", po::value<int>()->default_value(3),  "Number of previous points to align marton polynomial to")
+         ("MARTON_CONEWEIGHT", po::value<float>()->default_value(2),"Total weight given to all anchor cone equations in marton robust. (prev points has weight 1 each)")
          ;
 
      // Parse command line
