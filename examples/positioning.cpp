@@ -87,6 +87,10 @@ const int step = vm["STEP"].as<int>();
 bool derotate = vm["DEROTATE_OF"].as<bool>();
 bool useRollPitch = vm["USE_ROLLPITCH"].as<bool>();
 
+/* Occlusion settings */
+bool occlude = vm["OCCLUDE"].as<bool>();
+int az_period;               bpu::assign(vm, az_period,"AZIPE_PERIOD");
+int fb_period;               bpu::assign(vm, fb_period,"FALLBACK_PERIOD");
 
 //Initialize positioning object
 int maxIdAruco = 50;
@@ -161,7 +165,7 @@ int pitchColumn;                bpu::assign(vm,pitchColumn,"PITCH_COLUMN");
 int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
 
 int algmode = pos::MODE_AZIPE_AND_FALLBACK;
-float wc;                  bpu::assign(vm, wc,"ROLLPITCH_FILT_WC");
+float wc;                       bpu::assign(vm, wc,"ROLLPITCH_FILT_WC");
 Filter rollFilter(wc);
 Filter pitchFilter(wc);
     while(getData.get(data)){
@@ -176,9 +180,11 @@ Filter pitchFilter(wc);
             pitch = pitchFilter.LPfilter(data[pitchColumn],timeStamp_data/1000);
             roll = rollFilter.LPfilter(data[rollColumn],timeStamp_data/1000);
         }
-        if((counter%22)<11){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
-        else{algmode = pos::MODE_FALLBACK;}
-
+        /* Force occlusion if OCCLUDE option is set*/
+        if(occlude){
+            if((counter%(az_period+fb_period))<az_period){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
+            else{algmode = pos::MODE_FALLBACK;}
+        }
 //Get new image
 //Separate processAndIllustrate with just process using switch statement
         if(VStreamer.peek()<=timeStamp_data){
@@ -342,6 +348,9 @@ Filter pitchFilter(wc);
          ("POS_ALG",po::value<std::string>(),"Positioning algorithm | AZIPE or VO or MARTON")
          ("USE_ROLLPITCH",   po::value<bool>()->default_value(true), "Use roll/pitch? otherwise set to 0. true/1 or false/0")
          ("ROLLPITCH_FILT_WC", po::value<float>()->default_value(15.0),  "Cutoff frequency of first order LP filter applied on roll/pitch [rad/s]")
+         ("OCCLUDE",   po::value<bool>()->default_value(true), "Force periods of fallback method. true/1 or false/0. Period lengths set with AZIPE_PERIOD/FALLBACK_PERIOD")
+         ("AZIPE_PERIOD", po::value<int>()->default_value(15),  "Period using AZIPE if OCCLUDE is set to true")
+         ("FALLBACK_PERIOD", po::value<int>()->default_value(15),  "Period using Fallback if OCCLUDE is set to true")
          ;
      po::options_description voSettings("Visual Odometry settings");
      voSettings.add_options()

@@ -25,6 +25,10 @@ STREAM_IMAGES_INFO_FILE = images/data.csv 	# Path to images info file from confi
 STREAM_DATA_FILE 	= imudata.csv   # Path to data file from config file path
 POS_ALG 		= AZIPE         # Positioning algorithm | AZIPE or VO or MARTON
 USE_ROLLPITCH = true   			# Use roll/pitch? otherwise set to 0. true/1 or false/0
+OCCLUDE = true				# Force periods of fallback method. true/1 or false/0. Period lengths set with AZIPE_PERIOD/FALLBACK_PERIOD
+AZIPE_PERIOD = 10			# Period using AZIPE if OCCLUDE is set to true
+FALLBACK_PERIOD = 20			# Period using Fallback if OCCLUDE is set to true
+
 ######## Visual Odometry settings
 OF_MODE = CORR                          # Mode of Optical flow algorithm. KLT or CORR
 VO_MODE = AFFINE                    	# Mode of Visual Odometry algorithm. HOMOGRAPHY or AFFINE
