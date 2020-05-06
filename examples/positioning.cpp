@@ -12,9 +12,31 @@
 #include "../src/logger.hpp"
 #include "../src/timeStamp.cpp"
 #define PI 3.1416
-
-
 #include <typeinfo>
+
+
+// LP filter (1st order LP discretized using tustin)
+class Filter{
+    float wc;
+    float t_prev;
+    float value_prev;
+    float value_filt_prev;
+    public:
+    Filter(float cutoff_){
+        wc = cutoff_;
+        t_prev = 0;
+        value_prev = 0;
+        value_filt_prev = 0;
+    }
+    float LPfilter(float value,float t){
+        float dt = t-t_prev;
+        float value_filt = ( (value + value_prev)*dt*wc + value_filt_prev*(2-dt*wc) ) / (2+dt*wc);
+        t_prev = t;
+        value_prev = value;
+        value_filt_prev = value_filt;
+        return value_filt;
+    }
+};
 
 //
 const int ALG_AZIPE = 0;
@@ -139,8 +161,9 @@ int pitchColumn;                bpu::assign(vm,pitchColumn,"PITCH_COLUMN");
 int rollColumn;                 bpu::assign(vm,rollColumn,"ROLL_COLUMN");
 
 int algmode = pos::MODE_AZIPE_AND_FALLBACK;
-//marton::circBuff buffer(3);
-//marton::circBuff2 buffer2(5);
+float wc;                  bpu::assign(vm, wc,"ROLLPITCH_FILT_WC");
+Filter rollFilter(wc);
+Filter pitchFilter(wc);
     while(getData.get(data)){
 
         timeStamp_data = data[0];
@@ -148,8 +171,10 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
         float pitch = 0;
         float roll = 0;
         if(useRollPitch){
-            pitch = data[pitchColumn];
-            roll = data[rollColumn];
+            //pitch = data[pitchColumn];
+            //roll = data[rollColumn];
+            pitch = pitchFilter.LPfilter(data[pitchColumn],timeStamp_data/1000);
+            roll = rollFilter.LPfilter(data[rollColumn],timeStamp_data/1000);
         }
         if((counter%22)<11){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
         else{algmode = pos::MODE_FALLBACK;}
@@ -266,8 +291,6 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
 }
 
 
-
-
 /*
  *
  * Definition of allowed program options according to the prototype defined in namespace boostParserUtilites
@@ -318,6 +341,7 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
          ("STREAM_DATA_FILE",po::value<std::string>(),"Path to data file from config file path")
          ("POS_ALG",po::value<std::string>(),"Positioning algorithm | AZIPE or VO or MARTON")
          ("USE_ROLLPITCH",   po::value<bool>()->default_value(true), "Use roll/pitch? otherwise set to 0. true/1 or false/0")
+         ("ROLLPITCH_FILT_WC", po::value<float>()->default_value(15.0),  "Cutoff frequency of first order LP filter applied on roll/pitch [rad/s]")
          ;
      po::options_description voSettings("Visual Odometry settings");
      voSettings.add_options()
