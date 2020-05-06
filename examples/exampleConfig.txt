@@ -30,7 +30,7 @@ AZIPE_PERIOD = 10			# Period using AZIPE if OCCLUDE is set to true
 FALLBACK_PERIOD = 20			# Period using Fallback if OCCLUDE is set to true
 
 ######## Visual Odometry settings
-OF_MODE = CORR                          # Mode of Optical flow algorithm. KLT or CORR
+OF_MODE = KLT                           # Mode of Optical flow algorithm. KLT or CORR
 VO_MODE = AFFINE                    	# Mode of Visual Odometry algorithm. HOMOGRAPHY or AFFINE
 OPTICAL_FLOW_GRID 	= 4             # Sqrt of number of optical flow vector
 ROI_SIZE 		= 150           # Side length of VO ROI. Used to edit K mat of VO alg.
@@ -38,5 +38,5 @@ DEROTATE_OF = true			# Derotate optical flow field using roll/pitch? true/1 or f
 ROLLPITCH_FILT_WC = 15.0		# Cutoff frequency of first order LP filter applied on roll/pitch [rad/s]
 
 ######## Marton Robust settings
-MARTON_BUFFERSIZE 	= 3		# Number of previous points to align marton polynomial to
+MARTON_BUFFERSIZE 	= 5		# Number of previous points to align marton polynomial to
 MARTON_CONEWEIGHT = 2			# Total weight given to all anchor cone equations in marton robust. (prev points has weight 1 each)
