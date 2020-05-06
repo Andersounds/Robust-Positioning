@@ -1,0 +1,38 @@
+ARUCO_DICT_TYPE, 0,  
+DIST_COEFF_K1, 0.248686, Barrel distortion coefficient k1
+DIST_COEFF_K2, -1.452671, Barrel distortion coefficient k2
+DIST_COEFF_K3, 2.638859, Barrel distortion coefficient k3
+DIST_COLUMN, 1,  Specifies which column of csv file that contains distance (lidar) data
+FRAME_RESOLUTION_X, 640, In pixles. Used to specify RPI video input res. Specify here or hardcode?
+FRAME_RESOLUTION_Y, 480,  
+INITIAL_X, 1.8,  
+INITIAL_Y, 0,  
+INITIAL_YAW, 1.6,  
+INITIAL_Z, -1,  
+K_MAT_cx, 320.000000, For image resolution 640 in x dir
+K_MAT_cy, 240.000000, For image resolution 480 in y dir
+K_MAT_fx, 607.136353, For image resolution 640 in x dir
+K_MAT_fy, 607.136353, For image resolution 480 in y dir
+LOG_MODE, 0, Log position estimation, pos est and video
+MAX_ID_ARUCO, 50, Database size. must be able to contain all IDs in ARUCO_DICT_TYPE
+OPTICAL_FLOW_GRID, 4,  sqrt of total amount of points used in optical flow.
+OPTICAL_FLOW_MODE, 0,  KLT (1) or correlation (2) based optical flow
+PATH_TO_ARUCO_DATABASE, ../anchors.csv,  
+PITCH_COLUMN, 3,  Specifies which column of csv file that contains pitch data
+POS_EST_MODE, 0, Azipe+VO (0), AZIPE (1), VO (2), (todo: benchmark, benchmark+azipe)
+ROI_SIZE, 150, Specify the size in pixles of the side of the centered ROI that is considered in VO. Used to edit K mat of VO alg.
+ROLL_COLUMN, 4,  Specifies which column of csv file that contains roll data
+STREAM_DATA_FILE, imudata.csv, Path to csv file to be streamed
+STREAM_IMAGES_BASEPATH, , Base path from program working directory to image directory ending with /
+STREAM_IMAGES_INFO_FILE, data.csv, File (located in IMAGES_BASEPATH with image data. (timestamps image name))
+T_MAT_1_1, 0.000000,  
+T_MAT_1_2, 1.000000,  
+T_MAT_1_3, 0.000000,  
+T_MAT_2_1, -1.000000,  
+T_MAT_2_2, 0.000000,  
+T_MAT_2_3, 0.000000,  
+T_MAT_3_1, 0.000000,  
+T_MAT_3_2, 0.000000,  
+T_MAT_3_3, 1.000000,  
+USE_CAM_NMBR, 0, -1: rpi cam, >=0: webcam nmbr
+VISUAL_ODOMETRY_MODE, 0,  Homography (1) or Affine (2) odometry estimation
