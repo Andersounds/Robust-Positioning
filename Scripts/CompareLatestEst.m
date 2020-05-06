@@ -1,20 +1,43 @@
 %close all
 clear all
 
-colors = [0.9290 0.6940 0.1250;
-        0 0.4470 0.7410;
-        0.4660 0.6740 0.1880;
-        0.6350 0.0780 0.1840;
-        0.8500 0.3250 0.0980;
-        0 0 0];
-%%SETTINGS%%%%
-%basePath = '/Users/Fredrik/Datasets/Sim/20-04-19-3-updatedsrc/';
-%basePath = '/Users/Fredrik/Datasets/Sim/20-04-19-3/';
+%colors = [0.8500 0.3250 0.0980;
+%        0.9290 0.6940 0.1250;
+%        0 0.4470 0.7410;
+%        0.4660 0.6740 0.1880;
+%        0.6350 0.0780 0.1840;
+%        0 0 0];
+colors = [0, 0.4470, 0.7410;
+        0.8500, 0.3250, 0.0980;
+        0.9290, 0.6940, 0.1250;
+        0.4940, 0.1840, 0.5560;
+        0.4660, 0.6740, 0.1880;
+        0.3010, 0.7450, 0.9330;
+        0.6350, 0.0780, 0.1840;
+        0.25, 0.25, 0.25;
+        0, 0.5, 0;
+    ];
+%%%%  BASEPATH  %%%%
+%basePath = '/Users/Fredrik/Datasets/Sim/20-04-27-fullyaw/';
+%basePath = '/Users/Fredrik/Datasets/Sim/20-04-23-1/';
 basePath = '/Users/Fredrik/Datasets/20-04-09/20-04-09-22/';
-d_est_file = [basePath,'outFile.csv'];
-d_true_file = [basePath,'outAZIPE.csv'];
-%d_true_file = [basePath,'path-200419-3.csv'];
-%d_true_file = [basePath,'path-200419-3.csv'];
+%%%%  ESTIMATION FILE BASE NAME  %%%%
+%d_est_str = 'AIPE';
+%d_est_str = 'MARTON_tilt';
+%d_est_str = 'VO_tilt';
+%d_est_str = 'AZIPE_tilt';
+d_est_str = 'AZIPE_filt_tilt';
+%d_est_str = 'MARTON_notilt';
+%d_est_str = 'VO_notilt';
+
+
+%%%%  TRUE FILE BASE NAME  %%%%
+%d_true_file = [basePath,'AZIPE_tilt.csv'];
+d_true_file = [basePath,'AZIPE_notilt.csv'];
+
+
+d_est_file = [basePath,d_est_str,'.csv'];
+
 plotTrue = 1;
 %% Estimation File and parameters
 %Read file
@@ -72,14 +95,15 @@ end
 %%Plot
 
      figure
-    subplot(4,1,1);
+     
+    subplot(5,1,1);
         plot(t_est,roll_est,'.');
         hold on
         plot(t_est,pitch_est,'.');
         title('Roll/pitch');
         legend('Roll','Pitch');
         %axis([0,80,-2.5,2.5]);
-    subplot(4,1,2);
+    subplot(5,1,2);
         if plotTrue
             plot(t_ref,x_ref,'Color',colors(1,:));
             hold on
@@ -88,13 +112,13 @@ end
         counter = 2;
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-            colorindex = mod(counter,length(colors));
+            colorindex = mod(counter,length(colors))+1;
             plot(t_est(indeces),x_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
             counter = counter+1;
             hold on      
         end
         title('X direction');
-    subplot(4,1,3);
+    subplot(5,1,3);
         if plotTrue
             plot(t_ref,y_ref,'Color',colors(1,:));
             hold on
@@ -103,13 +127,28 @@ end
         counter = 2;
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-            colorindex = mod(counter,length(colors));
+            colorindex = mod(counter,length(colors))+1;
             plot(t_est(indeces),y_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
             counter = counter+1;
             hold on      
         end
         title('Y direction');
-    subplot(4,1,4);
+        subplot(5,1,4);
+        if plotTrue
+            plot(t_ref,z_ref,'Color',colors(1,:));
+            hold on
+        end   
+       %%% Plot in different colors depending on method   
+        counter = 2;
+        for i=C' %Must be row vector to loop through it like this
+            indeces = find(mode_est==i);%Find indices where algorithm used mode i
+            colorindex = mod(counter,length(colors))+1;
+            plot(t_est(indeces),z_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
+            counter = counter+1;
+            hold on      
+        end
+        title('Z direction');
+    subplot(5,1,5);
         if plotTrue
             plot(t_ref,yaw_ref,'Color',colors(1,:));
             hold on
@@ -118,7 +157,7 @@ end
         counter = 2;
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-            colorindex = mod(counter,length(colors));
+            colorindex = mod(counter,length(colors))+1;
             plot(t_est(indeces),yaw_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
             counter = counter+1;
             hold on      
@@ -127,15 +166,18 @@ end
 
     figure
         if plotTrue
-        plot(x_ref,y_ref,'Color',colors(1,:));
+        %plot(x_ref,y_ref,'Color',colors(1,:),'Marker','.','LineStyle','None'); 
+        %plot3(x_ref,y_ref,z_ref,'Color',colors(1,:),'Marker','.','LineStyle','None');
+        plot3(x_ref,y_ref,z_ref,'Color',colors(1,:));
         hold on
         end
         % Plot est path in different colour depending on mode used
         counter = 2;
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-            colorindex = mod(counter,length(colors));
-            plot(x_est(indeces),y_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
+            colorindex = mod(counter,length(colors))+1;
+            %plot(x_est(indeces),y_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
+            plot3(x_est(indeces),y_est(indeces),z_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
             counter = counter+1;
             hold on      
         end
@@ -160,5 +202,5 @@ end
         xlabel('X dir [m]');
         ylabel('Y dir [m]');
         axis equal
-    title('Position')
+    title(d_est_str,'Interpreter', 'none')
      
