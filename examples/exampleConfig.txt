@@ -39,3 +39,4 @@ ROLLPITCH_FILT_WC = 15.0		# Cutoff frequency of first order LP filter applied on
 
 ######## Marton Robust settings
 MARTON_BUFFERSIZE 	= 3		# Number of previous points to align marton polynomial to
+MARTON_CONEWEIGHT = 2			# Total weight given to all anchor cone equations in marton robust. (prev points has weight 1 each)
