@@ -131,8 +131,8 @@ bool vo::planarHomographyVO::process(std::vector<cv::Point2f>& p1,
  * Accepts point correspondances, instantaneous pitch, roll, height, and the current global pose
  * Uses complete homography for estimation
  */
-bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1,
-                std::vector<cv::Point2f>& p2,
+bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1_,
+                std::vector<cv::Point2f>& p2_,
                 float roll,float pitch, float dist,
                 cv::Mat_<double>& b,
                 cv::Mat_<double>& A){
@@ -142,13 +142,15 @@ bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1,
 //roll_prev = roll;
 //pitch_prev = pitch;
     //Check that there are enough point correspondances
-    if((p1.size()<3)|| (p2.size()<3)){std::cout << "odometryHom::Not enough point correspondances" << std::endl;
+    if((p1_.size()<3)|| (p2_.size()<3)){std::cout << "odometryHom::Not enough point correspondances" << std::endl;
         return false;
     }
     if(activateDerotation){
-        deRotateFlowField(p1, roll_prev, pitch_prev);
-        deRotateFlowField(p2, roll, pitch);
+        deRotateFlowField(p1_, roll_prev, pitch_prev);
+        deRotateFlowField(p2_, roll, pitch);
     }
+    std::vector<cv::Point2f> p1 = p1_;
+    std::vector<cv::Point2f> p2 = p2_;
     cv::Mat_<float> H = cv::findHomography(p1,p2,homoGraphyMethod,ransacReprojThreshold);
     if(H.empty()){//std::cout << "No homography found" << std::endl;
         return false;}
@@ -176,8 +178,8 @@ bool vo::planarHomographyVO::odometryHom(std::vector<cv::Point2f>& p1,
  * Accepts point correspondances, instantaneous pitch, roll, height, and the current global pose
  * Uses 4d affine transformation instead of complete homography. Mandatory de-rotation
  */
-bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
-                std::vector<cv::Point2f>& p2,
+bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1_,
+                std::vector<cv::Point2f>& p2_,
                 float roll,float pitch, float dist,//height should rather be distance. not corresponding to coordinate system height
                 cv::Mat_<double>& b,
                 cv::Mat_<double>& A){
@@ -185,17 +187,18 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1,
     static float pitch_prev = 0;
 
     //Check that there are enough point correspondances
-    if((p1.size()<3)|| (p2.size()<3)){std::cout << "odometryAffine::Not enough point correspondances" << std::endl;
+    if((p1_.size()<3)|| (p2_.size()<3)){std::cout << "odometryAffine::Not enough point correspondances" << std::endl;
         return false;
     }
     //De-rotate
-    //std::cout << "Bug in odometryAffine: Derotation" << std::endl;
     if(activateDerotation){
-        deRotateFlowField(p1, roll_prev, pitch_prev);
-        deRotateFlowField(p2, roll, pitch);
+        deRotateFlowField(p1_, roll_prev, pitch_prev);
+        deRotateFlowField(p2_, roll, pitch);
     }
     //Translate flow field to camera coordinate system. ie origin is in the middle
     //cv::Point2f offset(K(0,2),K(1,2));
+    std::vector<cv::Point2f> p1 = p1_;
+    std::vector<cv::Point2f> p2 = p2_;
     cv::Point2f offset(K(0,2),K(1,2));
     std::vector<cv::Point2f>::iterator it1 = p1.begin();
     std::vector<cv::Point2f>::iterator it2 = p2.begin();

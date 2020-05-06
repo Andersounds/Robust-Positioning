@@ -100,11 +100,11 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
         std::vector<cv::Point2f> features;                                  //Must declare these before every calculation doe to being manipulated on
         std::vector<cv::Point2f> updatedFeatures;                           //The new positions estimated from KLT
         of::opticalFlow::getFlow(subPrevFrame,frame(roi),features,updatedFeatures); //Get flow field
+        bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,arguments.roll,arguments.pitch,arguments.dist,pos,arguments.yaw);
         float scale = 5;                                                    //Illustrate
         cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
         drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
         cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
-        bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,arguments.roll,arguments.pitch,arguments.dist,pos,arguments.yaw);
         if(!vo_success){returnMode = pos::RETURN_MODE_INERTIA;}
         else{returnMode = pos::RETURN_MODE_VO;}
     }
