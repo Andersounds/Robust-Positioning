@@ -1,18 +1,42 @@
+% This script is to be used to plot comparisions of paths 
+% in a consistent manner, with consistent colors and scales
+% Save experiments in separate folder. Put generated paths there 
+% For each figure in the report, save a plot script somehow 
+%
+%
+
 %close all
 clear all
 
-%colors = [0.8500 0.3250 0.0980;
-%        0.9290 0.6940 0.1250;
-%        0 0.4470 0.7410;
-%        0.4660 0.6740 0.1880;
-%        0.6350 0.0780 0.1840;
-%        0 0 0];
-colors = [0, 0.4470, 0.7410;
-        0.8500, 0.3250, 0.0980;
-        0.9290, 0.6940, 0.1250;
-        0.4940, 0.1840, 0.5560;
+
+
+%Define Legend strings and pair them with return modes
+legendStr = {}; %Create a struct to hold legend strings
+%Return flags for what positioning algorithm was used
+azmode = 1;     legendStr{azmode} = 'Angulation';       %Azipe angulation was used to estimate position
+vomode = 2;     legendStr{vomode} = 'Visual Odometry';  %Visual odometry was used to estimate position (from last)
+martmode = 3;   legendStr{martmode} = 'Marton';         % Marton was used to estimate position
+%Error codes are above 10
+azFailed = 10;  legendStr{azFailed} = ' ';              %If only azipe is used and estimation fails
+%VO error codes
+voInertia = 20; legendStr{voInertia} = ' ';             %Visual odometry failed, assumed rotational speed kept
+voproj = 21;    legendStr{voproj} = ' ';                %Visual odometry successful and estimation is projected onto v_tilde NOT USED
+%Marton error codes
+martfailed = 30;legendStr{martfailed} = ' ';
+martold = 31;   legendStr{martold} = ' ';
+marterr = 32;   legendStr{marterr} = ' ';
+
+
+
+
+%First row is used by reference. next rows are for other codes
+% Return code i uses color specified on row i+1
+colors = [0, 0.4470, 0.7410;      % Reference
+        0.3010, 0.7450, 0.9330;   % Azipe
+        0.8500, 0.3250, 0.0980;   % VO
+        0.9290, 0.6940, 0.1250;   % Marton
+        0.4940, 0.1840, 0.5560;  
         0.4660, 0.6740, 0.1880;
-        0.3010, 0.7450, 0.9330;
         0.6350, 0.0780, 0.1840;
         0.25, 0.25, 0.25;
         0, 0.5, 0;
@@ -23,17 +47,18 @@ colors = [0, 0.4470, 0.7410;
 basePath = '/Users/Fredrik/Datasets/20-04-09/20-04-09-22/';
 %%%%  ESTIMATION FILE BASE NAME  %%%%
 %d_est_str = 'AIPE';
-%d_est_str = 'MARTON_tilt';
-%d_est_str = 'VO_tilt';
-%d_est_str = 'AZIPE_tilt';
-d_est_str = 'AZIPE_filt_tilt';
+%d_est_str = 'MARTON_out';
+%d_est_str = 'MARTON_noweight';
+d_est_str = 'VO_out';
+%d_est_str = 'AZIPE_out';
+
 %d_est_str = 'MARTON_notilt';
 %d_est_str = 'VO_notilt';
 
 
 %%%%  TRUE FILE BASE NAME  %%%%
-%d_true_file = [basePath,'AZIPE_tilt.csv'];
-d_true_file = [basePath,'AZIPE_notilt.csv'];
+d_true_file = [basePath,'AZIPE_out.csv'];
+%d_true_file = [basePath,'AZIPE_notilt.csv'];
 
 
 d_est_file = [basePath,d_est_str,'.csv'];
@@ -109,12 +134,12 @@ end
             hold on
         end
   %%% Plot in different colors depending on method   
-        counter = 2;
+
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-            colorindex = mod(counter,length(colors))+1;
+            colorindex = mod(i,length(colors))+1;
             plot(t_est(indeces),x_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
-            counter = counter+1;
+
             hold on      
         end
         title('X direction');
@@ -124,12 +149,11 @@ end
             hold on
         end   
        %%% Plot in different colors depending on method   
-        counter = 2;
+
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-            colorindex = mod(counter,length(colors))+1;
+            colorindex = mod(i,length(colors))+1;
             plot(t_est(indeces),y_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
-            counter = counter+1;
             hold on      
         end
         title('Y direction');
@@ -139,12 +163,10 @@ end
             hold on
         end   
        %%% Plot in different colors depending on method   
-        counter = 2;
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-            colorindex = mod(counter,length(colors))+1;
+            colorindex = mod(i,length(colors))+1;
             plot(t_est(indeces),z_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
-            counter = counter+1;
             hold on      
         end
         title('Z direction');
@@ -154,12 +176,10 @@ end
             hold on
         end
         %%% Plot in different colors depending on method   
-        counter = 2;
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-            colorindex = mod(counter,length(colors))+1;
+            colorindex = mod(i,length(colors))+1;
             plot(t_est(indeces),yaw_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
-            counter = counter+1;
             hold on      
         end
         title('Yaw');
@@ -172,13 +192,11 @@ end
         hold on
         end
         % Plot est path in different colour depending on mode used
-        counter = 2;
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
-            colorindex = mod(counter,length(colors))+1;
+            colorindex = mod(i,length(colors))+1;
             %plot(x_est(indeces),y_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
             plot3(x_est(indeces),y_est(indeces),z_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
-            counter = counter+1;
             hold on      
         end
         
@@ -186,7 +204,7 @@ end
              Legend = cell(length(C)+1,1);
              Legend{1} = 'Reference';
              for i=1:length(C)
-                Legend{i+1} = num2str(C(i));
+                  Legend{i+1} = legendStr{C(i)};
              end
              legend(Legend);
              grid on
@@ -194,8 +212,8 @@ end
              %legendCell = cellstr(num2str(C', 'N=%-d'));
              %legend(legendCell);
              Legend = cell(length(C),1);
-             for i=1:length(C)
-                Legend{i} = num2str(C(i));
+             if C(i) <= 3
+                 Legend{i} = legendStr{C(i)};
              end
              legend(Legend);
         end
