@@ -65,14 +65,18 @@ namespace pos{
 
 
     //Return flags for what positioning algorithm was used
-    const int RETURN_MODE_AZIPE = 0;        //Azipe angulation was used to estimate position
-    const int RETURN_MODE_VO    = 1;        //Visual odometry was used to estimate position (from last)
-    const int RETURN_MODE_INERTIA = 2;        //Visual odometry failed, assumed rotational speed kept
-    const int RETURN_MODE_PROJ = 3;           //Visual odometry successful and estimation is projected onto v_tilde
-    const int RETURN_MODE_AZIPE_FAILED = 4; //If only azipe is used and estimation fails
-    const int RETURN_MODE_MARTON = 5;
-    const int RETURN_MODE_MARTON_FAILED = 6;
-    const int RETURN_MODE_MARTON_OLD = 7;
+    const int RETURN_MODE_AZIPE = 1;        //Azipe angulation was used to estimate position
+    const int RETURN_MODE_VO    = 2;        //Visual odometry was used to estimate position (from last)
+    const int RETURN_MODE_MARTON = 3;
+    //Error codes are above 10
+    const int RETURN_MODE_AZIPE_FAILED = 10; //If only azipe is used and estimation fails
+    //VO error codes
+    const int RETURN_MODE_INERTIA = 20;        //Visual odometry failed, assumed rotational speed kept
+    const int RETURN_MODE_PROJ = 21;           //Visual odometry successful and estimation is projected onto v_tilde
+    //Marton error codes
+    const int RETURN_MODE_MARTON_FAILED = 30;
+    const int RETURN_MODE_MARTON_OLD = 31;
+    const int RETURN_MODE_MARTON_ERR = 32;
 
 
     #define TSPAN_MAX 3000

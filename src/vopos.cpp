@@ -168,7 +168,7 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
             switch(_returnMode){
                 case GSL_SUCCESS:{returnMode = pos::RETURN_MODE_MARTON;break;}
                 case GSL_ENOPROG:{returnMode = pos::RETURN_MODE_MARTON_FAILED;break;}
-                default:{std::cout << "Unknown return value from marton::process in vopos>process_Marton_Fallback" << std::endl; returnMode = 100;}
+                default:{std::cout << "Unknown return value from marton::process in vopos>process_Marton_Fallback" << std::endl; returnMode = RETURN_MODE_MARTON_ERR;}
             }
             std::cout << "Marton: X: "<< pos(0,0) << ", Y: "<< pos(1,0) << ", Z: " << pos(2,0)  << ", yaw: " << arguments.yaw<< std::endl;
         //}else{
