@@ -66,8 +66,9 @@ namespace pos{
 
     //Return flags for what positioning algorithm was used
     const int RETURN_MODE_AZIPE = 1;        //Azipe angulation was used to estimate position
-    const int RETURN_MODE_VO    = 2;        //Visual odometry was used to estimate position (from last)
-    const int RETURN_MODE_MARTON = 3;
+    const int RETURN_MODE_AIPE = 2;
+    const int RETURN_MODE_VO    = 3;        //Visual odometry was used to estimate position (from last)
+    const int RETURN_MODE_MARTON = 4;
     //Error codes are above 10
     const int RETURN_MODE_AZIPE_FAILED = 10; //If only azipe is used and estimation fails
     //VO error codes

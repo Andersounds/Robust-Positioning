@@ -353,7 +353,7 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
 
     cv::Mat_<float> err = cv::Mat_<float>::ones(1,1)*(thresh+1);
     int counter = 0;
-    int maxIter = 2;
+    int maxIter = 1;
     //Add threshold
     while(counter < maxIter ){//&& err(0,0)>1){
         counter++;
@@ -451,7 +451,7 @@ int az::aipe(const std::vector<cv::Mat_<float>>& v,
         cv::Mat_<float> t_op = F*e_op+w;//Give t_op as argument to aipe? Or is t opt F*e+w according to Eq. 13?
         position = -R.t()*t_op;
         err = e_op.t()*e_op;
-        //std::cout << "Err " << counter << ": " << err(0,0) << std::endl;
+        std::cout << "Err " << counter << ": " << err(0,0) << std::endl;
     }
     return 1;
 }

@@ -63,7 +63,13 @@ int pos::positioning::process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
         ang::angulation::maskOut(v,v_m,mask);//mask out v so it can be passed to azipe
         az::azipe(v_m,q_m,pos,arguments.yaw,arguments.pitch,arguments.roll);
-        returnMode = pos::RETURN_MODE_AZIPE;
+        float thresh = 0.01;
+        if(knownAnchors>4 && false){// Do not use AIPE
+        //    az::aipe(v_m, q_m, pos, arguments.yaw,arguments.pitch, arguments.roll,thresh);
+        //    returnMode = pos::RETURN_MODE_AIPE;
+        }else{
+            returnMode = pos::RETURN_MODE_AZIPE;
+        }
     }else{
         returnMode = pos::RETURN_MODE_AZIPE_FAILED;
     }
