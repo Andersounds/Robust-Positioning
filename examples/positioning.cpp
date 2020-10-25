@@ -175,6 +175,12 @@ int algmode = pos::MODE_AZIPE_AND_FALLBACK;
 float wc;                       bpu::assign(vm, wc,"ROLLPITCH_FILT_WC");
 Filter rollFilter(wc);
 Filter pitchFilter(wc);
+
+float oldPitch = 0;
+float oldPitchDelta = 0;
+float oldRoll = 0;
+float oldRollDelta = 0;
+float limit = 0.02; //Max 0.02 rad since previous
     while(getData.get(data)){
 
         timeStamp_data = data[0];
@@ -182,11 +188,36 @@ Filter pitchFilter(wc);
         float pitch = 0;
         float roll = 0;
         if(useRollPitch){
-            //pitch = data[pitchColumn];
-            //roll = data[rollColumn];
-            pitch = pitchFilter.LPfilter(data[pitchColumn],timeStamp_data/1000);
-            roll = rollFilter.LPfilter(data[rollColumn],timeStamp_data/1000);
+            float rawpitch = data[pitchColumn];
+            float rawroll = data[rollColumn];
+
+///////// This section is a late fix to remove glitches that are apparent in the raw toll data
+            float deltaPitch = rawpitch - oldPitch;
+            if(deltaPitch>limit){
+                rawpitch=oldPitch+oldPitchDelta; //Follow previous incline or decline of delta is over limit
+            }else{
+                oldPitchDelta = deltaPitch;
+            }
+            float deltaRoll = rawroll - oldRoll;
+            if(deltaRoll>limit){
+                rawroll=oldRoll+oldRollDelta; //Follow previous incline or decline of delta is over limit
+            }else{
+                oldRollDelta = deltaRoll;
+            }
+//////////
+
+
+            pitch = pitchFilter.LPfilter(rawpitch,timeStamp_data/1000);
+            roll = rollFilter.LPfilter(rawroll,timeStamp_data/1000);
+///
+            oldPitch = pitch;
+            oldRoll = roll;
+///
         }
+
+
+
+
         /* Force occlusion if OCCLUDE option is set*/
         if(occlude){
             if((counter%(az_period+fb_period))<az_period){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
