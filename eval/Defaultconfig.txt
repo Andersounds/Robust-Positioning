@@ -1,0 +1,42 @@
+##### UAV properties:
+RES_X = 640         # Camera resolution in X direction
+RES_Y = 480         # Camera resolution in Y direction
+K_MAT = [607.136353,0,320;0,607.136353,240;0,0,1]	# Camera K matrix specified in matlab style. ',' as column separator and ';' as row separator
+T_MAT = [0,-1,0;1,0,0;0,0,1]            # UAV-to-Camera matrix. Default +90deg. Specified in matlab style
+CAMERA_BARREL_DISTORTION  = [0.2486,-1.4526,2.6388]# Barrel distortion coefficients given as [K1,K2,K3]
+
+######### Initial values:
+XYZ_INIT =[0;50;-170]             #Initial position expressed as [X,Y,Z] coordinate floats
+ROLL_INIT = 0                           # Initial roll of UAV, radians
+PITCH_INIT = 0                          # Initial pitch of UAV, radians
+YAW_INIT =0.0                           # Initial yaw of UAV, radians
+
+
+######## Program settings:
+OUT 	= outFile.csv                   # Write output data to specified file.
+LOG 	= 1 				# Output log file 0 (NO) / 1 (YES)
+STEP 	= 0				# Wait for keypress between each image? 0 (NO) / 1 (YES)
+OUT_TO_PWD 	= NO                    # Write output file pwd instead of to BASEPATH (NO or YES)
+DIST_COLUMN 	= 1                     # Specifies which column of csv file that contains distance (lidar) data
+ROLL_COLUMN 	= 4                     # Specifies which column of csv file that contains roll data
+PITCH_COLUMN 	= 3                     # Specifies which column of csv file that contains pitch	 data
+PATH_TO_ARUCO_DATABASE 	= anchors.csv   # Path to anchor database from base path
+STREAM_IMAGES_INFO_FILE = images/data.csv 	# Path to images info file from config file path
+STREAM_DATA_FILE 	= imudata.csv   # Path to data file from config file path
+POS_ALG 		= AZIPE         # Positioning algorithm | AZIPE or VO or MARTON
+USE_ROLLPITCH = true   			# Use roll/pitch? otherwise set to 0. true/1 or false/0
+OCCLUDE = true				# Force periods of fallback method. true/1 or false/0. Period lengths set with AZIPE_PERIOD/FALLBACK_PERIOD
+AZIPE_PERIOD = 10			# Period using AZIPE if OCCLUDE is set to true
+FALLBACK_PERIOD = 20			# Period using Fallback if OCCLUDE is set to true
+
+######## Visual Odometry settings
+OF_MODE = KLT                           # Mode of Optical flow algorithm. KLT or CORR
+VO_MODE = AFFINE                    	# Mode of Visual Odometry algorithm. HOMOGRAPHY or AFFINE
+OPTICAL_FLOW_GRID 	= 4             # Sqrt of number of optical flow vector
+ROI_SIZE 		= 150           # Side length of VO ROI. Used to edit K mat of VO alg.
+DEROTATE_OF = true			# Derotate optical flow field using roll/pitch? true/1 or false/0
+ROLLPITCH_FILT_WC = 15.0		# Cutoff frequency of first order LP filter applied on roll/pitch [rad/s]
+
+######## Marton Robust settings
+MARTON_BUFFERSIZE 	= 5		# Number of previous points to align marton polynomial to
+MARTON_CONEWEIGHT = 2			# Total weight given to all anchor cone equations in marton robust. (prev points has weight 1 each)
