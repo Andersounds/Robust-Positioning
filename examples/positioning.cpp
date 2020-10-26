@@ -180,7 +180,7 @@ float oldPitch = 0;
 float oldPitchDelta = 0;
 float oldRoll = 0;
 float oldRollDelta = 0;
-float limit = 0.02; //Max 0.02 rad since previous
+float limit = 0.1; //Max 0.02 rad since previous
     while(getData.get(data)){
 
         timeStamp_data = data[0];
