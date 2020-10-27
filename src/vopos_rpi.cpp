@@ -56,7 +56,7 @@ int pos::positioning::process_AZIPE(cv::Mat& frame, cv::Mat& outputFrame,cv::Mat
     std::vector<cv::Mat_<float>> q;//q and q_masked
     std::vector<bool> mask;
     int knownAnchors = dataBase2q(ids,q,mask);
-    drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+    //drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
     if(knownAnchors>=minAnchors){                                                //If enough anchors then do triangulation and break
         std::vector<cv::Mat_<float>> v;//v and v_masked;
         pix2uLOS(corners,v);
@@ -93,7 +93,7 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
     std::vector<cv::Mat_<float>> q;//q and q_masked
     std::vector<bool> mask;
     int knownAnchors = dataBase2q(ids,q,mask);
-    drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+    //drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
     if(knownAnchors>=minAnchors && mode != pos::MODE_FALLBACK){                  //If enough anchors then do triangulation unless overridden
         std::cout << "  MODE: AZIPE"<< std::endl;
         std::vector<cv::Mat_<float>> v;//v and v_masked;
@@ -112,8 +112,8 @@ int pos::positioning::process_VO_Fallback(int mode,cv::Mat& frame, cv::Mat& outp
         bool vo_success = vo::planarHomographyVO::process(features,updatedFeatures,arguments.roll,arguments.pitch,arguments.dist,pos,arguments.yaw,prevRoll,prevPitch);
         float scale = 5;                                                    //Illustrate
         cv::Point2f focusOffset(roi.x,roi.y);                               //Illustrate
-        drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
-        cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
+        //drawArrows(outputFrame,features,updatedFeatures,scale,focusOffset); //Illustrate
+        //cv::rectangle(outputFrame,roi,CV_RGB(255,0,0),2,cv::LINE_8,0);      //Illustrate
         if(!vo_success){
             std::cout << "  MODE: VO (failed)"<< std::endl;
             returnMode = pos::RETURN_MODE_INERTIA;}
@@ -151,7 +151,7 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         std::vector<cv::Mat_<float>> q;//q and q_masked
         std::vector<bool> mask;
         int knownAnchors = dataBase2q(ids,q,mask);
-        drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
+        //drawMarkers(outputFrame,corners,ids,mask);                          //Illustrate
         std::vector<cv::Mat_<float>> v;//v and v_masked;
         pix2uLOS(corners,v);
         ang::angulation::maskOut(q,q_m,mask);//Mask out q so it can be passed to azipe
