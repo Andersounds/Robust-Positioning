@@ -88,7 +88,7 @@ if(vm["OUT_TO_PWD"].as<std::string>()=="YES"){
 const int log = vm["LOG"].as<int>();
 if(log){
     std::cout << "Writing output file to " << outFile << std::endl;
-    if(!databin_LOG.init(outFile,std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []","Mode"})) return 0;
+    if(!databin_LOG.init(outFile,std::vector<std::string>{"timestamp [ms]","X [m]","Y [m]","Z [m]","Roll [rad]","Pitch [rad]","Yaw [rad]","Known anchors []","Mode","Execution time [ms]"})) return 0;
 }else{
     std::cout << "Will not log values" << std::endl;
 }
@@ -191,7 +191,7 @@ float limit = 0.1; //Max 0.02 rad since previous
             float rawpitch = data[pitchColumn];
             float rawroll = data[rollColumn];
 
-///////// This section is a late fix to remove glitches that are apparent in the raw toll data
+///////// This section is a late fix to remove glitches that are apparent in the raw roll data
             float deltaPitch = rawpitch - oldPitch;
             if(deltaPitch>limit){
                 rawpitch=oldPitch+oldPitchDelta; //Follow previous incline or decline of delta is over limit
@@ -232,13 +232,17 @@ float limit = 0.1; //Max 0.02 rad since previous
             std::cout << "Lap " << counter  << ", time: " << timeStamp_data<< std::endl;
             //int mode = P.processAndIllustrate(pos_alg,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
             //std::cout << "SWITCH:::::::::" << std::endl;
+            double tic,toc,executionTime;
             switch(pos_alg){
                 case ALG_AZIPE:{
                     std::cout << "ALG_AZIPE:::" << std::endl;
                     pos::argStruct arguments = {dist,roll,pitch,yaw};
+                    stamp.get(tic);
                     int mode = P.process_AZIPE(frame, colorFrame,t,arguments);
+                    stamp.get(toc);
+                    executionTime = toc-tic; //Execution time
                     if(log){
-                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode,(float)executionTime};
                         databin_LOG.dump(logData);
                     }
                     yaw = arguments.yaw;
@@ -247,10 +251,14 @@ float limit = 0.1; //Max 0.02 rad since previous
                 case ALG_VO:{
                     std::cout << "ALG_VO:::" << std::endl;
                     pos::VOargStruct arguments = {dist*100,roll,pitch,yaw};//Scale dist measurement to cm
+                    double tic2,toc1;
+                    stamp.get(tic);
                     int mode = P.process_VO_Fallback(algmode,frame, colorFrame, t,arguments);
+                    stamp.get(toc);
+                    executionTime = toc-tic; //Execution time
                     yaw = arguments.yaw;
                     if(log){
-                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode,(float)executionTime};
                         databin_LOG.dump(logData);
                     }
                     break;
@@ -258,10 +266,13 @@ float limit = 0.1; //Max 0.02 rad since previous
                 case ALG_MARTON:{
                     std::cout << "ALG_MARTON:::" << std::endl;
                     pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data, marton_buffsize,marton_coneweight};
+                    stamp.get(tic);
                     int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
+                    stamp.get(toc);
+                    executionTime = toc-tic; //Execution time
                     yaw = arguments.yaw;
                     if(log){
-                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
+                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode,(float)executionTime};
                         databin_LOG.dump(logData);
                     }
                     break;
