@@ -101,6 +101,10 @@ bool occlude = vm["OCCLUDE"].as<bool>();
 int az_period;               bpu::assign(vm, az_period,"AZIPE_PERIOD");
 int fb_period;               bpu::assign(vm, fb_period,"FALLBACK_PERIOD");
 
+/* Framerate settings */
+int framerate_div;               bpu::assign(vm, framerate_div,"FRAMERATE_DIV");
+int skip = 0;           //Variable used if full framerate_div images should not be skipped
+
 //Initialize positioning object
 int maxIdAruco = 50;
 std::string anchorPath;     bpu::assign(vm,anchorPath,"PATH_TO_ARUCO_DATABASE");
@@ -181,16 +185,34 @@ float oldPitchDelta = 0;
 float oldRoll = 0;
 float oldRollDelta = 0;
 float limit = 0.1; //Max 0.02 rad since previous
-    while(getData.get(data)){
 
-        timeStamp_data = data[0];
+float imageTimeStamp;
+
+    while(true){
+        /* Read and discard the number of frames specified. Note use of float skip */
+        for(int s=0;s<=(framerate_div-1)*skip;s++){
+            imageTimeStamp = VStreamer.peek();
+            VStreamer.getImage(frame);
+            if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
+        }
+        skip = 1;//Reset skip to 1 so that the specified number of frames are skipped next lap if we find a matching imu data timestamp
+        do{
+            if(!getData.get(data)){std::cout << "Date stream done."<< std::endl; return 0;}       //Read next imu data block
+            timeStamp_data = data[0];
+        }while((timeStamp_data-imageTimeStamp)<-10); //Step data until data timestamp is no longer more than 10ms after (smaller number) image timestamp
+        /*Above while loop assumes that:
+            -there are no big holes in timestamp data!
+            -its period is greater than 10ms
+            -The data timestamp and image timestamp are within +-10ms of eachother
+        */
+
         float dist = data[distColumn];//This is used as a subst as actual height is not in dataset
         float pitch = 0;
         float roll = 0;
+        /* Use roll and pitch with speecified filter is USE_ROLLPITCH option is set */
         if(useRollPitch){
             float rawpitch = data[pitchColumn];
             float rawroll = data[rollColumn];
-
 ///////// This section is a late fix to remove glitches that are apparent in the raw roll data
             float deltaPitch = rawpitch - oldPitch;
             if(deltaPitch>limit){
@@ -204,122 +226,80 @@ float limit = 0.1; //Max 0.02 rad since previous
             }else{
                 oldRollDelta = deltaRoll;
             }
-//////////
-
-
-            pitch = pitchFilter.LPfilter(rawpitch,timeStamp_data/1000);
+            pitch = pitchFilter.LPfilter(rawpitch,timeStamp_data/1000); //These filters are not part of the quick fix
             roll = rollFilter.LPfilter(rawroll,timeStamp_data/1000);
-///
             oldPitch = pitch;
             oldRoll = roll;
-///
         }
 
-
-
-
-        /* Force occlusion if OCCLUDE option is set*/
+        /* Force occlusion if OCCLUDE option is set */
         if(occlude){
             if((counter%(az_period+fb_period))<az_period){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
             else{algmode = pos::MODE_FALLBACK;}
         }
 //Get new image
 //Separate processAndIllustrate with just process using switch statement
-        if(VStreamer.peek()<=timeStamp_data){
-            VStreamer.getImage(frame);
-            if(frame.empty()){std::cout << "Video stream done."<< std::endl; return 0;}
-            cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
-            std::cout << "Lap " << counter  << ", time: " << timeStamp_data<< std::endl;
-            //int mode = P.processAndIllustrate(pos_alg,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
-            //std::cout << "SWITCH:::::::::" << std::endl;
-            double tic,toc,executionTime;
-            switch(pos_alg){
-                case ALG_AZIPE:{
-                    std::cout << "ALG_AZIPE:::" << std::endl;
-                    pos::argStruct arguments = {dist,roll,pitch,yaw};
-                    stamp.get(tic);
-                    int mode = P.process_AZIPE(frame, colorFrame,t,arguments);
-                    stamp.get(toc);
-                    executionTime = toc-tic; //Execution time
-                    if(log){
-                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode,(float)executionTime};
-                        databin_LOG.dump(logData);
-                    }
-                    yaw = arguments.yaw;
-                    break;
+
+
+        cv::cvtColor(frame, colorFrame, cv::COLOR_GRAY2BGR);
+        std::cout << "Lap " << counter  << ", time: " << timeStamp_data<< std::endl;
+        double tic,toc,executionTime;
+        switch(pos_alg){
+            case ALG_AZIPE:{
+                std::cout << "ALG_AZIPE:::" << std::endl;
+                pos::argStruct arguments = {dist,roll,pitch,yaw};
+                stamp.get(tic);
+                int mode = P.process_AZIPE(frame, colorFrame,t,arguments);
+                stamp.get(toc);
+                executionTime = toc-tic; //Execution time
+                if(log){
+                    std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode,(float)executionTime};
+                    databin_LOG.dump(logData);
                 }
-                case ALG_VO:{
-                    std::cout << "ALG_VO:::" << std::endl;
-                    pos::VOargStruct arguments = {dist*100,roll,pitch,yaw};//Scale dist measurement to cm
-                    double tic2,toc1;
-                    stamp.get(tic);
-                    int mode = P.process_VO_Fallback(algmode,frame, colorFrame, t,arguments);
-                    stamp.get(toc);
-                    executionTime = toc-tic; //Execution time
-                    yaw = arguments.yaw;
-                    if(log){
-                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode,(float)executionTime};
-                        databin_LOG.dump(logData);
-                    }
-                    break;
-                }
-                case ALG_MARTON:{
-                    std::cout << "ALG_MARTON:::" << std::endl;
-                    pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data, marton_buffsize,marton_coneweight};
-                    stamp.get(tic);
-                    int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
-                    stamp.get(toc);
-                    executionTime = toc-tic; //Execution time
-                    yaw = arguments.yaw;
-                    if(log){
-                        std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode,(float)executionTime};
-                        databin_LOG.dump(logData);
-                    }
-                    break;
-                }
+                yaw = arguments.yaw;
+                break;
             }
-
-
-
-            //int mode = P.processAz(pos::MODE_AZIPE,frame,colorFrame,pos::ILLUSTRATE_ALL,dist,roll,pitch,yaw,t,nmbrOfAnchors);
-            //Log data
-//            if(true){
-//                std::vector<float> logData{timeStamp_data,t(0,0),t(1,0),t(2,0),arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode};
-//                databin_LOG.dump(logData);
-//            }
-            //std::cout << "Main:   X: "<< t(0,0) << ", Y: "<< t(1,0) << ", Z: " << t(2,0) <<", roll: " << roll<<", pitch: " << pitch << "yaw: " << yaw<< std::endl;
-            P.illustrateYaw(colorFrame,yaw);
-            cv::imshow("showit",colorFrame);
-            if(step){
-                cv::waitKey(0);
+            case ALG_VO:{
+                std::cout << "ALG_VO:::" << std::endl;
+                pos::VOargStruct arguments = {dist*100,roll,pitch,yaw};//Scale dist measurement to cm
+                double tic2,toc1;
+                stamp.get(tic);
+                int mode = P.process_VO_Fallback(algmode,frame, colorFrame, t,arguments);
+                stamp.get(toc);
+                executionTime = toc-tic; //Execution time
+                yaw = arguments.yaw;
+                if(log){
+                    std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode,(float)executionTime};
+                    databin_LOG.dump(logData);
+                }
+                break;
             }
-            if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
+            case ALG_MARTON:{
+                std::cout << "ALG_MARTON:::" << std::endl;
+                pos::MartonArgStruct arguments = {roll,pitch,yaw,timeStamp_data, marton_buffsize,marton_coneweight};
+                stamp.get(tic);
+                int mode = P.process_Marton_Fallback(algmode,frame, colorFrame, t,arguments);
+                stamp.get(toc);
+                executionTime = toc-tic; //Execution time
+                yaw = arguments.yaw;
+                if(log){
+                    std::vector<float> logData{timeStamp_data,t(0,0)/100,t(1,0)/100,t(2,0)/100,arguments.roll,arguments.pitch,arguments.yaw,nmbrOfAnchors,(float)mode,(float)executionTime};
+                    databin_LOG.dump(logData);
+                }
+                break;
+            }
+        }
 
-            counter++;
-            std::cout << ":::::::::::::::" << std::endl;
-      }
 
+        P.illustrateYaw(colorFrame,yaw);
+        cv::imshow("showit",colorFrame);
+        if(step){
+            cv::waitKey(0);
+        }
+        if( cv::waitKey(1) == 27 ) {std::cout << "Bryter"<< std::endl;return 1;}
 
-    //std::cout << "t: " << t.t() << std::endl;
-        //Maybe convert to color for illustartion?
-        //cv::cvtColor(colorFrame, frame, cv::COLOR_BGR2GRAY);
-
-        //std::cout << "Mode: " << mode << std::endl;
-
-    /*    //Write to file
-        stamp.get(timeStamp);
-        std::vector<float> truePath{(float)timeStamp, xPath[i],yPath[i],zPath[i],yawPath[i],pitchPath[i],rollPath[i]};
-        databin_LOG.dump(truePath);
-        imagebin.dump(timeStamp,frame);
-
-*/
-    //    std::vector<float> estimation{(float)timeStamp,t(0,0),t(1,0),t(2,0),yaw,(float)mode};
-    //    databin_EST.dump(estimation);
-
-//if(i>100) return 0;
-        //std::string str = std::to_string(i);
-        //std::cout << str << std::endl;
-        //cv::putText(colorFrame,str,cv::Point(10,colorFrame.rows/2),cv::FONT_HERSHEY_DUPLEX,1.0,CV_RGB(118, 185, 0),2);
+        counter++;
+        std::cout << ":::::::::::::::" << std::endl;
 
 
     }
@@ -386,6 +366,7 @@ float limit = 0.1; //Max 0.02 rad since previous
          ("OCCLUDE",   po::value<bool>()->default_value(true), "Force periods of fallback method. true/1 or false/0. Period lengths set with AZIPE_PERIOD/FALLBACK_PERIOD")
          ("AZIPE_PERIOD", po::value<int>()->default_value(15),  "Period using AZIPE if OCCLUDE is set to true")
          ("FALLBACK_PERIOD", po::value<int>()->default_value(15),  "Period using Fallback if OCCLUDE is set to true")
+         ("FRAMERATE_DIV", po::value<int>()->default_value(1),  "For value n, every n:th image will be considered, the rest skipped.")
          ;
      po::options_description voSettings("Visual Odometry settings");
      voSettings.add_options()
