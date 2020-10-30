@@ -92,7 +92,7 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                         element -= pPrev[offsetindex];//Offset with first x y z yawvalues
                         pPrev_normed[i] = (double)element;
                     }else{
-                        pPrev_normed[i] = pPrev[offsetindex];
+                        pPrev_normed[i] = pPrev[i];
                     }
                 }
                 //Unwrap yaw
