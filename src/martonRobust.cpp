@@ -91,6 +91,8 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                     if(offsetindex!=3){//Skip yaw offset
                         element -= pPrev[offsetindex];//Offset with first x y z yawvalues
                         pPrev_normed[i] = (double)element;
+                    }else{
+                        pPrev_normed[i] = pPrev[offsetindex];
                     }
                 }
                 //Unwrap yaw
@@ -115,7 +117,7 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 double slopeY = singleRegressor(tPrev_normed, pPrev_normed, bufferSize, 1, 4);
                 double slopeZ = singleRegressor(tPrev_normed, pPrev_normed, bufferSize, 2, 4);
                 double slopeYAW = singleRegressor(tPrev_normed, pPrev_normed, bufferSize, 3, 4);
-                double x_init[12] = { 0, slopeX, 0, 0,slopeY, 0, 0, slopeZ, 0, 0, slopeYAW, 0};
+                double x_init[12] = { 0, slopeX, 0, 0,slopeY, 0, 0, slopeZ, 0, pPrev_normed[4*(bufferSize-1)+3], slopeYAW, 0};
 
 
 
@@ -123,9 +125,9 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 //double x_init[12] = { 1, 0, 0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
                 /* Construct weight array. different weights for different equation types*/
                 //Weights:  xold,yold,zold,yawolsd, x,y,z,yaw
-                double pPrevWeight = 1;
+                double pPrevWeight = 1/(double)bufferSize;
                 double coneWeight = ((double)coneWeight_f)/(double)anchorSize;
-                double yawWeight = 2/(double)anchorSize;
+                double yawWeight = ((double)coneWeight_f)/(double)anchorSize;
                 double weights[costEquationSize];
                 for(int i=0;i<costEquationSize;i++){
                     if(i<4*bufferSize){
