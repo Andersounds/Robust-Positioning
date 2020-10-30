@@ -242,8 +242,8 @@ bool vo::planarHomographyVO::odometryAffine(std::vector<cv::Point2f>& p1_,
     }*/
     //Scale x-y with height
     //Should we edit dist value??
-    b(0,0) *= dist;//*cos(roll)*cos(pitch);
-    b(1,0) *= dist;//*cos(roll)*cos(pitch);
+    b(0,0) *= dist*cos(roll)*cos(pitch);
+    b(1,0) *= dist*cos(roll)*cos(pitch);
     //std::cout << "Scaled translation: " << b.t() << std::endl;
     //Shift roll and pitch static variables
     roll_prev = roll;
