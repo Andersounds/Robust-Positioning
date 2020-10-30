@@ -59,8 +59,9 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
                 double alpha[6*anchorSize];//Make space for anchorSize anchors. 6 numbers each (anchor coordinate + uLos vector)
                 for(int i=0;i<anchorSize;i++){
                     /* Define q and v vectors, (and adapt v vector to current roll/pitch) */
-                    cv::Mat_<float> qi = q[i];qi.reshape(1);          //Reshape to column vector so be sure that direct element access below is correct
-                    cv::Mat_<float> v_i_unrot = v[i];v_i_unrot.reshape(1);
+                    int j=rand()%((int)v.size()-1);//Choose random from whole anchor range (May be the same)
+                    cv::Mat_<float> qi = q[j];qi.reshape(1);          //Reshape to column vector so be sure that direct element access below is correct
+                    cv::Mat_<float> v_i_unrot = v[j];v_i_unrot.reshape(1);
                     cv::Mat_<float> vi = Ry*Rx*v_i_unrot;//Apply from right
                     /*Set values in alpha array.*/
                     alpha[i*6+0] = (double)qi(0,0)-offset[0];//Norm shift marker position
@@ -153,11 +154,17 @@ int marton::process(const std::vector<cv::Mat_<float>>& v,
 
                     float tf_normed_sqrd = tf_normed*tf_normed;
                     cv::Mat_<float> po = cv::Mat_<float>::zeros(3,1);
-                    for(int i=0;i<3;i++){
+                    for(int i=0;i<3;i++){ //Change i<2 to i<3 and remove calculation below to include z-estimation as quadratic
                         float delta_value = x_est[3*i] + x_est[3*i+1]*tf_normed + x_est[3*i+2]*tf_normed_sqrd;//Calculate value from polybnomial. But it is offset!
                         po(i,0) = pPrev[i] + delta_value;// Add offset and update position
                     //    po(i,0) = delta_value;
                     }
+                    float delta_value = x_est[3*2] + x_est[3*2+1]*tf_normed ;//Calculate value from polybnomial. But it is offset!
+                    //po(2,0) = pPrev[2] + delta_value;// Add offset and update position
+
+
+
+
                     po.copyTo(position);
 
                     float delta_yaw = x_est[9] + x_est[10]*tf_normed + x_est[11]*tf_normed_sqrd;
@@ -224,6 +231,7 @@ int f_nmbr=0;//Counter to keep track of f vector position
         gsl_vector_set (f, 0+offset, x_[0]+x_[1]*t_i+x_[2]*t_i_sqrd - p[0+offset]); //X for time i
         gsl_vector_set (f, 1+offset, x_[3]+x_[4]*t_i+x_[5]*t_i_sqrd - p[1+offset]); //Y for time i
         gsl_vector_set (f, 2+offset, x_[6]+x_[7]*t_i+x_[8]*t_i_sqrd - p[2+offset]); //Z for time i
+//        gsl_vector_set (f, 2+offset, x_[6]+x_[7]*t_i                  - p[2+offset]); //Z for time i LINEAR - Change together with row 245 AND 153
         gsl_vector_set (f, 3+offset, x_[9]+x_[10]*t_i+x_[11]*t_i_sqrd - p[3+offset]); //Yaw for time i
 
     }
@@ -235,12 +243,14 @@ int f_nmbr=0;//Counter to keep track of f vector position
     double x_est = x_[0]+x_[1]*t_f+x_[2]*t_f_sqrd;
     double y_est = x_[3]+x_[4]*t_f+x_[5]*t_f_sqrd;
     double z_est = x_[6]+x_[7]*t_f+x_[8]*t_f_sqrd;
+    //double z_est = x_[6]+x_[7]*t_f; //LINEAR - Change together with row 234
     for(int i=0;i<anchorSize;i++){
         int offset = i*6; //Every anchor uses 6 elements in alpha
         double c_sqr = (alpha[3+offset]*alpha[3+offset]+alpha[4+offset]*alpha[4+offset])/(alpha[5+offset]*alpha[5+offset]); // to use in cone equation sqrt(x^2+y^2) = c*z
         double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_est - alpha[2+offset],(double)2);//Original cost function. Vary x-y-z
-        //Replace f12_sqr with below two lines to only include x-y as optimization variables in cone equation
-        //double z_last =p[0] + 0.3*(p[(bufferSize-1)*4+2]-p[2])*(t_f-t[0])/(t[bufferSize-1]-t[0]); //Choose Z as linear continuation of buffered z values at tf. Scaled down with 0.3
+        //Replace f12_sqr with below three lines to only include x-y as optimization variables in cone equation
+        //double slopeZ = singleRegressor(t, p, bufferSize, 2, 4);
+        //double z_last = p[0] + 1*slopeZ*(t_f-t[0])/(t[bufferSize-1]-t[0]); //Choose Z as linear continuation of buffered z values at tf.
         //double f12_sqr = pow(x_est-alpha[0+offset],(double)2) + pow(y_est - alpha[1+offset],(double)2) - c_sqr*pow(z_last - alpha[2+offset],(double)2);//Can only modify in x-y to optimize this
         double f12 = sqrt(abs(f12_sqr));//f12_sqr;//sqrt(abs(f12_sqr));
         gsl_vector_set (f, f_nmbr, f12);
