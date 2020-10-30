@@ -4,6 +4,43 @@
 #include "vopos.hpp"
 
 
+// LP filter (1st order LP discretized using tustin)
+class ZFilter{
+    float wc;
+    float t_prev;
+    float value_prev;
+    float value_filt_prev;
+    public:
+    ZFilter(float cutoff_){
+        wc = cutoff_;
+        t_prev = 0;
+        value_prev = 0;
+        value_filt_prev = 0;
+    }
+    float LPfilter(float value,float t){
+        float dt = t-t_prev;
+        float value_filt = ( (value + value_prev)*dt*wc + value_filt_prev*(2-dt*wc) ) / (2+dt*wc);
+        t_prev = t;
+        value_prev = value;
+        value_filt_prev = value_filt;
+        return value_filt;
+    }
+    //This method resets prev values and filters one indez in buffer in-place
+    //Assumes that we are logging 4 values (x,y,z,yaw) at tPrev.size() buffer size.
+    void filtZOnly(std::vector<float>& pPrev,std::vector<float> tPrev){
+        int bufferSize = tPrev.size();
+        int index = 2; //Which index should be filtered [0,1,2,3] <=> [x,y,z,yaw]
+        //Reset start value of filter
+        value_prev = pPrev[index];
+        value_filt_prev = pPrev[index];
+        t_prev = tPrev[0];
+        for(int i=1;i<bufferSize;i++){//Start at second (1) index due to reset with first (0)
+            int dataIndex= i*4+index;
+            float filtered = LPfilter(pPrev[dataIndex],tPrev[i]);
+            pPrev[dataIndex] = filtered;
+        }
+    }
+};
 /*
 Master positioning class constructor. Is called after the inherited classes are constructed
 Inherited class constructors are called with relevant arguments after the ":" in the initialization list.
@@ -170,6 +207,8 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
             std::cout << "  MODE: MARTON." << std::endl;
             std::vector<float> pPrev(4*bufferSize);
             pBuffer.read(pPrev);
+            ZFilter Zfilt(0.007);
+            Zfilt.filtZOnly(pPrev,tPrev);//FILTER JUST Z VALUES
             int _returnMode = marton::process(v_m,q_m,pos,arguments.yaw, arguments.pitch, arguments.roll,arguments.time,pPrev,tPrev,arguments.coneWeight);
             switch(_returnMode){
                 case GSL_SUCCESS:{returnMode = pos::RETURN_MODE_MARTON;break;}
