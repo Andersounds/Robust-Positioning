@@ -1,0 +1,16 @@
+STREAM_DATA_FILE = path-200423-1.csv	#Path to data file from config file path
+XYZ_COLUMS = [1,2,3]			#Specifies [<X_COL>,<Y_COL>,<Z_COL>] as matlab
+                               		#	style vector (0-indexed)
+TIMESTAMP_COL = 0			#Specifies which column of csv file that
+                               		#	contains timestamp data (0-indexed)
+DIST_COLUMN = 7              		#Specifies which column of csv file that
+                             		#	contains distance (lidar) data (0-indexed)
+Y_P_R_COLUMNS = [6,5,4]			#Specifies which columns of csv file that
+                               		#	contains [yaw,pitch,col] data (0-indexed)
+BASESCENE = baseScene.png               #Path to the base scene image that is to be
+                               		#	warped. Defaults to chess board
+BASESCENE_WIDTH = 4          		#Physical width of base scene in meter (x-dir)
+K_MAT = [607,0,320;0,607,240;0,0,1]     #Camera K matrix specified in matlab style. ',
+YAW_OFFSET = -1.5708 			#Relative yaw between image coordinate system and UAV. -pi/2 for UAV x axis == neg image y axis
+LOG = YES				#Log dataset? <YES/NO>
+STEP = NO				#Wait for keypress after every image? <YES/NO>
