@@ -48,9 +48,9 @@ colors = [0, 0.4470, 0.7410;      % Reference
 basePath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Evaluation/20-04-09/20-04-09-28/';
 %%%%  ESTIMATION FILE BASE NAME  %%%%
 %d_est_str = 'AIPE';
-%d_est_str = 'MARTON_outFile';
+d_est_str = 'MARTON_outFile';
 %d_est_str = 'MARTON_noweight';
-d_est_str = 'VO_outFile';
+%d_est_str = 'VO_outFile';
 %d_est_str = 'AZIPE_aipe';
 
 %d_est_str = 'MARTON_notilt';
@@ -160,14 +160,14 @@ end
         title('Y direction');
         subplot(5,1,4);
         if plotTrue
-            plot(t_ref,z_ref,'Color',colors(1,:));
+            plot(t_ref,-z_ref,'Color',colors(1,:));
             hold on
         end   
        %%% Plot in different colors depending on method   
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
             colorindex = mod(i,length(colors))+1;
-            plot(t_est(indeces),z_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
+            plot(t_est(indeces),-z_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
             hold on      
         end
         title('Z direction');
@@ -189,7 +189,7 @@ end
         if plotTrue
         %plot(x_ref,y_ref,'Color',colors(1,:),'Marker','.','LineStyle','None'); 
         %plot3(x_ref,y_ref,z_ref,'Color',colors(1,:),'Marker','.','LineStyle','None');
-        plot3(x_ref,y_ref,z_ref,'Color',colors(1,:));
+        plot3(x_ref,y_ref,-z_ref,'Color',colors(1,:));
         hold on
         end
         % Plot est path in different colour depending on mode used
@@ -197,7 +197,7 @@ end
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
             colorindex = mod(i,length(colors))+1;
             %plot(x_est(indeces),y_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
-            plot3(x_est(indeces),y_est(indeces),z_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
+            plot3(x_est(indeces),y_est(indeces),-z_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
             hold on      
         end
         
