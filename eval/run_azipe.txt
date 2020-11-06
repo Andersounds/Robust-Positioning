@@ -3,20 +3,169 @@
 # This execution script runs positioning algorithm on all datasets and outputs
 # the log files in their corresponding directories
 
-
 # Check that pwd is correct
-if ! bin/positioning.out; then
+echo "Testing if we are at the right directory by running without argument..."
+var=$(bin/positioning.out)
+
+if [ -z "$var" ]; then
 	echo ---Script must be executed from working directory Robust-Positioning--
+	exit
+fi
+echo "Success! Ignore row above."
+
+if [[ $# -eq 0 ]];then
+echo "Must give either vo or marton as argument"
+exit
 fi
 
+if [ "$1" != "VO" ] && [ "$1" != "MARTON" ]; then
+echo "Argument must be either vo or marton"
+exit
+fi
+
+
+echo ""
+echo "=======TOTAL TEST MATRIX======"
+echo "|  \complex.|    |     |     |"
+echo "|fps\_______|_Lo_|_Mid_|_Hi__|"	
+echo "|    1/1    | hl | hm  | hh  |"
+echo "|    1/2    |    |     | mh  |"
+echo "|    1/4    |    |     | lh  |"
+
+
+# choose if filmed, simulated, or both
+#dir=(20-04-09 20-11-3-sim)
+#dir=(20-04-09)
+dir=(20-11-3-sim)
+
+#Choose which sets
+#nmbrs=(18 23 27 28)
+nmbrs=(18)
+
+#Choose which experiments
+#experiments=(hh hm hl mh lh)
+experiments=(hh hm)
+
+#Calculate amount of experiments and print some info
+numOfDirs="${#dir[@]}"
+numOfSets="${#nmbrs[@]}"
+numOfExp="${#experiments[@]}"
+totnmbr=$(($numOfExp*$numOfSets*$numOfDirs))
+echo "Executing $numOfExp configurations on $(($numOfSets*$numOfDirs)) datasets = $totnmbr experiments"
+echo "The following experiments will be executed:"
+echo "Directories: ${dir[@]}"
+echo "Datasets: ${nmbrs[@]}"
+echo "Setups: ${experiments[@]}"
+echo "=== Starting evaluations..."
+counter=0
+for directory in ${dir[@]};do
+	for number in ${nmbrs[@]};do
+		for experiment in ${experiments[@]};do	
+			percent=$((100*$counter/$totnmbr))
+			echo -e "Total progress: $percent% Evaluation $directory / $number / $experiment...\r\c"
+
+
+
+posalg=$1
+#Default values
+fallbackperiod=40
+azipeperiod=20
+martonbuffersize=5
+occlude=false
+frameratediv=1
+filename=$experiment"_log.csv"
+
+
+case $experiment in
+  hl)
+echo HL
+    ;;
+
+  hm)
+echo HM
+    ;;
+
+  hh)
+echo HH
+fallbackperiod=40
+azipeperiod=20
+martonbuffersize=5
+occlude=false
+frameratediv=1
+    ;;
+  mh)
+echo MH
+    ;;
+  lh)
+echo LH
+    ;;
+
+  *)
+    echo "INVALID SETUP"
+	exit
+    ;;
+esac	
+
+
+
+#silence=$(
+bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$number/exampleConfig.txt \
+--OUT $filename --POS_ALG $posalg --OCCLUDE $occlude --FRAMERATE_DIV $frameratediv \
+--MARTON_CONEWEIGHT 2 --FALLBACK_PERIOD $fallbackperiod --AZIPE_PERIOD $azipeperiod \
+--MARTON_BUFFERSIZE $martonbuffersize
+#)
+
+
+
+
+			((counter+=1))
+			sleep 1
+		done
+	done
+done
+percent=$((100*$counter/$totnmbr))
+echo "Total progress: $percent%"
+
+echo "DONE! Run script XXX to copy files to eval directory if git repo"
+exit
+
+
+
+
+
+#-dir 20-04-09 20-11-3-sim #any of them
+#-nmbr   18 23 27 28 #any of them
+#-e --experiment xy x:fps, y:complexity -azipe for GT
+
+
+echo "|  \complex.|    |     |     |"
+echo "|fps\_______|_Lo_|_Mid_|_Hi__|"	
+echo "|    1/1    | hl | hm  | hh  |"
+echo "|    1/2    |    |     | mh  |"
+echo "|    1/4    |    |     | lh  |"
+
+echo "running X experiments for Y datasets, collected and simulated"
+#Behöver namnge outputdata så att filen stämplas med -e flaggan
+experiment=hh
+filename=$experiment"_log.csv"
+
+
 # Run for all datasets defined
-#for NUM in 1 2 3 4 5 6 7 8 9 10 11 12 13 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29
 #for NUM in 18 23 27 28
-for NUM in 28
+for NUM in 18
 do          
 
-echo Trying dataset $NUM...
+echo -e "Trying experiment $experiment on dataset $NUM in dir $MAP ...\c"
 
-bin/positioning.out --file ../../../Evaluation/20-04-09/20-04-09-$NUM/exampleConfig.txt --USE_ROLLPITCH true --ROLLPITCH_FILT_WC 7 --POS_ALG MARTON --OF_MODE KLT --OCCLUDE true --STEP 0 --FRAMERATE_DIV 1 --MARTON_CONEWEIGHT 0 --FALLBACK_PERIOD 40 --AZIPE_PERIOD 20 --MARTON_BUFFERSIZE 5
-
+silence=$(bin/positioning.out --file ../../../Evaluation/$MAP/20-04-09-$NUM/exampleConfig.txt --OUT $filename --POS_ALG AZIPE --OCCLUDE false --FRAMERATE_DIV 1 --MARTON_CONEWEIGHT 2 --FALLBACK_PERIOD 40 --AZIPE_PERIOD 20 --MARTON_BUFFERSIZE 5)
+echo "Done"
 done
+
+
+#case $arg in "$@"
+#do
+
+
+
+
+#esac
