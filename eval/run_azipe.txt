@@ -13,24 +13,7 @@ if [ -z "$var" ]; then
 fi
 echo "Success! Ignore row above."
 
-if [[ $# -eq 0 ]];then
-echo "Must give either vo or marton as argument"
-exit
-fi
 
-if [ "$1" != "VO" ] && [ "$1" != "MARTON" ]; then
-echo "Argument must be either vo or marton"
-exit
-fi
-
-
-echo ""
-echo "=======TOTAL TEST MATRIX======"
-echo "|  \complex.|    |     |     |"
-echo "|fps\_______|_Lo_|_Mid_|_Hi__|"	
-echo "|    1/1    | hl | hm  | hh  |"
-echo "|    1/2    |    |     | mh  |"
-echo "|    1/4    |    |     | lh  |"
 
 
 # choose if filmed, simulated, or both
@@ -42,85 +25,39 @@ dir=(20-11-3-sim)
 #nmbrs=(18 23 27 28)
 nmbrs=(18)
 
-#Choose which experiments
-#experiments=(hh hm hl mh lh)
-experiments=(hh hm)
 
 #Calculate amount of experiments and print some info
 numOfDirs="${#dir[@]}"
 numOfSets="${#nmbrs[@]}"
-numOfExp="${#experiments[@]}"
-totnmbr=$(($numOfExp*$numOfSets*$numOfDirs))
-echo "Executing $numOfExp configurations on $(($numOfSets*$numOfDirs)) datasets = $totnmbr experiments"
+
+totnmbr=$(($numOfSets*$numOfDirs))
+echo "Executing azipe on $(($numOfSets*$numOfDirs)) datasets = $totnmbr experiments"
 echo "The following experiments will be executed:"
 echo "Directories: ${dir[@]}"
 echo "Datasets: ${nmbrs[@]}"
-echo "Setups: ${experiments[@]}"
+
 echo "=== Starting evaluations..."
 counter=0
 for directory in ${dir[@]};do
 	for number in ${nmbrs[@]};do
-		for experiment in ${experiments[@]};do	
 			percent=$((100*$counter/$totnmbr))
-			echo -e "Total progress: $percent% Evaluation $directory / $number / $experiment...\r\c"
+			echo -e "Total progress: $percent% Evaluation $directory / $number...\r\c"
 
 
 
-posalg=$1
-#Default values
-fallbackperiod=40
-azipeperiod=20
-martonbuffersize=5
-occlude=false
-frameratediv=1
-filename=$experiment"_log.csv"
-
-
-case $experiment in
-  hl)
-echo HL
-    ;;
-
-  hm)
-echo HM
-    ;;
-
-  hh)
-echo HH
-fallbackperiod=40
-azipeperiod=20
-martonbuffersize=5
-occlude=false
-frameratediv=1
-    ;;
-  mh)
-echo MH
-    ;;
-  lh)
-echo LH
-    ;;
-
-  *)
-    echo "INVALID SETUP"
-	exit
-    ;;
-esac	
-
-
+posalg=AZIPE
+filename="AZIPE_log.csv"
 
 #silence=$(
 bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$number/exampleConfig.txt \
---OUT $filename --POS_ALG $posalg --OCCLUDE $occlude --FRAMERATE_DIV $frameratediv \
---MARTON_CONEWEIGHT 2 --FALLBACK_PERIOD $fallbackperiod --AZIPE_PERIOD $azipeperiod \
---MARTON_BUFFERSIZE $martonbuffersize
+--OUT $filename --POS_ALG $posalg
 #)
 
+cp ../../../Evaluation/$directory/20-04-09-$number/$filename eval/data/$directory/20-04-09-$number/$filename 
 
+((counter+=1))
+sleep 1
 
-
-			((counter+=1))
-			sleep 1
-		done
 	done
 done
 percent=$((100*$counter/$totnmbr))
@@ -128,44 +65,3 @@ echo "Total progress: $percent%"
 
 echo "DONE! Run script XXX to copy files to eval directory if git repo"
 exit
-
-
-
-
-
-#-dir 20-04-09 20-11-3-sim #any of them
-#-nmbr   18 23 27 28 #any of them
-#-e --experiment xy x:fps, y:complexity -azipe for GT
-
-
-echo "|  \complex.|    |     |     |"
-echo "|fps\_______|_Lo_|_Mid_|_Hi__|"	
-echo "|    1/1    | hl | hm  | hh  |"
-echo "|    1/2    |    |     | mh  |"
-echo "|    1/4    |    |     | lh  |"
-
-echo "running X experiments for Y datasets, collected and simulated"
-#Behöver namnge outputdata så att filen stämplas med -e flaggan
-experiment=hh
-filename=$experiment"_log.csv"
-
-
-# Run for all datasets defined
-#for NUM in 18 23 27 28
-for NUM in 18
-do          
-
-echo -e "Trying experiment $experiment on dataset $NUM in dir $MAP ...\c"
-
-silence=$(bin/positioning.out --file ../../../Evaluation/$MAP/20-04-09-$NUM/exampleConfig.txt --OUT $filename --POS_ALG AZIPE --OCCLUDE false --FRAMERATE_DIV 1 --MARTON_CONEWEIGHT 2 --FALLBACK_PERIOD 40 --AZIPE_PERIOD 20 --MARTON_BUFFERSIZE 5)
-echo "Done"
-done
-
-
-#case $arg in "$@"
-#do
-
-
-
-
-#esac
