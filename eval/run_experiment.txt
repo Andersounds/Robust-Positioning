@@ -14,12 +14,12 @@ fi
 echo "Success! Ignore row above."
 
 if [[ $# -eq 0 ]];then
-echo "Must give either vo or marton as argument"
+echo "Must give either VO or MARTON as argument"
 exit
 fi
 
 if [ "$1" != "VO" ] && [ "$1" != "MARTON" ]; then
-echo "Argument must be either vo or marton"
+echo "Argument must be either VO or MARTON"
 exit
 fi
 
@@ -35,8 +35,8 @@ echo "|    1/4    |    |     | lh  |"
 
 # choose if filmed, simulated, or both
 #dir=(20-04-09 20-11-3-sim)
-#dir=(20-04-09)
-dir=(20-11-3-sim)
+dir=(20-04-09)
+#dir=(20-11-3-sim)
 
 #Choose which sets
 #nmbrs=(18 23 27 28)
@@ -44,7 +44,7 @@ nmbrs=(18)
 
 #Choose which experiments
 #experiments=(hh hm hl mh lh)
-experiments=(hh hm)
+experiments=(hh)
 
 #Calculate amount of experiments and print some info
 numOfDirs="${#dir[@]}"
@@ -73,8 +73,8 @@ azipeperiod=20
 martonbuffersize=5
 occlude=false
 frameratediv=1
-filename=$experiment"_log.csv"
-
+fileending=$experiment"_log.csv"
+filename=$posalg"_"$fileending
 
 case $experiment in
   hl)
@@ -108,14 +108,14 @@ esac
 
 
 
-#silence=$(
-bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$number/exampleConfig.txt \
---OUT $filename --POS_ALG $posalg --OCCLUDE $occlude --FRAMERATE_DIV $frameratediv \
+silence=$(bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$number/exampleConfig.txt \
+--OUT $fileending --POS_ALG $posalg --OCCLUDE $occlude --FRAMERATE_DIV $frameratediv \
 --MARTON_CONEWEIGHT 2 --FALLBACK_PERIOD $fallbackperiod --AZIPE_PERIOD $azipeperiod \
---MARTON_BUFFERSIZE $martonbuffersize
-#)
+--MARTON_BUFFERSIZE $martonbuffersize)
 
-
+echo -e "Copying result file of  $directory / $number / $experiment to git repo... \c"
+cp ../../../Evaluation/$directory/20-04-09-$number/$filename eval/data/$directory/20-04-09-$number/$filename 
+echo Done!
 
 
 			((counter+=1))
@@ -126,6 +126,6 @@ done
 percent=$((100*$counter/$totnmbr))
 echo "Total progress: $percent%"
 
-echo "DONE! Run script XXX to copy files to eval directory if git repo"
+echo "DONE!"
 exit
 
