@@ -1,4 +1,16 @@
 #!/bin/bash
+# Settings:
+# choose if filmed, simulated, or both
+dir=(20-11-3-sim) 	#Which dir?	Ex: (20-04-09 20-11-3-sim)
+nmbrs=(18)		#Which sets?	Ex: (18 23 27 28)
+experiments=(hh)	#Which exps?	Ex: (hh hm hl mh lh)
+
+#Occlusion settings:
+fallbackperiod=40
+azipeperiod=20
+
+
+
 
 # This execution script runs positioning algorithm on all datasets and outputs
 # the log files in their corresponding directories
@@ -32,19 +44,6 @@ echo "|    1/1    | hl | hm  | hh  |"
 echo "|    1/2    |    |     | mh  |"
 echo "|    1/4    |    |     | lh  |"
 
-
-# choose if filmed, simulated, or both
-#dir=(20-04-09 20-11-3-sim)
-dir=(20-04-09)
-#dir=(20-11-3-sim)
-
-#Choose which sets
-#nmbrs=(18 23 27 28)
-nmbrs=(18)
-
-#Choose which experiments
-#experiments=(hh hm hl mh lh)
-experiments=(hh)
 
 #Calculate amount of experiments and print some info
 numOfDirs="${#dir[@]}"
@@ -87,8 +86,6 @@ echo HM
 
   hh)
 echo HH
-fallbackperiod=40
-azipeperiod=20
 martonbuffersize=5
 occlude=false
 frameratediv=1
