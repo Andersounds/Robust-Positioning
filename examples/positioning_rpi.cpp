@@ -29,6 +29,7 @@ class Filter{
         value_filt_prev = 0;
     }
     float LPfilter(float value,float t){
+        if(wc<=0){return value;}// If cutoff is set to 0 or lower, dont bother filtering
         float dt = t-t_prev;
         float value_filt = ( (value + value_prev)*dt*wc + value_filt_prev*(2-dt*wc) ) / (2+dt*wc);
         t_prev = t;
