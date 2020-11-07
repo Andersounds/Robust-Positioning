@@ -1,7 +1,7 @@
 #!/bin/bash
 # Settings:
 # choose if filmed, simulated, or both
-dir=(20-04-09) 	#Which dir?	Ex: (20-04-09 20-11-3-sim)
+dir=(20-11-3-sim) 	#Which dir?	Ex: (20-04-09 20-11-3-sim)
 nmbrs=(27)		#Which sets?	Ex: (18 23 27 28)
 experiments=(hh)	#Which exps?	Ex: (hh hm hl mh lh)
 
@@ -29,7 +29,7 @@ echo "Second argument:"
 echo "	1	Transient occlusion"
 echo "	2	Repeated transient occlusion"
 echo "	3	Static occlusion"
-echo "  4	No occlusion"
+echo "	4	No occlusion"
 echo "Example: bash eval/run_experiment.txt VO 2"
 exit
 fi
@@ -70,7 +70,7 @@ occlusionCase=Noocclusion
 occlude=false
     ;;
   *)
-    echo "Second argument must be either 1, 2, or 3"
+    echo "Second argument must be either 1, 2, 3, or 4"
 	exit
     ;;
 esac
