@@ -1,14 +1,9 @@
 #!/bin/bash
 # Settings:
 # choose if filmed, simulated, or both
-dir=(20-11-3-sim) 	#Which dir?	Ex: (20-04-09 20-11-3-sim)
-nmbrs=(18)		#Which sets?	Ex: (18 23 27 28)
+dir=(20-04-09) 	#Which dir?	Ex: (20-04-09 20-11-3-sim)
+nmbrs=(27)		#Which sets?	Ex: (18 23 27 28)
 experiments=(hh)	#Which exps?	Ex: (hh hm hl mh lh)
-
-#Occlusion settings:
-fallbackperiod=40
-azipeperiod=20
-
 
 
 
@@ -26,14 +21,61 @@ fi
 echo "Success! Ignore row above."
 
 if [[ $# -eq 0 ]];then
-echo "Must give either VO or MARTON as argument"
+echo "Must give pos alg as first argument and occlusion case as second argument"
+echo "First argument:"
+echo "	VO	Visual odometry"
+echo "	Marton	Marton robust"
+echo "Second argument:"
+echo "	1	Transient occlusion"
+echo "	2	Repeated transient occlusion"
+echo "	3	Static occlusion"
+echo "  4	No occlusion"
+echo "Example: bash eval/run_experiment.txt VO 2"
 exit
 fi
-
+## Check first argument
 if [ "$1" != "VO" ] && [ "$1" != "MARTON" ]; then
-echo "Argument must be either VO or MARTON"
+echo "First argument must be either VO or MARTON"
 exit
 fi
+## Check second argument
+case $2 in
+  1)
+echo "Transient occlusion"
+azipeperiod=60
+fallbackperiod=15
+occlusionCase="AZ"$azipeperiod"FB"$fallbackperiod
+occlude=true
+    ;;
+  2)
+echo "Repeated transient occlusion"
+azipeperiod=10
+fallbackperiod=20
+occlusionCase="AZ"$azipeperiod"FB"$fallbackperiod
+occlude=true
+    ;;
+  3)
+echo "Static occlusion"
+azipeperiod=5
+fallbackperiod=40
+occlusionCase="AZ"$azipeperiod"FB"$fallbackperiod
+occlude=true
+    ;;
+  4)
+echo "No occlusion"
+azipeperiod=100
+fallbackperiod=100
+#Must give some values to ezipeperiod and fallback period. Not used as occlusion =false
+occlusionCase=Noocclusion
+occlude=false
+    ;;
+  *)
+    echo "Second argument must be either 1, 2, or 3"
+	exit
+    ;;
+esac
+
+
 
 
 echo ""
@@ -64,15 +106,11 @@ for directory in ${dir[@]};do
 			echo -e "Total progress: $percent% Evaluation $directory / $number / $experiment...\r\c"
 
 
-
 posalg=$1
 #Default values
-fallbackperiod=40
-azipeperiod=20
 martonbuffersize=5
-occlude=false
 frameratediv=1
-fileending=$experiment"_log.csv"
+fileending=$experiment"_"$occlusionCase"_log.csv"
 filename=$posalg"_"$fileending
 
 case $experiment in
@@ -105,7 +143,7 @@ esac
 
 
 
-silence=$(bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$number/exampleConfig.txt \
+silence=$(bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$number/Config.txt \
 --OUT $fileending --POS_ALG $posalg --OCCLUDE $occlude --FRAMERATE_DIV $frameratediv \
 --MARTON_CONEWEIGHT 2 --FALLBACK_PERIOD $fallbackperiod --AZIPE_PERIOD $azipeperiod \
 --MARTON_BUFFERSIZE $martonbuffersize)
