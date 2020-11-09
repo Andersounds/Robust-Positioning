@@ -115,24 +115,19 @@ filename=$posalg"_"$fileending
 
 case $experiment in
   hl)
-echo HL
     ;;
 
   hm)
-echo HM
     ;;
 
   hh)
-echo HH
 martonbuffersize=5
-occlude=false
+occlude=true
 frameratediv=1
     ;;
   mh)
-echo MH
     ;;
   lh)
-echo LH
     ;;
 
   *)
@@ -148,7 +143,7 @@ silence=$(bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$nu
 --MARTON_CONEWEIGHT 2 --FALLBACK_PERIOD $fallbackperiod --AZIPE_PERIOD $azipeperiod \
 --MARTON_BUFFERSIZE $martonbuffersize)
 
-echo -e "Copying result file of  $directory / $number / $experiment to git repo... \c"
+echo -e "Copying result file of  $directory / $number / $posalg"_"$experiment"_"$occlusionCase to git repo... \c"
 cp ../../../Evaluation/$directory/20-04-09-$number/$filename eval/data/$directory/20-04-09-$number/$filename 
 echo Done!
 
