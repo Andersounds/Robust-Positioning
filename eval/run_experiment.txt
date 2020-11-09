@@ -109,6 +109,7 @@ for directory in ${dir[@]};do
 posalg=$1
 #Default values
 martonbuffersize=5
+$opticalflowgrid=4
 frameratediv=1
 fileending=$experiment"_"$occlusionCase"_log.csv"
 filename=$posalg"_"$fileending
@@ -121,8 +122,6 @@ case $experiment in
     ;;
 
   hh)
-martonbuffersize=5
-occlude=true
 frameratediv=1
     ;;
   mh)
@@ -140,8 +139,8 @@ esac
 
 silence=$(bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$number/Config.txt \
 --OUT $fileending --POS_ALG $posalg --OCCLUDE $occlude --FRAMERATE_DIV $frameratediv \
---MARTON_CONEWEIGHT 2 --FALLBACK_PERIOD $fallbackperiod --AZIPE_PERIOD $azipeperiod \
---MARTON_BUFFERSIZE $martonbuffersize)
+--FALLBACK_PERIOD $fallbackperiod --AZIPE_PERIOD $azipeperiod \
+--MARTON_BUFFERSIZE $martonbuffersize --OPTICAL_FLOW_GRID $opticalflowgrid)
 
 echo -e "Copying result file of  $directory / $number / $posalg"_"$experiment"_"$occlusionCase to git repo... \c"
 cp ../../../Evaluation/$directory/20-04-09-$number/$filename eval/data/$directory/20-04-09-$number/$filename 
