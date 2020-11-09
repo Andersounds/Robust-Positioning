@@ -235,7 +235,7 @@ int pos::positioning::process_Marton_Fallback(int mode,cv::Mat& frame, cv::Mat& 
         //Add newest position estimation and yaw and time to circular buffer
         //maybe add marton estimation as well?
         std::cout << "Returnmode: " << returnMode << std::endl;
-        if(returnMode==pos::RETURN_MODE_AZIPE){
+        if((returnMode==pos::RETURN_MODE_AZIPE)||(returnMode==pos::RETURN_MODE_MARTON)){
 //        if((returnMode==pos::RETURN_MODE_AZIPE)||(returnMode==pos::RETURN_MODE_MARTON)){
         //    std::cout << "Adding timestamp: " << arguments.time << " to buffer..." << std::endl;
         //    buffer.add(pos,arguments.yaw,arguments.time);//Dont add if positioning failed
