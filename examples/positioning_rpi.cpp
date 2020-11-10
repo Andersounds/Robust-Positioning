@@ -235,7 +235,7 @@ float imageTimeStamp;
 
         /* Force occlusion if OCCLUDE option is set */
         if(occlude){
-            if((counter%(az_period+fb_period))<az_period){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
+            if(((counter%(az_period+fb_period))<az_period) | (counter<marton_buffsize+10)){algmode = pos::MODE_AZIPE_AND_FALLBACK;}
             else{algmode = pos::MODE_FALLBACK;}
         }
 //Get new image
