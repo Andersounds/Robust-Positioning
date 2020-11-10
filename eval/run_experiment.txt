@@ -1,9 +1,9 @@
 #!/bin/bash
 # Settings:
 # choose if filmed, simulated, or both
-dir=(20-11-3-sim) 	#Which dir?	Ex: (20-04-09 20-11-3-sim)
-nmbrs=(27)		#Which sets?	Ex: (18 23 27 28)
-experiments=(hh)	#Which exps?	Ex: (hh hm hl mh lh)
+dir=(20-04-09 20-11-3-sim) 	#Which dir?	Ex: (20-04-09 20-11-3-sim)
+nmbrs=(18 23 27 28)		#Which sets?	Ex: (18 23 27 28)
+experiments=(hh hm hl mh lh)	#Which exps?	Ex: (hh hm hl mh lh)
 
 
 
@@ -24,7 +24,7 @@ if [[ $# -eq 0 ]];then
 echo "Must give pos alg as first argument and occlusion case as second argument"
 echo "First argument:"
 echo "	VO	Visual odometry"
-echo "	Marton	Marton robust"
+echo "	MARTON	Marton robust"
 echo "Second argument:"
 echo "	1	Transient occlusion"
 echo "	2	Repeated transient occlusion"
@@ -109,24 +109,38 @@ for directory in ${dir[@]};do
 posalg=$1
 #Default values
 martonbuffersize=5
-$opticalflowgrid=4
+opticalflowgrid=4
 frameratediv=1
 fileending=$experiment"_"$occlusionCase"_log.csv"
 filename=$posalg"_"$fileending
 
 case $experiment in
   hl)
+frameratediv=1
+martonbuffersize=3
+opticalflowgrid=3
     ;;
 
   hm)
+frameratediv=1
+martonbuffersize=15
+opticalflowgrid=6
     ;;
 
   hh)
 frameratediv=1
+martonbuffersize=30
+opticalflowgrid=9
     ;;
   mh)
+frameratediv=2
+martonbuffersize=30
+opticalflowgrid=9
     ;;
   lh)
+frameratediv=4
+martonbuffersize=30
+opticalflowgrid=9
     ;;
 
   *)
@@ -156,5 +170,4 @@ percent=$((100*$counter/$totnmbr))
 echo "Total progress: $percent%"
 
 echo "DONE!"
-exit
 

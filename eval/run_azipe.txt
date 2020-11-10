@@ -17,9 +17,9 @@ echo "Success! Ignore row above."
 
 
 # choose if filmed, simulated, or both
-#dir=(20-04-09 20-11-3-sim)
+dir=(20-04-09 20-11-3-sim)
 #dir=(20-04-09)
-dir=(20-11-3-sim)
+#dir=(20-11-3-sim)
 
 #Choose which sets
 #nmbrs=(18 23 27 28)

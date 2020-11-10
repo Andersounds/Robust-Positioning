@@ -1,0 +1,36 @@
+#!/bin/bash
+
+echo "Running this script will execute 5 experiments for all 4 datasets and 3 occlusions"
+echo "This is a total of 60 dataset passes. It could take a while"
+while true; do
+	read -p "Do you wish to continue? [yes/no] " yn
+    		case $yn in
+        	yes) echo Executing....; break;;
+        	no) echo Exiting...; exit;;
+        	* ) echo "Please answer yes or no.";;
+    	esac
+done
+
+starttime=$SECONDS
+
+
+occlusions=(1 2 3)
+algorithms=(VO MARTON)
+coun=1
+
+for occl in ${occlusions[@]};do
+	for algo in ${algorithms[@]};do
+
+echo "====== Executing run_experiment.txt script with arguments: $algo $occl"
+	. eval/run_experiment.txt $algo $occl
+echo "======Finished $coun/6 experiments"
+elapsedSec=$(($SECONDS-starttime))
+elapsedMin=$(($elapsedSec/60))
+echo "-Elapsed time: $elapsedMin minutes"
+echo "-Remaining time ca $(($elapsedMin*(6-coun))) minutes"
+	((coun+=1))
+	done
+
+done
+
+
