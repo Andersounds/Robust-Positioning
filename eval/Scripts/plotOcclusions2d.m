@@ -7,10 +7,10 @@
 %Possibly choose if xy is 2x1d or 1x2d
 %close all
 clear all
-algorithms={'VO','MARTON'};             nmbr1=2;
+algorithms={'VO','MARTON'};             nmbr1=1;
 directories={'20-04-09/','20-11-3-sim/'};  nmbr2=2;
 datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};nmbr3=3;
-settings={'hl','hm','hh','mh','lh'};    nmbr4=4;
+settings={'hl','hm','hh','mh','lh'};    nmbr4=5;
 occlusions={'AZ60FB15','AZ10FB20','AZ5FB40'}; 
 plotTrue = 1;
 
@@ -60,10 +60,14 @@ end
 for i=C' %Must be row vector to loop through it like this
     indeces = find(mode_est==i);%Find indices where algorithm used mode i
 	colorindex = mod(i,length(colors))+1;
+    if(plotTrue && (i~=1))
     plot(x_est(indeces),y_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
-    hold on      
+    hold on 
+    end
 end
 title(plottitle);
+xlabel('[m]')
+ylabel('[m]')
 %% Z-plot
     subplot(3,3,occlusionindex+3);
     plottitle=['Z path, occlusion: ',num2str(occlusionindex)];
@@ -76,12 +80,14 @@ title(plottitle);
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
             colorindex = mod(i,length(colors))+1;
+            if(plotTrue && (i~=1))
             plot(t_est(indeces),-z_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
-
-            hold on      
+            hold on   
+            end
         end
         title(plottitle);
-        
+        xlabel('Time [s]')
+        ylabel('Height [m]')
 %% Yawplot        
     subplot(3,3,occlusionindex+6);
     plottitle=['Yaw angle, occlusion: ',num2str(occlusionindex)];
@@ -93,10 +99,13 @@ title(plottitle);
         for i=C' %Must be row vector to loop through it like this
             indeces = find(mode_est==i);%Find indices where algorithm used mode i
             colorindex = mod(i,length(colors))+1;
+            if(plotTrue && (i~=1))
             plot(t_est(indeces),yaw_est(indeces),'Marker','.','LineStyle','None','Color',colors(colorindex,:));
-            hold on      
+            hold on  
+            end
         end
       title(plottitle);
-
+      xlabel('Time [s]')
+      ylabel('Yaw [rad]')
     
 end
