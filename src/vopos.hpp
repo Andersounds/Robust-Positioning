@@ -80,7 +80,7 @@ namespace pos{
     const int RETURN_MODE_MARTON_ERR = 32;
 
 
-    #define TSPAN_MAX 3000
+    #define TSPAN_MAX 6000
     /* Convenience structs for passing to positioning functions*/
     struct argStruct {
         float dist;
