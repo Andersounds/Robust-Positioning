@@ -25,25 +25,35 @@ clear all
 
 
 % CHoose which configuration by setting the indexed in nmbrsX-vectors
-directories={'20-04-09/','20-11-3-sim/'};  nmbr1=[2];
+directories={'20-04-09/','20-11-3-sim/'};  nmbr1=[1];
 datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};nmbr2=[1,2,3,4];
 algorithms={'VO','MARTON'};             nmbr3=1; %Only choose one
-settings={'hl','hm','hh','mh','lh'};    nmbr4=[1,2,3];%1,2,3 or 3,4,5 
+settings={'hl','hm','hh','mh','lh'};    nmbr4=[3,4,5];%1,2,3 or 3,4,5 
 occlusions={'AZ60FB15','AZ10FB20','AZ5FB40'}; nmbr5=[3];% 1 or 2 or 3?
 basePath = '../data/';
 
 
 G={};%Create cell array that is to be filled with data
 runs=length(nmbr1)*length(nmbr2)*length(nmbr4)*length(nmbr5);
-X = zeros(100,100,runs); %Must be able to contain all data points. (rows>number of FB sequences, cols>length of each FB sequence)
-Y = zeros(size(G));
-Z = zeros(size(G));
-YAW = zeros(size(G));
-MASK = zeros(size(G));
-GTX = zeros(size(G));%Ground truth
-GTY = zeros(size(G));%Ground truth
-GTZ = zeros(size(G));%Ground truth
-GTYAW = zeros(size(G));%Ground truth
+%Each fb sequence has one element in the cell arrays
+%Each row contains sequences from a single log file
+%[FBsequence 1, FBSequence2, ..., FBequence n1;
+% FBSequence 1, FBSequence2, ..., FBSequence n2;
+%                   ...
+% FBSequence 1, FBSequence2, ... FBSequence nm]
+%
+X = {}; 
+Y = {};
+Z = {};
+YAW = {};
+T = {};
+
+GTX = {};%Ground truth
+GTY = {};%Ground truth
+GTZ = {};%Ground truth
+GTYAW = {};%Ground truth
+GTT = {};%Should be equal to T
+
 
 %DIMENSIONS: )inter-sequence, intra-sequence, intra data file)
 counter=1;
@@ -69,15 +79,29 @@ from = 1;
 for j=1:length(breakpoints)
 to = breakpoints(j)-1;
 indexesOfFBSequencej = fbindexes(from:to);%These are the data indexes that we want to extract
-sequenceLength = length(indexesOfFBSequencej);
-
 %-ta ut data och spara i matris (from,to)
-X(1:sequenceLength,j,counter) = x(indexesOfFBSequencej);
-Y(1:sequenceLength,j,counter) = y(indexesOfFBSequencej);
-Z(1:sequenceLength,j,counter) = z(indexesOfFBSequencej);
-YAW(1:sequenceLength,j,counter) = yaw(indexesOfFBSequencej);
-MASK(1:sequenceLength,j,counter)=1;
-%DIMENSIONS: )inter-sequence, intra-sequence, intra data file)
+X{counter,j} = x(indexesOfFBSequencej);
+Y{counter,j} = y(indexesOfFBSequencej);
+Z{counter,j} = z(indexesOfFBSequencej);
+YAW{counter,j} = yaw(indexesOfFBSequencej);
+T{counter,j} = t(indexesOfFBSequencej);
+% GT Data. 
+% We have a single GT data file (with full framerate)
+% Extract correct data points by matching timestamps
+gtindexes = [];
+for ti = T{counter,j}' %Must be a row vector
+   in = find(t_gt==ti);
+   gtindexes = [gtindexes,in];% Add every ground truth index in a vector
+    if length(in)~=1
+    error('Something wrong in GT index search')
+    end
+end
+GTX{counter,j} = x_gt(gtindexes);
+GTY{counter,j} = y_gt(gtindexes);
+GTZ{counter,j} = z_gt(gtindexes);
+GTYAW{counter,j} = yaw_gt(gtindexes);
+GTT{counter,j} = t_gt(gtindexes);
+
 
 from = breakpoints(j);%Start of next FB sequence
 end
@@ -90,3 +114,18 @@ end
 
 
 %At this point we have the complete matrices
+
+%Get columns on by one
+%Check isempty before calculating
+index = 12;
+figure
+for i=1:runs
+    if ~isempty(X{i,index})
+        deltX=X{i,index}-GTX{i,index};
+        deltY=Y{i,index}-GTY{i,index};
+        
+        plot(deltX,'.','color','k');
+        hold on;
+    end
+end
+title(algorithms{nmbr3})
