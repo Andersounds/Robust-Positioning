@@ -1,36 +1,20 @@
-%This script reads specified data and calculates error metrics
-clear all
+%This script reads specified data and returns a cell arrays for x,y,z,yaw
+%for the specified FB method as well as ground truth. It also returns
+%execution times
 %User must be able to specify:
 % - One of the algorithms {VO, MARTON}
 % - Any comibation of datasets {20-04-09, 20-11-3-sim}
 % - Any combination of occlusions {1,2,3}
 % - Any combination of experiments {hl,hm,hh,mh,lh}
 
-
-% I can try out some different metrics such as
-% RMSE
-% First order drift plus RMSE
-% First order drift plus RMSE (and note of mean error)
-
-% Regarding method
-% Create a cell array
-% loop through modes vector
-% skip all modes 1 (angulation)
-% 
-
-
-% Regarding plots
-% modes: {1,3,4}={azipe,VO,Marton}
-
-
-
+function [X,Y,Z,YAW,EXECT,GTX,GTY,GTZ,GTYAW,GTT] = extractFBSequences(nmbr1,nmbr2,nmbr3,nmbr4,nmbr5,basePath)
 % CHoose which configuration by setting the indexed in nmbrsX-vectors
-directories={'20-04-09/','20-11-3-sim/'};  nmbr1=[1];
-datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};nmbr2=[1,2,3,4];
-algorithms={'VO','MARTON'};             nmbr3=1; %Only choose one
-settings={'hl','hm','hh','mh','lh'};    nmbr4=[3,4,5];%1,2,3 or 3,4,5 
-occlusions={'AZ60FB15','AZ10FB20','AZ5FB40'}; nmbr5=[3];% 1 or 2 or 3?
-basePath = '../data/';
+directories={'20-04-09/','20-11-3-sim/'};  %nmbr1=[1];
+datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};%nmbr2=[1,2,3,4];
+algorithms={'VO','MARTON'};            % nmbr3=2; %Only choose one
+settings={'hl','hm','hh','mh','lh'};    %nmbr4=[3];%1,2,3 or 3,4,5 
+occlusions={'AZ60FB15','AZ10FB20','AZ5FB40'};% nmbr5=[1,2,3];% 1 or 2 or 3?
+%basePath = '../data/';
 
 
 G={};%Create cell array that is to be filled with data
@@ -47,6 +31,7 @@ Y = {};
 Z = {};
 YAW = {};
 T = {};
+EXECT = {};
 
 GTX = {};%Ground truth
 GTY = {};%Ground truth
@@ -65,7 +50,7 @@ gtPath = [basePath,directories{i},datasets{ii},'AZIPE_log.csv'];
        for iii=nmbr4
            for iiii=nmbr5
 path = [basePath,directories{i},datasets{ii},algorithms{nmbr3},'_',settings{iii},'_',occlusions{iiii},'_log.csv'];
-[t, x, y, z, roll, pitch, yaw, modes]=getData(path);
+[t, x, y, z, roll, pitch, yaw, modes, execTime]=getData(path);
 % calculate errors
 fbindexes=find(modes~=1)'; %Find all the indexes that does _not_ correspond to angulation. These are the relevant ones
 steps = [1, diff(fbindexes)]; %If there is a step>1, the indexes are not adjescent and angulation must have been performed between
@@ -85,6 +70,7 @@ Y{counter,j} = y(indexesOfFBSequencej);
 Z{counter,j} = z(indexesOfFBSequencej);
 YAW{counter,j} = yaw(indexesOfFBSequencej);
 T{counter,j} = t(indexesOfFBSequencej);
+EXECT{counter,j} = execTime(indexesOfFBSequencej);
 % GT Data. 
 % We have a single GT data file (with full framerate)
 % Extract correct data points by matching timestamps
@@ -110,22 +96,3 @@ counter = counter+1;
        end
    end
 end
-
-
-
-%At this point we have the complete matrices
-
-%Get columns on by one
-%Check isempty before calculating
-index = 12;
-figure
-for i=1:runs
-    if ~isempty(X{i,index})
-        deltX=X{i,index}-GTX{i,index};
-        deltY=Y{i,index}-GTY{i,index};
-        
-        plot(deltX,'.','color','k');
-        hold on;
-    end
-end
-title(algorithms{nmbr3})
