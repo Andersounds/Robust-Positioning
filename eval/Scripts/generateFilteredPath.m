@@ -3,9 +3,9 @@
 % input
 
 
-NUM = 28;
+NUM = 27;
 BASE = '/Users/Fredrik/Google Drive/Kurser/Thesis/Evaluation/';
-infile_path = strcat(BASE,'20-04-09/20-04-09-',num2str(NUM),'/AZIPE_outFile.csv');
+infile_path = strcat(BASE,'20-04-09/20-04-09-',num2str(NUM),'/AZIPE_log.csv');
 output_path_filtered = strcat(BASE,'20-11-3-sim/20-04-09-',num2str(NUM),'/GT.csv');
 file= csvread(infile_path,1,0);
     t = file(:,1);
@@ -23,9 +23,10 @@ file= csvread(infile_path,1,0);
    a = 1;
    z_filt = filter(b,a,z);
    z_filt(1:windowSize) = z_filt(windowSize+1);
+   z_filt = z_filt-0.6;%Höjer z med 0.6m för att se mer av scenen
   % filter z at least. maybe something more?
     
-  x = x + 0.5;
+  x = x + 0.3;
   y = y + 0.5;
   dist = abs(z_filt./(cos(roll).*cos(pitch)));
   
