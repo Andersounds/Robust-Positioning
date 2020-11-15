@@ -5,14 +5,14 @@
 % - One of the algorithms {VO, MARTON}
 % - Any comibation of datasets {20-04-09, 20-11-3-sim}
 % - Any combination of occlusions {1,2,3}
-% - Any combination of experiments {hl,hm,hh,mh,lh}
+% - Any combination of experiments {'hl','hm','hh','mm','mh','lm','lh'};
 
 function [X,Y,Z,YAW,EXECT,GTX,GTY,GTZ,GTYAW,GTT] = extractFBSequences(nmbr1,nmbr2,nmbr3,nmbr4,nmbr5,basePath)
 % CHoose which configuration by setting the indexed in nmbrsX-vectors
 directories={'20-04-09/','20-11-3-sim/'};  %nmbr1=[1];
 datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};%nmbr2=[1,2,3,4];
 algorithms={'VO','MARTON'};            % nmbr3=2; %Only choose one
-settings={'hl','hm','hh','mh','lh'};    %nmbr4=[3];%1,2,3 or 3,4,5 
+settings={'hl','hm','hh','mm','mh','lm','lh'};   %nmbr4=[3];%1,2,3 or 3,4,5 
 occlusions={'AZ60FB15','AZ10FB20','AZ5FB40'};% nmbr5=[1,2,3];% 1 or 2 or 3?
 %basePath = '../data/';
 
