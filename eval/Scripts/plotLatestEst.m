@@ -2,15 +2,12 @@
 clear all
 %% Estimation File and parameters
 %d_est_path = '/Users/Fredrik/Datasets/20-04-09/';
-NUMBRS = flip([1,2,3,4,6,7,8,9,10,11,12,13,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]);
-NUMBRS = [18,23,27,28]
-NUMBRS = [18]
+%NUMBRS = flip([1,2,3,4,6,7,8,9,10,11,12,13,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]);
+%NUMBRS = [18,23,27,28]
+NUMBRS = [27]
 for NUM=NUMBRS
-d_est_file = strcat('/Users/Fredrik/Google Drive/Kurser/Thesis/Evaluation/20-11-3-sim/20-04-09-',num2str(NUM),'/AZIPE_outFile.csv');
-d_est_file = strcat('/Users/Fredrik/Google Drive/Kurser/Thesis/Evaluation/20-11-3-sim/20-04-09-',num2str(NUM),'/GT.csv');
+d_est_file = strcat('../data/20-11-3-sim/20-04-09-',num2str(NUM),'/MARTON_hh_AZ10FB20_log.csv');
 
-%d_est_file = strcat('/Users/Fredrik/Google Drive/Kurser/Thesis/Evaluation/20-04-09/20-04-09-',num2str(NUM),'/AZIPE_outFile.csv');
-%d_est_file = strcat('/Users/Fredrik/Datasets/20-04-09/20-04-09-',num2str(NUM),'/VO_outFile.csv');
 d_est= csvread(d_est_file,1,0);
    
     t_est = d_est(:,1)./1000;
