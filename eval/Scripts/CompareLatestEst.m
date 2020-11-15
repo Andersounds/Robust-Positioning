@@ -16,7 +16,7 @@ legendStr = {}; %Create a struct to hold legend strings
 azmode = 1;     legendStr{azmode} = 'Angulation';       %Azipe angulation was used to estimate position
 aimode = 2;     legendStr{aimode} = 'aipe';
 vomode = 3;     legendStr{vomode} = 'Visual Odometry';  %Visual odometry was used to estimate position (from last)
-martmode = 4;   legendStr{martmode} = 'Marton';         % Marton was used to estimate position
+martmode = 4;   legendStr{martmode} = 'Polynomial regression';         % Marton was used to estimate position
 %Error codes are above 10
 azFailed = 10;  legendStr{azFailed} = ' ';              %If only azipe is used and estimation fails
 %VO error codes
@@ -43,32 +43,32 @@ colors = [0, 0.4470, 0.7410;      % Reference
         0, 0.5, 0;
     ];
 %%%%  BASEPATH  %%%%
-%basePath = '/Users/Fredrik/Datasets/Sim/20-04-27-fullyaw/';
-%basePath = '/Users/Fredrik/Datasets/Sim/20-04-23-1/';
-basePath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Evaluation/20-04-09/20-04-09-28/';
+basePath = '../data/';
+dir_str = '20-11-3-sim/';%20-04-09/';
+nmbrs_str = '20-04-09-27/';
 %%%%  ESTIMATION FILE BASE NAME  %%%%
-%d_est_str = 'AIPE';
-d_est_str = 'MARTON_outFile';
-%d_est_str = 'MARTON_noweight';
-%d_est_str = 'VO_outFile';
-%d_est_str = 'AZIPE_aipe';
+mode_str = 'MARTON';
+exp_str = 'hh';
+occl_str = 'AZ5FB40'; %'AZ5FB40';
+d_est_str = [mode_str,'_',exp_str,'_',occl_str]
 
-%d_est_str = 'MARTON_notilt';
-%d_est_str = 'VO_notilt';
+d_est_file=[d_est_str,'_log.csv']
+d_est_file_full = [basePath,dir_str,nmbrs_str,d_est_file];
+%d_est_file_full = [basePath,dir_str,nmbrs_str,'AZIPE_log.csv'];
 
 
 %%%%  TRUE FILE BASE NAME  %%%%
-%d_true_file = [basePath,'AZIPE_out.csv'];
-d_true_file = [basePath,'AZIPE_outFile.csv'];
+d_true_file_full = [basePath,dir_str,nmbrs_str,'AZIPE_log.csv'];
+%d_true_file_full = [basePath,dir_str,nmbrs_str,'GT.csv'];
 
 
-d_est_file = [basePath,d_est_str,'.csv'];
+
 
 plotTrue = 1;
 %% Estimation File and parameters
 %Read file
 
-d_est= csvread(d_est_file,1,0);
+d_est= csvread(d_est_file_full,1,0);
 %Data columns
 tcolE = 1;
 xcolE = 2;
@@ -98,7 +98,7 @@ if plotTrue
 disp('Reading true path file...');
 %Read file
 
-d_ref= csvread(d_true_file,1,0);
+d_ref= csvread(d_true_file_full,1,0);
 % data columns in file
 tcolR = 1;
 xcolR = 2;
