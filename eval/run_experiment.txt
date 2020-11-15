@@ -42,7 +42,7 @@ fi
 case $2 in
   1)
 echo "Transient occlusion"
-azipeperiod=60
+azipeperiod=30
 fallbackperiod=15
 occlusionCase="AZ"$azipeperiod"FB"$fallbackperiod
 occlude=true
@@ -83,8 +83,8 @@ echo "=======TOTAL TEST MATRIX======"
 echo "|  \complex.|    |     |     |"
 echo "|fps\_______|_Lo_|_Mid_|_Hi__|"	
 echo "|    1/1    | hl | hm  | hh  |"
-echo "|    1/2    |    |     | mh  |"
-echo "|    1/4    |    |     | lh  |"
+echo "|    1/2    |    | mm  | mh  |"
+echo "|    1/4    |    | lm  | lh  |"
 
 
 #Calculate amount of experiments and print some info
@@ -132,6 +132,15 @@ frameratediv=1
 martonbuffersize=30
 opticalflowgrid=9
     ;;
+  mm)
+frameratediv=2
+martonbuffersize=15
+opticalflowgrid=6
+  lm)
+frameratediv=4
+martonbuffersize=15
+opticalflowgrid=6
+    ;;
   mh)
 frameratediv=2
 martonbuffersize=30
@@ -152,9 +161,14 @@ esac
 
 
 silence=$(bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$number/Config.txt \
---OUT $fileending --POS_ALG $posalg --OCCLUDE $occlude --FRAMERATE_DIV $frameratediv \
---FALLBACK_PERIOD $fallbackperiod --AZIPE_PERIOD $azipeperiod \
---MARTON_BUFFERSIZE $martonbuffersize --OPTICAL_FLOW_GRID $opticalflowgrid)
+--OUT $fileending \
+--POS_ALG $posalg \
+--OCCLUDE $occlude \
+--FRAMERATE_DIV $frameratediv \
+--FALLBACK_PERIOD $fallbackperiod \
+--AZIPE_PERIOD $azipeperiod \
+--MARTON_BUFFERSIZE $martonbuffersize \
+--OPTICAL_FLOW_GRID $opticalflowgrid)
 
 echo -e "Copying result file of  $directory / $number / $posalg"_"$experiment"_"$occlusionCase to git repo... \c"
 cp ../../../Evaluation/$directory/20-04-09-$number/$filename eval/data/$directory/20-04-09-$number/$filename 
