@@ -136,6 +136,7 @@ opticalflowgrid=9
 frameratediv=2
 martonbuffersize=15
 opticalflowgrid=6
+    ;;
   lm)
 frameratediv=4
 martonbuffersize=15

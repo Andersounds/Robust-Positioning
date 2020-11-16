@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "Running this script will execute 5 experiments for all 4 datasets and 3 occlusions"
-echo "This is a total of 60 dataset passes. It could take a while"
+echo "Running this script will execute 7 experiments for all 4 datasets and 3 occlusions"
+echo "This is a total of 84 dataset passes. It could take a while"
 while true; do
 	read -p "Do you wish to continue? [yes/no] " yn
     		case $yn in
