@@ -3,7 +3,7 @@
 # choose if filmed, simulated, or both
 dir=(20-04-09 20-11-3-sim) 	#Which dir?	Ex: (20-04-09 20-11-3-sim)
 nmbrs=(18 23 27 28)		#Which sets?	Ex: (18 23 27 28)
-experiments=(hh hm hl mh lh)	#Which exps?	Ex: (hh hm hl mh lh)
+experiments=(hl hm hh mm mh lm lh)	#Which exps?	Ex: (hl hm hh mm mh lm lh)
 
 
 
