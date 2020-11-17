@@ -38,7 +38,8 @@ z_re = zeros(size(xy_re));% Z_Relative Error
 yaw_ae = zeros(size(xy_re));%YAW Absolute Error
 figure
 %Get all data for the specified directory
-for directory = nmbr1
+for directoryIndex = 1:length(nmbr1)
+    directory = nmbr1(directoryIndex);
 [X,Y,Z,YAW,EXECT,GTX,GTY,GTZ,GTYAW,T] = extractFBSequences(directory,nmbr2,nmbr3,nmbr4,nmbr5,basePath);
 
     %Loop through every FB sequence
@@ -60,11 +61,11 @@ for directory = nmbr1
                 end
             YAW_AE_ij = abs(diffYAW);
         % Plot as scatter plots
-            subplot(1,3,1)
+            subplot(2,3,1+3*(directoryIndex-1))
             plot(XY_RE_ij,'.','color',[0.2,0.2,0.2]);hold on
-            subplot(1,3,2)
+            subplot(2,3,2+3*(directoryIndex-1))
             plot(Z_RE_ij,'.','color',[0.2,0.2,0.2]);hold on
-            subplot(1,3,3)
+            subplot(2,3,3+3*(directoryIndex-1))
             plot(YAW_AE_ij,'.','color',[0.2,0.2,0.2]);hold on
             
         %Add squared elements to sum
@@ -87,80 +88,95 @@ for directory = nmbr1
     z_rrmse = sqrt(z_re(1:nonZeroIndexes,1)./z_re(1:nonZeroIndexes,2));
     yaw_rmse = sqrt(yaw_ae(1:nonZeroIndexes,1)./yaw_ae(1:nonZeroIndexes,2));
         
-           
-    subplot(1,3,1)
-        plot(xy_rrmse,'color','r');
-    subplot(1,3,2)
-        plot(z_rrmse,'color','r');
-    subplot(1,3,3)
-        plot(yaw_rmse,'color','r');
+    
+    
+    
+    %% Calculate trend and offset
+    index = 1:length(xy_rrmse);
+    
+    pxy = polyfit(index',xy_rrmse,1);
+    pz = polyfit(index',z_rrmse,1);
+    pyaw = polyfit(index',yaw_rmse,1);
+    
+    resultMatrix(1+3*(directoryIndex-1),1:2) = pxy;
+    resultMatrix(2+3*(directoryIndex-1),1:2) = pz;
+    resultMatrix(3+3*(directoryIndex-1),1:2) = pyaw;
+    disp('Make sure that trend and offset are in correct column')
+    
+    %% Plot
+    subplot(2,3,1+3*(directoryIndex-1))
+        plot(xy_rrmse,'color','k','linewidth',2);
+    subplot(2,3,2+3*(directoryIndex-1))
+        plot(z_rrmse,'color','k','linewidth',2);
+    subplot(2,3,3+3*(directoryIndex-1))
+        plot(yaw_rmse,'color','k','linewidth',2);
     
     
 end
 
+% Edit some axis and text properties
+algorithmTitles={'Visual Odometry','Polynomial Regression'};
+    subplot(2,3,1)
+    title('xy')
+    subplot(2,3,2)
+    title({[algorithmTitles{nmbr3}, ' - Measured dataset'],'z'})
+    subplot(2,3,3)
+    title('yaw')
+    subplot(2,3,4)
+    title('x,y')
+    subplot(2,3,5)
+    title({[algorithmTitles{nmbr3}, ' - Simulated dataset'],'z'})
+    subplot(2,3,6)
+    title('yaw')
 
 
-disp(round(resultMatrix,2))
+
+subplot(2,3,4)
+axis([0,40,0,0.1])
+
+
+if nmbr3 == 1
+    %XY
+    xyaxis = [0,40,0,0.3];
+    zaxis = [0,40,0,0.2];
+    yawaxis = [0,40,0,0.25];
+elseif nmbr3 == 2
+    xyaxis = [0,40,0,0.3];
+    zaxis = [0,40,0,0.2];
+    yawaxis = [0,40,0,0.5];
+end
+
+    subplot(2,3,1)
+        axis(xyaxis)
+        ylabel('RRMSE [-]')
+        xlabel('Sequence index')
+    subplot(2,3,4)
+        axis(xyaxis)
+        ylabel('RRMSE [-]')
+        xlabel('Index after failure [-]')
+        xlabel('Sequence index')
+    subplot(2,3,2)
+        axis(zaxis)
+        ylabel('RRMSE [-]')
+        xlabel('Sequence index')
+    subplot(2,3,5)
+        axis(zaxis)
+        ylabel('RRMSE [-]')
+        xlabel('Sequence index')
+    subplot(2,3,3)
+        axis(yawaxis)
+        ylabel('RMSE [rad]')
+        xlabel('Sequence index')
+    subplot(2,3,6)
+        axis(yawaxis)
+        ylabel('RMSE [rad]')
+        xlabel('Sequence index')
+
+
+
+
+disp(resultMatrix)
 disp('Done')
-
-
-
-
-
-
-% 
-% 
-% 
-% 
-% %Get columns on by one
-% %Check isempty before calculating
-% figure
-% for i=1:runs %outer loop: every run (every file)
-%     for j=1:length(T(i,:)) %inner loop: every fallback sequence
-%     if isempty(T(i,j)) break; end %Need to check this because if one row is longer the others are filled with empty cells;   
-%    
-%     errXY = ((X{i,j}-GTX{i,j}).^2 + (Y{i,j}-GTY{i,j}).^2).^(1/2);%RMSE
-%     errZ=abs(Z{i,j}-GTZ{i,j});
-%     %Lite balett för att inte få +-2pi fel
-%     diffYAW = YAW{i,j}-GTYAW{i,j};
-%     toobigindexes = find(diffYAW>3);
-%     diffYAW(toobigindexes) = diffYAW(toobigindexes)-2*pi;
-%     toosmallindexes = find(diffYAW<-3);
-%     diffYAW(toosmallindexes) = diffYAW(toosmallindexes)+2*pi;
-%     errYAW = abs(diffYAW);
-%     
-%     subplot(2,3,1)
-%     %plot(errXY);hold on;
-%       plot(errXY,'color',[0.95,0.95,0.95]);hold on;
-%       plot(errXY,'.','color','k');hold on;
-%       axis([0,40,0,0.3]);
-%       xlabel('Fallback sequence index')
-%       ylabel('Error [m]')
-%       title('Visual Odometry - Horizontal RMSE')
-%     subplot(2,3,2)
-%     %plot(errZ);hold on;
-%       plot(errZ,'color',[0.95,0.95,0.95]);hold on;
-%       plot(errZ,'.','color','k');hold on;
-%       axis([0,40,0,0.3])
-%       xlabel('Fallback sequence index')
-%       ylabel('Error [m]')
-%       title('Visual Odometry - Vertical')
-%     subplot(2,3,3)
-%     %plot(errYAW);hold on;
-%       plot(errYAW,'color',[0.95,0.95,0.95]);hold on;
-%       plot(errYAW,'.','color','k');hold on;
-%       axis([0,40,0,0.3]);
-%       xlabel('Fallback sequence index')
-%       ylabel('Error [rad]')
-%       title('Visual Odometry - YAW')
-%     end
-% end
-% 
-% 
-% 
-% 
-% 
-
 
 
 
