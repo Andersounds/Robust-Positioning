@@ -9,8 +9,9 @@
 %algorithms={'VO','MARTON'};            % nmbr3=2; %Only choose one
 %settings={'hl','hm','hh','mh','lh'};    %nmbr4=[3];%1,2,3 or 3,4,5 
 %occlusions={'AZ60FB15','AZ10FB20','AZ5FB40'};% nmbr5=[1,2,3];% 1 or 2 or 3?
-
-nmbr3 = 1;          %algorithms={'VO','MARTON'}
+disp('RUN FROM DIRECTORY eval/Scripts');
+nmbr3 = 2;          %algorithms={'VO','MARTON'}
+plotIdentifications = {'VO','MARTON'};
 
 if nmbr3 == 1
     nmbr4=[2];      %settings={'hl','hm','hh','mm','mh','lm','lh'};  
@@ -33,14 +34,29 @@ resultMatrix = zeros(6,3);
 
 %% c
 
-xy_re = zeros(100,2); %One column for summation and one column for counter
-z_re = zeros(size(xy_re));% Z_Relative Error
-yaw_ae = zeros(size(xy_re));%YAW Absolute Error
-figure
+
+
+
+figure(nmbr3);
+set(nmbr3,'Position',[1,1,850,400],'PaperUnits','centimeters','PaperSize',[29, 15]);
 %Get all data for the specified directory
 for directoryIndex = 1:length(nmbr1)
     directory = nmbr1(directoryIndex);
 [X,Y,Z,YAW,EXECT,GTX,GTY,GTZ,GTYAW,T] = extractFBSequences(directory,nmbr2,nmbr3,nmbr4,nmbr5,basePath);
+
+xy_re = zeros(100,2); %One column for summation and one column for counter
+z_re = zeros(size(xy_re));% Z_Relative Error
+yaw_ae = zeros(size(xy_re));%YAW Absolute Error
+
+%These vectors are to save all relative errors so that they can be shown as
+%scatterplots
+XY_RE = [];
+Z_RE = [];
+YAW_AE = [];
+
+
+
+
 
     %Loop through every FB sequence
     [run,seq] = size(T);%Run: number of data files, seq: number of fallback sections (note that this may be lower on some files so therefore must chekc isempty before reading data
@@ -55,19 +71,19 @@ for directoryIndex = 1:length(nmbr1)
        %For yaw calculate Absolute Error
                 %Fixar yaw för att inte få +- 2pi fel   
             diffYAW = YAW{i,j}-GTYAW{i,j};
-                for yi = 1:length(diffYAW)
+                for yi = 1:K
                    while (abs(diffYAW(yi)-2*pi) < abs(diffYAW(yi))) diffYAW(yi) = diffYAW(yi)-2*pi;end
                    while (abs(diffYAW(yi)+2*pi) < abs(diffYAW(yi))) diffYAW(yi) = diffYAW(yi)+2*pi;end  
                 end
             YAW_AE_ij = abs(diffYAW);
-        % Plot as scatter plots
-            subplot(2,3,1+3*(directoryIndex-1))
-            plot(XY_RE_ij,'.','color',[0.2,0.2,0.2]);hold on
-            subplot(2,3,2+3*(directoryIndex-1))
-            plot(Z_RE_ij,'.','color',[0.2,0.2,0.2]);hold on
-            subplot(2,3,3+3*(directoryIndex-1))
-            plot(YAW_AE_ij,'.','color',[0.2,0.2,0.2]);hold on
-            
+        
+        %Save errors for scatter plot
+            indexes_ij = [1:K]';
+            XY_RE = [XY_RE;[indexes_ij';XY_RE_ij']'];
+            Z_RE = [Z_RE;[indexes_ij';Z_RE_ij']'];
+            YAW_AE = [YAW_AE;[indexes_ij';YAW_AE_ij']'];
+        
+        
         %Add squared elements to sum
             xy_re(1:K,1) = xy_re(1:K,1) + XY_RE_ij.^2;   %Element wise sum of squares
             xy_re(1:K,2) = xy_re(1:K,2) + 1;             %increase n by one for these indexes
@@ -88,9 +104,7 @@ for directoryIndex = 1:length(nmbr1)
     z_rrmse = sqrt(z_re(1:nonZeroIndexes,1)./z_re(1:nonZeroIndexes,2));
     yaw_rmse = sqrt(yaw_ae(1:nonZeroIndexes,1)./yaw_ae(1:nonZeroIndexes,2));
         
-    
-    
-    
+     
     %% Calculate trend and offset
     index = 1:length(xy_rrmse);
     
@@ -103,7 +117,15 @@ for directoryIndex = 1:length(nmbr1)
     resultMatrix(3+3*(directoryIndex-1),1:2) = pyaw;
     disp('Make sure that trend and offset are in correct column')
     
-    %% Plot
+    %% Scatterplot
+        subplot(2,3,1+3*(directoryIndex-1))
+        plot(XY_RE(:,1),XY_RE(:,2),'.','color',[0.2,0.2,0.2]);hold on
+        subplot(2,3,2+3*(directoryIndex-1))
+        plot(Z_RE(:,1),Z_RE(:,2),'.','color',[0.2,0.2,0.2]);hold on
+        subplot(2,3,3+3*(directoryIndex-1))
+        plot(YAW_AE(:,1),YAW_AE(:,2),'.','color',[0.2,0.2,0.2]);hold on
+    
+    %% Plot rrmse and rmse
     subplot(2,3,1+3*(directoryIndex-1))
         plot(xy_rrmse,'color','k','linewidth',2);
     subplot(2,3,2+3*(directoryIndex-1))
@@ -131,10 +153,6 @@ algorithmTitles={'Visual Odometry','Polynomial Regression'};
 
 
 
-subplot(2,3,4)
-axis([0,40,0,0.1])
-
-
 if nmbr3 == 1
     %XY
     xyaxis = [0,40,0,0.3];
@@ -150,29 +168,43 @@ end
         axis(xyaxis)
         ylabel('RRMSE [-]')
         xlabel('Sequence index')
+        legend('Relative error','RRMSE')
     subplot(2,3,4)
         axis(xyaxis)
         ylabel('RRMSE [-]')
         xlabel('Index after failure [-]')
         xlabel('Sequence index')
+        legend('Relative error','RRMSE')
     subplot(2,3,2)
         axis(zaxis)
         ylabel('RRMSE [-]')
         xlabel('Sequence index')
+        legend('Relative error','RRMSE')
     subplot(2,3,5)
         axis(zaxis)
         ylabel('RRMSE [-]')
         xlabel('Sequence index')
+        legend('Relative error','RRMSE')
     subplot(2,3,3)
         axis(yawaxis)
         ylabel('RMSE [rad]')
         xlabel('Sequence index')
+        legend('Absolute error','RMSE')
     subplot(2,3,6)
         axis(yawaxis)
         ylabel('RMSE [rad]')
         xlabel('Sequence index')
+        legend('Absolute error','RMSE')
 
-
+        
+outpath = '../../../../../Documentation/Report_presentations/AndersonThesis/Texter/Results/Figures/';
+%outpath = '../../../../../Documentation/Report_presentations/';
+filetitle = ['Comparison3-indexederrors-',plotIdentifications{nmbr3}];
+fulltitle = [outpath,filetitle,'.pdf'];        
+        
+   
+%saveas(nmbr3,fulltitle)
+print(nmbr3,'-dpdf','-bestfit',fulltitle)
 
 
 disp(resultMatrix)
