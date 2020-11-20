@@ -33,12 +33,13 @@ yaw_ref = d_ref(:,yawcolR);
 
 figure(5)
 subplot(2,2,i)
-plot(x_ref,y_ref,'color','k'); grid on; hold on
+
 n = 7;
 x_ref_spaced = x_ref(1:n:end);
 y_ref_spaced = y_ref(1:n:end);
 yaw_ref_spaced = yaw_ref(1:n:end);
-quiver(x_ref_spaced,y_ref_spaced,cos(yaw_ref_spaced),sin(yaw_ref_spaced));
+quiver(x_ref_spaced,y_ref_spaced,cos(yaw_ref_spaced),sin(yaw_ref_spaced)); hold on
+plot(x_ref,y_ref,'color','k'); grid on; hold on
 %plot3(x_ref,y_ref,-z_ref,'color','k'); grid on;axis equal
 %quiver3(x_ref,y_ref,-z_ref,cos(yaw_ref),sin(yaw_ref),zeros(size(yaw_ref)));
 title(['Ground truth, dataset ',num2str(i)])
