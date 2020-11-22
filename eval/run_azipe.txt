@@ -50,11 +50,11 @@ fileending="log.csv"
 filename=$posalg"_"$fileending
 
 
-silence=$(bin/positioning.out --file ../../../Evaluation/$directory/20-04-09-$number/Config.txt \
+silence=$(bin/positioning.out --file ../Evaluation/$directory/20-04-09-$number/Config.txt \
 --OUT $fileending --POS_ALG $posalg)
 
 echo -e "Copying result file of  $directory / $number to git repo... \c"
-cp ../../../Evaluation/$directory/20-04-09-$number/$filename eval/data/$directory/20-04-09-$number/$filename 
+cp ../Evaluation/$directory/20-04-09-$number/$filename eval/data/$directory/20-04-09-$number/$filename 
 echo Done!
 
 ((counter+=1))
