@@ -10,7 +10,24 @@ fi
 if [ ”$1” = ”positioning” ];then
 	#
 	echo Compiling general positioning program for RPI. Difference: copied positioning.cpp and vopos.cpp and removed drawing and imshow functions.
-	g++ -std=c++11 -fvisibility=hidden -ggdb /usr/local/lib/libboost_program_options.a /usr/local/lib/libgsl.a /usr/local/lib/libgslcblas.a `pkg-config --cflags --libs opencv` examples/positioning_rpi.cpp src/vopos_rpi.cpp src/angulation.cpp src/azipe.cpp src/opticalFlow.cpp src/homographyVO.cpp src/martonRobust.cpp include/Quartic-master/quartic.cpp src/videoStream.cpp src/dataStream.cpp src/logger.cpp -o bin/positioning.out
+	g++ -std=c++11 -fvisibility=hidden -ggdb \
+/usr/local/lib/libboost_program_options.a \
+/usr/local/lib/libgsl.a \
+/usr/local/lib/libgslcblas.a \
+`pkg-config --cflags --libs opencv` \
+examples/positioning_rpi.cpp \
+src/vopos_rpi.cpp \
+src/angulation.cpp \
+src/azipe.cpp \
+src/opticalFlow.cpp \
+src/homographyVO.cpp \
+src/martonRobust.cpp \
+include/Quartic-master/quartic.cpp \
+src/videoStream.cpp \
+src/dataStream.cpp \
+src/logger.cpp \
+-o bin/positioning.out
+
 	echo Run with command ./bin/positioning.out [option]
 fi
 
