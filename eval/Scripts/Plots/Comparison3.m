@@ -197,7 +197,7 @@ end
         legend('Absolute error','RMSE')
 
         
-outpath = '../../../../../Documentation/Report_presentations/AndersonThesis/Texter/Results/Figures/';
+outpath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Documentation/Report_presentations/AndersonThesis/Texter/Results/Figures/';
 %outpath = '../../../../../Documentation/Report_presentations/';
 filetitle = ['Comparison3-indexederrors-',plotIdentifications{nmbr3}];
 fulltitle = [outpath,filetitle,'.pdf'];        

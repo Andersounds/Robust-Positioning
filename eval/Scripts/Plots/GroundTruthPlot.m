@@ -51,7 +51,7 @@ end
 
 
         
-outpath = '../../../../../Documentation/Report_presentations/AndersonThesis/Texter/Implementation/Figures/';
+outpath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Documentation/Report_presentations/AndersonThesis/Texter/Implementation/Figures/';
 %outpath = '../../../../../Documentation/Report_presentations/';
 filetitle = ['groundtruthPaths'];
 fulltitle = [outpath,filetitle,'.pdf'];        
