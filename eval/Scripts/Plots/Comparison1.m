@@ -11,7 +11,7 @@
 %occlusions={'AZ30FB15','AZ10FB20','AZ5FB40'};% nmbr5=[1,2,3];% 1 or 2 or 3?
 
 
-nmbr3 = 1;          %algorithms={'VO','MARTON'}
+nmbr3 = 2;          %algorithms={'VO','MARTON'}
 nmbr4=[1,2,3];      %settings={'hl','hm','hh','mm','mh','lm','lh'};
 
 nmbr1=[1];          %directories={'20-04-09/','20-11-3-sim/'};
@@ -94,7 +94,7 @@ resultMatrix(10,complexityIndex) = mean(executionTime);
 
 end
 
-disp(round(resultMatrix,2))
+disp(round(resultMatrix,3))
 disp('Done')
 
 

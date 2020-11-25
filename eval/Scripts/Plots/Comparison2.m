@@ -90,7 +90,7 @@ for occlusionIndex = 1:length(nmbr5)
     % Location of the calculated data in the big matrix
     tableCol = complexityIndex;
     tableRow = 3*(occlusionIndex-1); %+1 for xy, +2 for z, +3 for yaw
-    
+    % Obs multiplicerar med 100 för %
     resultMatrix(tableRow+1,tableCol) = xyRMSE*100;
     resultMatrix(tableRow+2,tableCol) = zRMSE*100;
     resultMatrix(tableRow+3,tableCol) = yawRMSE/(2*pi)*100;
