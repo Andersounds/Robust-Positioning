@@ -17,7 +17,7 @@ nmbr4=[1,2,3];      %settings={'hl','hm','hh','mm','mh','lm','lh'};
 nmbr1=[1];          %directories={'20-04-09/','20-11-3-sim/'};
 nmbr2 = [1,2,3,4];  %datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};
 
-nmbr5=[1,2,3];          %occlusions={'AZ60FB15','AZ10FB20','AZ5FB40'}
+nmbr5=[1,2,3];          %occlusions={'AZ30FB15','AZ10FB20','AZ5FB40'}
 runs = length(nmbr1)*length(nmbr2)*length(nmbr4)*length(nmbr5);
 basePath = '../data/';
 
