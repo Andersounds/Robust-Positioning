@@ -9,7 +9,7 @@
 %settings={'hl','hm','hh','mh','lh'};    %nmbr4=[3];%1,2,3 or 3,4,5 
 %occlusions={'AZ60FB15','AZ10FB20','AZ5FB40'};% nmbr5=[1,2,3];% 1 or 2 or 3?
 disp('RUN FROM DIRECTORY eval/Scripts');
-nmbr3 = 2;          %algorithms={'VO','MARTON'}
+nmbr3 = 1;          %algorithms={'VO','MARTON'}
 
 plotIdentifications = {'VO','MARTON'};
 
@@ -169,13 +169,13 @@ algorithmTitles={'Visual Odometry','Polynomial Regression'};
     subplot(2,3,1)
     title('xy')
     subplot(2,3,2)
-    title({[algorithmTitles{nmbr3}, ' - Measured dataset'],'z'})
+    title({[algorithmTitles{nmbr3}, ' - Measured dataset'],'z'},'FontSize',15)
     subplot(2,3,3)
     title('yaw')
     subplot(2,3,4)
     title('x,y')
     subplot(2,3,5)
-    title({[algorithmTitles{nmbr3}, ' - Simulated dataset'],'z'})
+    title({[algorithmTitles{nmbr3}, ' - Simulated dataset'],'z'},'FontSize',15)
     subplot(2,3,6)
     title('yaw')
 
@@ -194,37 +194,35 @@ end
 
     subplot(2,3,1)
         axis(xyaxis)
-        ylabel('RRMSE [%(z)]')
-        xlabel('Sequence index')
+        ylabel('RRMSE [%(z)]','FontSize',14)
+        xlabel('Sequence index','FontSize',14)
         legend('Relative error','RRMSE')
     subplot(2,3,4)
         axis(xyaxis)
-        ylabel('RRMSE [%(z)]')
-        xlabel('Index after failure [-]')
-        xlabel('Sequence index')
+        ylabel('RRMSE [%(z)]','FontSize',14)
+        xlabel('Sequence index','FontSize',14)
         legend('Relative error','RRMSE')
     subplot(2,3,2)
         axis(zaxis)
-        ylabel('RRMSE [%(z)]')
-        xlabel('Sequence index')
+        ylabel('RRMSE [%(z)]','FontSize',14)
+        xlabel('Sequence index','FontSize',14)
         legend('Relative error','RRMSE')
     subplot(2,3,5)
         axis(zaxis)
-        ylabel('RRMSE [%(z)]')
-        xlabel('Sequence index')
+        ylabel('RRMSE [%(z)]','FontSize',14)
+        xlabel('Sequence index','FontSize',14)
         legend('Relative error','RRMSE')
     subplot(2,3,3)
         axis(yawaxis)
-        ylabel('RMSE [rad]')
-        xlabel('Sequence index')
+        ylabel('RMSE [rad]','FontSize',14)
+        xlabel('Sequence index','FontSize',14)
         legend('Absolute error','RMSE')
     subplot(2,3,6)
         axis(yawaxis)
-        ylabel('RMSE [rad]')
-        xlabel('Sequence index')
+        ylabel('RMSE [rad]','FontSize',14)
+        xlabel('Sequence index','FontSize',14)
         legend('Absolute error','RMSE')
-
-        
+      
 outpath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Documentation/Report_presentations/AndersonThesis/Texter/Results/Figures/';
 %outpath = '../../../../../Documentation/Report_presentations/';
 filetitle = ['Comparison3-indexederrors-',plotIdentifications{nmbr3}];
