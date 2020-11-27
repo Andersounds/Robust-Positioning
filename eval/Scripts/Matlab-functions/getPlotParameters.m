@@ -21,15 +21,17 @@ marterr = 32;   legendStr{marterr} = ' ';
 
 %First row is used by reference. next rows are for other codes
 % Return code i uses color specified on row i+1
-colors = [0, 0.4470, 0.7410;      % Reference
-        0.3010, 0.7450, 0.9330;   % Azipe
-        0.8500, 0.3250, 0.0980;   % VO
-        0.9290, 0.6940, 0.1250;   % Marton
-        0.4940, 0.1840, 0.5560;  
-        0.4660, 0.6740, 0.1880;
-        0.6350, 0.0780, 0.1840;
-        0.25, 0.25, 0.25;
-        0, 0.5, 0;
+% Mode 3: VO
+% Mode 4: Polynomial Regression
+colors = [0, 0.4470, 0.7410;      % blue (Reference)
+        0.3010, 0.7450, 0.9330;   % light blue (Azipe)
+        0.9290, 0.6940, 0.1250;   % yellow
+        0.8500, 0.3250, 0.0980;   % orange (VO)
+        0.4940, 0.1840, 0.5560;   % purple (Marton)
+        0.4660, 0.6740, 0.1880;   % Green
+        0.6350, 0.0780, 0.1840;   % dark red
+        0.25, 0.25, 0.25;% Very dark green? or gray
+        0, 0.5, 0; % lighter green
     ];
 
 

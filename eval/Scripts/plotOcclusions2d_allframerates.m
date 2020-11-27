@@ -7,35 +7,39 @@
 %Possibly choose if xy is 2x1d or 1x2d
 %close all
 clear all
-algorithms={'VO','MARTON'};             nmbr1=1;
-directories={'20-04-09/','20-11-3-sim/'};  nmbr2=1;
-datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};nmbr3=4;
-settings={'hl','hm','hh','mm','mh','lm','lh'};    nmbr4=3;
-occlusions={'AZ30FB15','AZ10FB20','AZ5FB40'}; 
+algorithms={'VO','MARTON'};             nmbr1=2;
+directories={'20-04-09/','20-11-3-sim/'};  nmbr2=2;
+datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};nmbr3=3;
+settings={'hl','hm','hh','mm','mh','lm','lh'};    nmbr4=[2,4,6];
+occlusions={'AZ30FB15','AZ10FB20','AZ5FB40'};  occlusionindex=3;
 plotTrue = 1;
 
 
-algorithmTitles={'Visual Odometry','Polynomial Regression'};
+settingsStrings = {'30/1 fps','30/2 fps','30/4 fps'};
+
 %%%%  BASEPATH  %%%%
 basePath = '../data/';
 dir_str = directories{nmbr2};
 nmbrs_str = datasets{nmbr3};
 %%%%  ESTIMATION FILE BASE NAME  %%%%
 mode_str = algorithms{nmbr1};
-exp_str = settings{nmbr4};
+
+occlusion_str = occlusions{occlusionindex};
 
 %% Plot settings - legends, colors
 [legendStr, colors] = getPlotParameters();
 
 %% Plot
 figure
-for occlusionindex=1:3
+for settingsindex=1:3
 %% Estimation File and parameters
 % Read data
-d_est_file = [mode_str,'_',exp_str,'_',occlusions{occlusionindex},'_log.csv'];
+exp_str = settings{nmbr4(settingsindex)};
+d_est_file = [mode_str,'_',exp_str,'_',occlusion_str,'_log.csv'];
 d_est_file_full = [basePath,dir_str,nmbrs_str,d_est_file];
 [t_est,x_est,y_est,z_est,roll_est,pitch_est,yaw_est,mode_est]=getData(d_est_file_full);
 C = unique(mode_est);%Modes that are logged
+disp(d_est_file);
 %% True path file and parameters
 if plotTrue
 disp('Reading true path file...');
@@ -47,10 +51,10 @@ d_true_file_full = [basePath,dir_str,nmbrs_str,'AZIPE_log.csv'];
 end
 
 %% X-Y Plot
-subplot(3,3,occlusionindex);
-plottitle={[''],['Occlusion: ',num2str(occlusionindex)],['X-Y path, occlusion: ',num2str(occlusionindex)]};
+subplot(3,3,settingsindex);
+plottitle={[''],['Framerate: ',settingsStrings{settingsindex}],['X-Y path, occlusion: ',num2str(occlusionindex)]};
 if(occlusionindex==2)
-plottitle{1}=['Algorithm: ', algorithmTitles{nmbr1}, ', Settings: ', settings{nmbr4}];
+plottitle{1}=['Algorithm: ', algorithms{nmbr1}, ', Settings: ', settings{nmbr4}];
 
 end
 
@@ -71,7 +75,7 @@ title(plottitle);
 xlabel('[m]')
 ylabel('[m]')
 %% Z-plot
-    subplot(3,3,occlusionindex+3);
+    subplot(3,3,settingsindex+3);
     plottitle=['Z path, occlusion: ',num2str(occlusionindex)];
         if plotTrue
             plot(t_ref,-z_ref,'Color',colors(1,:));
@@ -91,7 +95,7 @@ ylabel('[m]')
         xlabel('Time [s]')
         ylabel('Height [m]')
 %% Yawplot        
-    subplot(3,3,occlusionindex+6);
+    subplot(3,3,settingsindex+6);
     plottitle=['Yaw angle, occlusion: ',num2str(occlusionindex)];
         if plotTrue
             plot(t_ref,yaw_ref,'Color',colors(1,:));
