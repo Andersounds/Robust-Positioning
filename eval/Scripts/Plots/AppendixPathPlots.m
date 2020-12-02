@@ -7,13 +7,26 @@
 %Possibly choose if xy is 2x1d or 1x2d
 %close all
 clear all
-algorithms={'VO','MARTON'};             nmbr1=1;
+algorithms={'VO','MARTON'};             nmbr1=2;
 directories={'20-04-09/','20-11-3-sim/'};  nmbr2=1;
 datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};nmbr3=4;
-settings={'hl','hm','hh','mm','mh','lm','lh'};    nmbr4=3;
+settings={'hl','hm','hh','mm','mh','lm','lh'};    nmbr4=2;
 occlusions={'AZ30FB15','AZ10FB20','AZ5FB40'}; 
 plotTrue = 1;
 
+
+occlusionTitles = {'Transient','Repeated','Static'};% For plot titles
+figure(nmbr1);
+clf(nmbr1,'reset')
+set(nmbr1,'Position',[1,1,700,500],'PaperUnits','centimeters','PaperSize',[29, 29]);
+
+
+if nmbr1==1
+    outPath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Documentation/Report_presentations/AndersonThesis/Texter/Appendix/Allpaths_Marton/';
+elseif nmbr1==2
+    outPath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Documentation/Report_presentations/AndersonThesis/Texter/Appendix/Allpaths_VO/';    
+end
+fileTitle = ['Paths-Allocclusions-',algorithms{nmbr1},'-',directories{nmbr2},'-',datasets{nmbr3},'-',settings{nmbr4},'.pdf'];
 
 algorithmTitles={'Visual Odometry','Polynomial Regression'};
 %%%%  BASEPATH  %%%%
@@ -28,7 +41,7 @@ exp_str = settings{nmbr4};
 [legendStr, colors] = getPlotParameters();
 
 %% Plot
-figure
+
 for occlusionindex=1:3
 %% Estimation File and parameters
 % Read data
@@ -48,9 +61,9 @@ end
 
 %% X-Y Plot
 subplot(3,3,occlusionindex);
-plottitle={[''],['Occlusion: ',num2str(occlusionindex)],['X-Y path, occlusion: ',num2str(occlusionindex)]};
+plottitle={[''],['Occlusion: ',occlusionTitles{occlusionindex}],['X-Y path']};
 if(occlusionindex==2)
-plottitle{1}=['Algorithm: ', algorithmTitles{nmbr1}, ', Settings: ', settings{nmbr4}];
+plottitle{1}=['Algorithm: ', algorithmTitles{nmbr1}];
 
 end
 
@@ -72,7 +85,7 @@ xlabel('[m]')
 ylabel('[m]')
 %% Z-plot
     subplot(3,3,occlusionindex+3);
-    plottitle=['Z path, occlusion: ',num2str(occlusionindex)];
+    plottitle=['Z path'];
         if plotTrue
             plot(t_ref,-z_ref,'Color',colors(1,:));
             hold on
@@ -92,7 +105,7 @@ ylabel('[m]')
         ylabel('Height [m]')
 %% Yawplot        
     subplot(3,3,occlusionindex+6);
-    plottitle=['Yaw angle, occlusion: ',num2str(occlusionindex)];
+    plottitle=['Yaw angle'];
         if plotTrue
             plot(t_ref,yaw_ref,'Color',colors(1,:));
             hold on
