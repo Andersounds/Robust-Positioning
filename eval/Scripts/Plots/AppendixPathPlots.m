@@ -1,3 +1,4 @@
+clear all
 %This could be a script that reads all occlusion cases and plots data
 %as a 3x3 subplots where the columns are occlusioncases and the rows are x-y 2d plot, z, yaw
 % At top of plot i have to choose:
@@ -7,27 +8,28 @@
 %Possibly choose if xy is 2x1d or 1x2d
 %close all
 clear all
-algorithms={'VO','MARTON'};             nmbr1=2;
+algorithms={'VO','MARTON'};             nmbr1=1; %CHANGE AMGORITHM HERE
 directories={'20-04-09/','20-11-3-sim/'};  nmbr2=1;
-datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};nmbr3=4;
+datasets={'20-04-09-18/','20-04-09-23/','20-04-09-27/','20-04-09-28/'};nmbr3=4;%CHANGE SET HERE
 settings={'hl','hm','hh','mm','mh','lm','lh'};    nmbr4=2;
 occlusions={'AZ30FB15','AZ10FB20','AZ5FB40'}; 
 plotTrue = 1;
 
 
 occlusionTitles = {'Transient','Repeated','Static'};% For plot titles
+dirTitles = {'20-04-09','20-11-3-sim'};
+datasetTitles = {'18','23','27','28'};
 figure(nmbr1);
 clf(nmbr1,'reset')
-set(nmbr1,'Position',[1,1,700,500],'PaperUnits','centimeters','PaperSize',[29, 29]);
+set(nmbr1,'Position',[1,1,700,500],'PaperUnits','centimeters','PaperSize',[28, 21]);
 
 
 if nmbr1==1
-    outPath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Documentation/Report_presentations/AndersonThesis/Texter/Appendix/Allpaths_Marton/';
+    outPath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Documentation/Report_presentations/AndersonThesis/Texter/Appendix/Allpaths_VO/Figures/';    
 elseif nmbr1==2
-    outPath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Documentation/Report_presentations/AndersonThesis/Texter/Appendix/Allpaths_VO/';    
+    outPath = '/Users/Fredrik/Google Drive/Kurser/Thesis/Documentation/Report_presentations/AndersonThesis/Texter/Appendix/Allpaths_Marton/Figures/';
 end
-fileTitle = ['Paths-Allocclusions-',algorithms{nmbr1},'-',directories{nmbr2},'-',datasets{nmbr3},'-',settings{nmbr4},'.pdf'];
-
+fileTitle = ['Paths-Allocclusions-',algorithms{nmbr1},'-',dirTitles{nmbr2},'-',datasetTitles{nmbr3},'-',settings{nmbr4}];
 algorithmTitles={'Visual Odometry','Polynomial Regression'};
 %%%%  BASEPATH  %%%%
 basePath = '../data/';
@@ -124,3 +126,13 @@ ylabel('[m]')
       ylabel('Yaw [rad]')
     
 end
+
+
+Lgnd = legend('Ground truth',algorithmTitles{nmbr1});
+Lgnd.Position(1) = 0.75;
+Lgnd.Position(2) = 0;
+
+
+fulltitle=[outPath,fileTitle,'.pdf'];
+
+print(nmbr1,'-dpdf','-bestfit',fulltitle);
